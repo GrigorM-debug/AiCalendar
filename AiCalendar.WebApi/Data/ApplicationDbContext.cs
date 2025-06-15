@@ -21,6 +21,10 @@ namespace AiCalendar.WebApi.Data
             base.OnModelCreating(modelBuilder);
             // Configure your entities here
 
+            modelBuilder.Entity<Event>()
+                .Property(e => e.IsCancelled)
+                .HasDefaultValue(false);
+
             //Seed some data for users and events
 
             // --Seed Users

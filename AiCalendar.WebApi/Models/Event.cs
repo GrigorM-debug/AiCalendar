@@ -38,6 +38,10 @@ namespace AiCalendar.WebApi.Models
         [Comment("User navigation property")]
         public User Creator { get; set; } = null!;
 
+        [Required]
+        [Comment("If event is cancelled or no")]
+        public bool IsCancelled { get; set; }
+
         [Comment("Collection of event participants")]
         public ICollection<Participant> Participants { get; set; } = new HashSet<Participant>();
     }
