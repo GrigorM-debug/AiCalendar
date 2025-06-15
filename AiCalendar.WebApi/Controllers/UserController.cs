@@ -1,4 +1,5 @@
 ﻿using System.Runtime.CompilerServices;
+using AiCalendar.WebApi.DTOs.Event;
 using AiCalendar.WebApi.DTOs.Users;
 using AiCalendar.WebApi.Models;
 using AiCalendar.WebApi.Services.Users.Interfaces;
@@ -98,7 +99,7 @@ namespace AiCalendar.WebApi.Controllers
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        public async Task<IActionResult> Logic([FromBody] LoginAndRegisterInputDto input)
+        public async Task<IActionResult> Login([FromBody] LoginAndRegisterInputDto input)
         {
             if (User.Identity != null && User.Identity.IsAuthenticated)
             {
@@ -200,6 +201,40 @@ namespace AiCalendar.WebApi.Controllers
                 _logger.LogError(ex, "Error updating user with ID {UserId}.", userId);
                 return StatusCode(500, "Internal server error while updating user.");
             }
+        }
+
+        /// <summary>
+        /// Gets all user created events.
+        /// </summary>
+        /// <param name="id">The ID of the user (GUID format).</param>
+        /// <returns>Returns collection of user created events</returns>
+        /// <remarks>
+        /// Sample request:
+        ///     Put /api/v1/user/user-events/A1B2C3D4-E5F6-7890-1234-567890ABCDEF
+        /// </remarks>
+        /// <response code="200">User updated successfully.</response>
+        /// <response code="400">Invalid user ID format or bad input (e.g., invalid password).</response>
+        /// <response code="403">User is not authorized to update this account.</response>
+        [Authorize]
+        [HttpGet("/user-events/{id}")]
+        [ProducesResponseType(typeof(EventDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        public async Task<IActionResult> GetUserCreatedEvents(string id)
+        {
+            if (!Guid.TryParse(id, out Guid userId))
+            {
+                return BadRequest("Invalid user ID format.");
+            }
+
+            if (User.Identity == null || !User.Identity.IsAuthenticated || User.FindFirst("id")?.Value != userId.ToString())
+            {
+                return Forbid("You are not authorized to access this resource.");
+            }
+
+            IEnumerable<EventDto> userEvents = await _userService.GetUserCreatedEventsAsync(userId);
+
+            return Ok(userEvents);
         }
     }
 }

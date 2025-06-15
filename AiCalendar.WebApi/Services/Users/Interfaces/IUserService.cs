@@ -1,4 +1,5 @@
-﻿using AiCalendar.WebApi.DTOs.Users;
+﻿using AiCalendar.WebApi.DTOs.Event;
+using AiCalendar.WebApi.DTOs.Users;
 using AiCalendar.WebApi.Models;
 
 namespace AiCalendar.WebApi.Services.Users.Interfaces
@@ -62,5 +63,12 @@ namespace AiCalendar.WebApi.Services.Users.Interfaces
         /// A task representing the asynchronous operation, containing the updated user if found; otherwise, <c>null</c>.
         /// </returns>
         Task<UserDto> UpdateUserAsync(Guid userId, UpdateUserDto updateUserDto);
+
+        /// <summary>
+        /// Asynchronously retrieves a collection of events created by the specified user.
+        /// </summary>
+        /// <param name="userId">The unique identifier of the user whose created events are to be retrieved.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains an enumerable collection of <see cref="EventDto"/> objects created by the user.</returns>
+        Task<IEnumerable<EventDto>> GetUserCreatedEventsAsync(Guid userId);
     }
 }

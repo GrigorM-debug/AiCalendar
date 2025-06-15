@@ -1,4 +1,5 @@
 ﻿using AiCalendar.WebApi.Data.Repository;
+using AiCalendar.WebApi.DTOs.Event;
 using AiCalendar.WebApi.DTOs.Users;
 using AiCalendar.WebApi.Models;
 using AiCalendar.WebApi.Services.Users.Interfaces;
@@ -9,11 +10,13 @@ namespace AiCalendar.WebApi.Services.Users
     {
         private readonly IRepository<User> _userRepository;
         private readonly IPasswordHasher _passwordHasher;
+        private readonly IRepository<Event> _eventRepository;
 
-        public UserService(IRepository<User> userRepository, IPasswordHasher passwordHasher)
+        public UserService(IRepository<User> userRepository, IPasswordHasher passwordHasher, IRepository<Event> eventRepository)
         {
             _userRepository = userRepository;
             _passwordHasher = passwordHasher;
+            _eventRepository = eventRepository;
         }
 
         /// <summary>
@@ -182,6 +185,36 @@ namespace AiCalendar.WebApi.Services.Users
             };
 
             return userDto;
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves a collection of events created by the specified user.
+        /// </summary>
+        /// <param name="userId">The unique identifier of the user whose created events are to be retrieved.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains an enumerable collection of <see cref="EventDto"/> objects created by the user.</returns>
+        public async Task<IEnumerable<EventDto>> GetUserCreatedEventsAsync(Guid userId)
+        {
+            //Check this
+            IEnumerable<Event> userCreatedEvents = await _eventRepository.GetAllByExpressionAsync(e => e.CreatorId == userId);
+
+            IEnumerable<EventDto> userCreatedEventsDtos = userCreatedEvents.Select(e => new EventDto
+            {
+                Id = e.Id.ToString(),
+                Title = e.Title,
+                Description = e.Description,
+                StartDate = e.StartTime,
+                EndDate = e.EndTime,
+                CreatorId = e.CreatorId.ToString(),
+                IsCancelled = e.IsCancelled,
+                Participants = e.Participants.Select(p => new UserDto()
+                {
+                    Id = p.UserId.ToString(),
+                    Email = p.User.Email,
+                    UserName = p.User.UserName
+                }).ToList()
+            });
+
+            return userCreatedEventsDtos;
         }
     }
 }
