@@ -15,8 +15,6 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerDocumentation();
-
 
 // --Configure Entity Framework Core with SQL Server, Services, Repositories and Swagger doc
 builder.Services
