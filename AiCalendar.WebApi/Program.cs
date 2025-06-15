@@ -1,29 +1,31 @@
+using System.Reflection;
 using System.Text;
 using AiCalendar.WebApi.Data;
 using AiCalendar.WebApi.Data.Repository;
+using AiCalendar.WebApi.Extensions;
 using AiCalendar.WebApi.Services.Users;
 using AiCalendar.WebApi.Services.Users.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
-// --Configure Entity Framework Core with SQL Server
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-{
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
-});
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerDocumentation();
 
-builder.Services.AddScoped<ITokenProvider, TokenProvider>();
-builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 
-builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+// --Configure Entity Framework Core with SQL Server, Services, Repositories and Swagger doc
+builder.Services
+    .AddDatabase(builder.Configuration)
+    .AddRepositories()
+    .AddServices()
+    .AddSwaggerDocumentation();
 
-builder.Services.AddScoped<IUserService, UserService>();
-
+// -- Configure JWT Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -55,6 +57,8 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI();
     app.UseExceptionHandler("/error-development");
 }
 else
