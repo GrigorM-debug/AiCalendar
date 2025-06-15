@@ -50,6 +50,7 @@ namespace AiCalendar.WebApi.Controllers
 
             return Problem(
                 title: "Internal Server Error",
+                detail: "An unexpected error occurred. Please try again later.",
                 statusCode: StatusCodes.Status500InternalServerError
             );
         }
