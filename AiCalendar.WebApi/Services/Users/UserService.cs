@@ -12,7 +12,7 @@ namespace AiCalendar.WebApi.Services.Users
 
         public UserService(IRepository<User> userRepository, IPasswordHasher passwordHasher)
         {
-            _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
+            _userRepository = userRepository;
             _passwordHasher = passwordHasher;
         }
 
@@ -21,7 +21,7 @@ namespace AiCalendar.WebApi.Services.Users
         /// </summary>
         /// <param name="input">The registration input data.</param>
         /// <returns>A task representing the asynchronous operation.</returns>
-        public async Task<User> RegisterAsync(LoginAndRegisterInputDto input)
+        public async Task<UserDto> RegisterAsync(LoginAndRegisterInputDto input)
         {
             string hashedPassword = _passwordHasher.HashPassword(input.Password);
 
@@ -34,7 +34,15 @@ namespace AiCalendar.WebApi.Services.Users
 
             await _userRepository.AddAsync(user);
             await _userRepository.SaveChangesAsync();
-            return user;
+
+            UserDto userDto = new UserDto
+            {
+                Id = user.Id.ToString(),
+                UserName = user.UserName,
+                Email = user.Email
+            };
+
+            return userDto;
         }
 
         /// <summary>
@@ -89,6 +97,91 @@ namespace AiCalendar.WebApi.Services.Users
         public async Task<bool> UserExistsByIdAsync(Guid userId)
         {
             return await _userRepository.ExistsByIdAsync(userId);
+        }
+
+        /// <summary>
+        /// Retrieves a user by username and email, if they exist.
+        /// </summary>
+        /// <param name="username">The username to search for.</param>
+        /// <param name="email">The email to search for.</param>
+        /// <returns>A task representing the asynchronous operation, with the user if found; otherwise, null.</returns>
+        public async Task<User?> GetUserByUserNameAndEmail(string username, string email)
+        {
+            User? user = await _userRepository.GetByExpressionAsync(u => u.UserName == username && u.Email == email);
+
+            if (user == null)
+            {
+                return null;
+            }
+
+            return user;
+        }
+
+        /// <summary>
+        /// Delete user by userId, if they exist.
+        /// </summary>
+        /// <param name="userId">The user's id</param>
+        public async Task DeleteUserAsync(Guid userId)
+        {
+            await _userRepository.DeleteAsync(userId);
+        }
+
+        /// <summary>
+        /// Updates a user by their userId, if the user exists.
+        /// </summary>
+        /// <param name="userId">The unique identifier of the user to update.</param>
+        /// <param name="updateUserDto">The updated user data.</param>
+        /// <returns>
+        /// A task representing the asynchronous operation, containing the updated user if found; otherwise, <c>null</c>.
+        /// </returns>
+        public async Task<UserDto> UpdateUserAsync(Guid userId, UpdateUserDto updateUserDto)
+        {
+            User? user = await _userRepository.GetByIdAsync(userId);
+
+            if (user == null)
+            {
+                return null;
+            }
+
+            if (!string.IsNullOrEmpty(updateUserDto.Email))
+            {
+                user.Email = updateUserDto.Email;
+            }
+
+            if(!string.IsNullOrEmpty(updateUserDto.UserName))
+            {
+                user.UserName = updateUserDto.UserName;
+            }
+
+            if(!string.IsNullOrEmpty(updateUserDto.OldPassword) && !string.IsNullOrEmpty(updateUserDto.NewPassword))
+            {
+                //Check if old password is correct
+                string oldPasswordHash = _passwordHasher.HashPassword(updateUserDto.OldPassword);
+                if (user.PasswordHashed != oldPasswordHash)
+                {
+                    throw new Exception("Old password is incorrect.");
+                }
+
+                string newPasswordHash = _passwordHasher.HashPassword(updateUserDto.NewPassword);
+                //Check if new password is same as the old password
+                if (user.PasswordHashed == newPasswordHash)
+                {
+                    throw new Exception("New password cannot be the same as the old password.");
+                }
+
+                user.PasswordHashed = newPasswordHash;
+            }
+
+            await _userRepository.SaveChangesAsync();
+
+            UserDto userDto = new UserDto
+            {
+                Id = user.Id.ToString(),
+                UserName = user.UserName,
+                Email = user.Email
+            };
+
+            return userDto;
         }
     }
 }
