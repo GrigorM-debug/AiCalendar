@@ -14,5 +14,8 @@
 
         //Password 
         public const string PasswordRequiredMessage = "Password is required.";
+        public const int PasswordMinLength = 5;
+        public const int PasswordMaxLength = 50;
+        public const string PasswordLengthErrorMessage = "Password must be between {1} and {2} characters long.";
     }
 }
