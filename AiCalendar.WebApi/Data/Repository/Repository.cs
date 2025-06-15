@@ -10,7 +10,7 @@ namespace AiCalendar.WebApi.Data.Repository
 
         public Repository(ApplicationDbContext context)
         {
-            _context = context ?? throw new ArgumentNullException(nameof(context));
+            _context = context;
             _dbSet = _context.Set<TEntity>();
         }
 
