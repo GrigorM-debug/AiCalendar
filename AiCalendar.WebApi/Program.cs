@@ -1,5 +1,6 @@
 using System.Text;
 using AiCalendar.WebApi.Data;
+using AiCalendar.WebApi.Data.Repository;
 using AiCalendar.WebApi.Services.Users;
 using AiCalendar.WebApi.Services.Users.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -18,6 +19,8 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 builder.Services.AddSingleton<ITokenProvider, TokenProvider>();
 builder.Services.AddSingleton<IPasswordHasher, PasswordHasher>();
+
+builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
