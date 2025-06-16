@@ -18,6 +18,11 @@ namespace AiCalendar.WebApi.Services.Events
             _eventRepository = eventRepository;
         }
 
+        /// <summary>
+        /// Retrieves an event by its unique identifier.
+        /// </summary>
+        /// <param name="id">The unique identifier of the event.</param>
+        /// <returns>The event matching the specified identifier, or <c>null</c> if not found.</returns>
         public async Task<EventDto?> GetEventByIdAsync(Guid id)
         {
             Event? e = await _eventRepository
@@ -49,6 +54,12 @@ namespace AiCalendar.WebApi.Services.Events
             return eventDto;
         }
 
+        /// <summary>
+        /// Creates a new event with the specified details and creator.
+        /// </summary>
+        /// <param name="createEventDto">The details of the event to create.</param>
+        /// <param name="creatorId">The unique identifier of the user creating the event.</param>
+        /// <returns>The created event.</returns>
         public async Task<EventDto> CreateEventAsync(CreateEventDto createEventDto, Guid creatorId)
         {
             Event newEvent = new Event
@@ -78,6 +89,11 @@ namespace AiCalendar.WebApi.Services.Events
             return eventDto;
         }
 
+        /// <summary>
+        /// Determines whether an event with the specified unique identifier exists.
+        /// </summary>
+        /// <param name="id">The unique identifier of the event.</param>
+        /// <returns><c>true</c> if the event exists; otherwise, <c>false</c>.</returns>
         public async Task<bool> EventExistsByIdAsync(Guid id)
         {
             bool isEventExisting = await _eventRepository.ExistsByIdAsync(id);
@@ -85,6 +101,13 @@ namespace AiCalendar.WebApi.Services.Events
             return isEventExisting;
         }
 
+        /// <summary>
+        /// Determines whether the specified user has any events that overlap with the given time range.
+        /// </summary>
+        /// <param name="userId">The unique identifier of the user.</param>
+        /// <param name="startTime">The start time of the range to check for overlaps.</param>
+        /// <param name="endTime">The end time of the range to check for overlaps.</param>
+        /// <returns><c>true</c> if there are overlapping events for the user; otherwise, <c>false</c>.</returns>
         public async Task<bool> HasOverlappingEvents(Guid userId, DateTime startTime, DateTime endTime)
         {
             var hasOverlappingEvents = await _eventRepository.ExistsByExpressionAsync(e =>
@@ -96,6 +119,12 @@ namespace AiCalendar.WebApi.Services.Events
             return hasOverlappingEvents;
         }
 
+        /// <summary>
+        /// Determines whether the specified user is the creator of the given event.
+        /// </summary>
+        /// <param name="eventId">The unique identifier of the event.</param>
+        /// <param name="userId">The unique identifier of the user.</param>
+        /// <returns><c>true</c> if the user is the creator of the event; otherwise, <c>false</c>.</returns>
         public async Task<bool> IsUserEventCreator(Guid eventId, Guid userId)
         {
             bool isCreator = await _eventRepository.ExistsByExpressionAsync(e => e.Id == eventId && e.CreatorId == userId);
@@ -103,12 +132,24 @@ namespace AiCalendar.WebApi.Services.Events
             return isCreator;
         }
 
+        /// <summary>
+        /// Deletes the event with the specified unique identifier.
+        /// </summary>
+        /// <param name="eventId">The unique identifier of the event to delete.</param>
+        /// <returns>A task that represents the asynchronous delete operation.</returns>
         public async Task DeleteEventAsync(Guid eventId)
         {
             await _eventRepository.DeleteAsync(eventId);
             await _eventRepository.SaveChangesAsync();
         }
 
+        /// <summary>
+        /// Updates the details of an existing event with the specified identifier.
+        /// </summary>
+        /// <param name="eventId">The unique identifier of the event to update.</param>
+        /// <param name="updateEventDto">The updated event details.</param>
+        /// <param name="userId">The unique identifier of the user performing the update.</param>
+        /// <returns>The updated event.</returns>
         public async Task<EventDto> UpdateEvent(Guid eventId, UpdateEventDto updateEventDto, Guid userId)
         {
             Event? eventToUpdate =
@@ -144,6 +185,14 @@ namespace AiCalendar.WebApi.Services.Events
             return updatedEventDto;
         }
 
+        /// <summary>
+        /// Determines whether the specified user has any events that overlap with the given time range, excluding the event with the specified identifier.
+        /// </summary>
+        /// <param name="userId">The unique identifier of the user.</param>
+        /// <param name="startTime">The start time of the range to check for overlaps.</param>
+        /// <param name="endTime">The end time of the range to check for overlaps.</param>
+        /// <param name="eventId">The unique identifier of the event to exclude from the overlap check.</param>
+        /// <returns><c>true</c> if there are overlapping events for the user (excluding the specified event); otherwise, <c>false</c>.</returns>
         public async Task<bool> HasOverlappingEventsExcludingTheCurrentEvent(Guid userId, DateTime startTime,
             DateTime endTime, Guid eventId)
         {
@@ -159,6 +208,12 @@ namespace AiCalendar.WebApi.Services.Events
             return hasOverlappingEvents;
         }
 
+        /// <summary>
+        /// Cancels the event with the specified unique identifier on behalf of the specified user.
+        /// </summary>
+        /// <param name="eventId">The unique identifier of the event to cancel.</param>
+        /// <param name="userId">The unique identifier of the user performing the cancellation.</param>
+        /// <returns>The updated event with its cancellation status set.</returns>
         public async Task<EventDto> CancelEventAsync(Guid eventId, Guid userId)
         {
             Event? eventToCancel = await _eventRepository
@@ -189,5 +244,60 @@ namespace AiCalendar.WebApi.Services.Events
 
             return cancelledEventDto;
         }
+
+        /// <summary>
+        /// Retrieves events based on specified filter criteria
+        /// </summary>
+        /// <param name="filter">Optional filter criteria for events</param>
+        /// <returns>A collection of filtered events</returns>
+        public async Task<IEnumerable<EventDto>> GetEventsAsync(EventFilterCriteriaDto? filter = null)
+        {
+            IQueryable<Event> query = _eventRepository
+                .WithIncludes(
+                    e => e.Creator,
+                    e => e.Participants,
+                    e => e.Participants.Select(p => p.User))
+                .AsQueryable();
+
+            if (filter != null)
+            {
+                if (filter.StartDate.HasValue)
+                {
+                    query = query.Where(e => e.StartTime >= filter.StartDate.Value);
+                }
+
+                if (filter.EndDate.HasValue)
+                {
+                    query = query.Where(e => e.EndTime <= filter.EndDate.Value);
+                }
+
+                if (filter.IsCancelled.HasValue)
+                {
+                    query = query.Where(e => e.IsCancelled == filter.IsCancelled.Value);
+                }
+            }
+
+            IEnumerable<EventDto> events = await query
+                .Select(e => new EventDto
+                {
+                    Id = e.Id.ToString(),
+                    Title = e.Title,
+                    Description = e.Description,
+                    StartDate = e.StartTime,
+                    EndDate = e.EndTime,
+                    CreatorId = e.CreatorId.ToString(),
+                    IsCancelled = e.IsCancelled,
+                    Participants = e.Participants.Select(p => new UserDto
+                    {
+                        Id = p.UserId.ToString(),
+                        UserName = p.User.UserName,
+                        Email = p.User.Email
+                    }).ToList()
+                })
+                .ToListAsync();
+
+            return events;
+        }
+
     }
 }
