@@ -287,5 +287,93 @@ namespace AiCalendar.WebApi.Services.Users
 
             return events;
         }
+
+        /// <summary>
+        /// Retrieves users based on specified filter criteria
+        /// </summary>
+        /// <param name="filter">Optional filter criteria for users</param>
+        /// <returns>A collection of filtered users</returns>
+        public async Task<IEnumerable<UserDtoExtended>> GetUsersAsync(UserFilterCriteriaDto? filter = null)
+        {
+            IQueryable<User> query = _userRepository
+                .WithIncludes(
+                    u => u.CreatedEvents,
+                    u => u.Participations,
+                    u => u.Participations.Select(p => p.Event))
+                .AsQueryable();
+
+            if (filter != null)
+            {
+                // Apply username filter if provided
+                if (!string.IsNullOrWhiteSpace(filter.Username))
+                {
+                    query = query.Where(u => u.UserName.Contains(filter.Username));
+                }
+
+                // Apply email filter if provided
+                if (!string.IsNullOrWhiteSpace(filter.Email))
+                {
+                    query = query.Where(u => u.Email.Contains(filter.Email));
+                }
+
+                // Apply active events filter if provided
+                if (filter.HasActiveEvents.HasValue)
+                {
+                    if (filter.HasActiveEvents.Value)
+                    {
+                        // User has active events (not cancelled)
+                        query = query.Where(u => u.CreatedEvents.Any(e => !e.IsCancelled));
+                    }
+                    else
+                    {
+                        // User has no active events (all events are cancelled or no events)
+                        query = query.Where(u => !u.CreatedEvents.Any(e => !e.IsCancelled));
+                    }
+                }
+            }
+
+            IEnumerable<UserDtoExtended> users = await query
+                .Select(u => new UserDtoExtended()
+                {
+                    Id = u.Id.ToString(),
+                    UserName = u.UserName,
+                    Email = u.Email,
+                    CreatedEvents = u.CreatedEvents.Select(e => new EventDto
+                    {
+                        Id = e.Id.ToString(),
+                        Title = e.Title,
+                        Description = e.Description,
+                        StartDate = e.StartTime,
+                        EndDate = e.EndTime,
+                        CreatorId = e.CreatorId.ToString(),
+                        IsCancelled = e.IsCancelled,
+                        Participants = e.Participants.Select(p => new UserDto
+                        {
+                            Id = p.UserId.ToString(),
+                            UserName = p.User.UserName,
+                            Email = p.User.Email
+                        }).ToList()
+                    }).ToList(),
+                    ParticipatingEvents = u.Participations.Select(p => new EventDto
+                    {
+                        Id = p.Event.Id.ToString(),
+                        Title = p.Event.Title,
+                        Description = p.Event.Description,
+                        StartDate = p.Event.StartTime,
+                        EndDate = p.Event.EndTime,
+                        CreatorId = p.Event.CreatorId.ToString(),
+                        IsCancelled = p.Event.IsCancelled,
+                        Participants = p.Event.Participants.Select(participant => new UserDto
+                        {
+                            Id = participant.UserId.ToString(),
+                            UserName = participant.User.UserName,
+                            Email = participant.User.Email
+                        }).ToList()
+                    }).ToList()
+                })
+                .ToListAsync();
+
+            return users;
+        }
     }
 }

@@ -308,7 +308,7 @@ namespace AiCalendar.WebApi.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> GetUserEvents([FromQuery] EventFilterCriteriaDto? filter)
+        public async Task<IActionResult> GetUserEvents([FromBody] EventFilterCriteriaDto? filter)
         {
             string? id = User.FindFirst("id")?.Value;
             if (!Guid.TryParse(id, out Guid userId))
@@ -332,6 +332,22 @@ namespace AiCalendar.WebApi.Controllers
             return Ok(events);
         }
 
+        /// <summary>
+        /// Gets users with optional filtering
+        /// </summary>
+        /// <param name="filter">Optional filter criteria for users</param>
+        /// <returns>Returns collection of filtered users</returns>
+        /// <response code="200">Returns the filtered list of users</response>
+        [AllowAnonymous]
+        [HttpGet("/users")]
+        [ProducesResponseType(typeof(IEnumerable<UserDtoExtended>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        public async Task<IActionResult> GetUsers([FromBody] UserFilterCriteriaDto? filter)
+        {
+            IEnumerable<UserDtoExtended> users = await _userService.GetUsersAsync(filter);
 
+            return Ok(users);
+        }
     }
 }

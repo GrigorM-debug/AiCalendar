@@ -89,5 +89,13 @@ namespace AiCalendar.WebApi.Services.Users.Interfaces
         /// <param name="filter">Optional filter criteria for the events</param>
         /// <returns>A collection of <see cref="EventDto"/> matching the specified criteria</returns>
         public Task<IEnumerable<EventDto>> GetUserEventsAsync(Guid userId, EventFilterCriteriaDto? filter = null);
+
+        /// <summary>
+        /// Retrieves users based on specified filter criteria
+        /// </summary>
+        /// <param name="filter">Optional filter criteria for users</param>
+        /// <returns>A collection of filtered users</returns>
+        Task<IEnumerable<UserDtoExtended>> GetUsersAsync(UserFilterCriteriaDto? filter = null);
+
     }
 }
