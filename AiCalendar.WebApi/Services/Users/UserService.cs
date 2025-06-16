@@ -7,17 +7,22 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AiCalendar.WebApi.Services.Users
 {
+    /// <summary>
+    /// Service for managing user-related operations
+    /// </summary>
     public class UserService : IUserService
     {
         private readonly IRepository<User> _userRepository;
         private readonly IPasswordHasher _passwordHasher;
         private readonly IRepository<Event> _eventRepository;
+        private readonly IRepository<Participant> _participantRepository;
 
-        public UserService(IRepository<User> userRepository, IPasswordHasher passwordHasher, IRepository<Event> eventRepository)
+        public UserService(IRepository<User> userRepository, IPasswordHasher passwordHasher, IRepository<Event> eventRepository, IRepository<Participant> participantRepository)
         {
             _userRepository = userRepository;
             _passwordHasher = passwordHasher;
             _eventRepository = eventRepository;
+            _participantRepository = participantRepository;
         }
 
         /// <summary>
@@ -122,12 +127,27 @@ namespace AiCalendar.WebApi.Services.Users
         }
 
         /// <summary>
-        /// Delete user by userId, if they exist.
+        /// Deletes a user and all their associated participant records
         /// </summary>
-        /// <param name="userId">The user's id</param>
+        /// <param name="userId">The unique identifier of the user to delete</param>
+        /// <returns>True if the user was successfully deleted</returns>
         public async Task DeleteUserAsync(Guid userId)
         {
+            User? user = await _userRepository.GetByIdAsync(userId);
+
+            // Delete all participations of the user
+            IEnumerable<Participant> participations = await _userRepository
+                .WithIncludes(u => u.Participations)
+                .Where(u => u.Id == userId)
+                .SelectMany(u => u.Participations)
+                .ToListAsync();
+
+            _participantRepository.RemoveRange(participations);
+            await _participantRepository.SaveChangesAsync();
+
+            // Delete the user
             await _userRepository.DeleteAsync(userId);
+            await _userRepository.SaveChangesAsync();
         }
 
         /// <summary>
@@ -203,6 +223,110 @@ namespace AiCalendar.WebApi.Services.Users
             });
 
             return userCreatedEventsDtos;
+        }
+
+        /// <summary>
+        /// Retrieves all events where the specified user is a participant
+        /// </summary>
+        /// <param name="userId">The unique identifier of the user</param>
+        /// <returns>A collection of events where the user is a participant</returns>
+        public async Task<IEnumerable<EventDto>> GetUserParticipatingEventsAsync(Guid userId)
+        {
+            IEnumerable<EventDto> userParticipatingEvents = await _userRepository
+                .WithIncludes(u => u.Participations, u => u.Participations.Select(p => p.Event))
+                .Where(u => u.Id == userId)
+                .SelectMany(u => u.Participations.Select(p => new EventDto()
+                {
+                    Id = p.Event.Id.ToString(),
+                    Title = p.Event.Title,
+                    Description = p.Event.Description,
+                    StartDate = p.Event.StartTime,
+                    EndDate = p.Event.EndTime,
+                    CreatorId = p.Event.CreatorId.ToString(),
+                    IsCancelled = p.Event.IsCancelled,
+                    Participants = p.Event.Participants.Select(participant => new UserDto()
+                    {
+                        Id = participant.UserId.ToString(),
+                        Email = participant.User.Email,
+                        UserName = participant.User.UserName
+                    }).ToList()
+                }))
+                .ToListAsync();
+
+            return userParticipatingEvents;
+        }
+
+        /// <summary>
+        /// Check if a user has any active events.
+        /// </summary>
+        /// <param name="userId">The unique identifier of the user</param>
+        /// <returns>Returns true if user has any active events or false if user hasn't</returns>
+        public async Task<bool> CheckIfUserHasActiveEvents(Guid userId)
+        {
+            bool isUserHavingActiveEvents = await _eventRepository
+                .ExistsByExpressionAsync(e => e.CreatorId == userId && e.IsCancelled == false);
+
+            return isUserHavingActiveEvents;
+        }
+
+        /// <summary>
+        /// Retrieves all events active events created by the specified user.
+        /// </summary>
+        /// <param name="userId">The unique identifier of the user</param>
+        /// <returns>A collection <see cref="EventDto"/> for all active events created by the specified user</returns>
+        public async Task<IEnumerable<EventDto>> GetAllUserActiveEventsAsync(Guid userId)
+        {
+            IEnumerable<EventDto> userActiveEvents = await _eventRepository
+                .WithIncludes(e => e.Participants, e => e.Participants.Select(p => p.User))
+                .Where(e => e.CreatorId == userId && e.IsCancelled == false)
+                .Select(e => new EventDto
+                {
+                    Id = e.Id.ToString(),
+                    Title = e.Title,
+                    Description = e.Description,
+                    StartDate = e.StartTime,
+                    EndDate = e.EndTime,
+                    CreatorId = e.CreatorId.ToString(),
+                    IsCancelled = e.IsCancelled,
+                    Participants = e.Participants.Select(p => new UserDto()
+                    {
+                        Id = p.UserId.ToString(),
+                        Email = p.User.Email,
+                        UserName = p.User.UserName
+                    }).ToList()
+                }).ToListAsync();
+
+            return userActiveEvents;
+        }
+
+        /// <summary>
+        /// Retrieves all events cancelled events created by the specified user.
+        /// </summary>
+        /// <param name="userId">The unique identifier of the user</param>
+        /// <returns>A collection <see cref="EventDto"/> for all cancelled events created by the specified user</returns>
+        public async Task<IEnumerable<EventDto>> GetAllUserCancelledEventsAsync(Guid userId)
+        {
+            IEnumerable<EventDto> userCancelledEvents = await _eventRepository
+                .WithIncludes(e => e.Participants, e => e.Participants.Select(p => p.User))
+                .Where(e => e.CreatorId == userId && e.IsCancelled == true)
+                .Select(e => new EventDto
+                {
+                    Id = e.Id.ToString(),
+                    Title = e.Title,
+                    Description = e.Description,
+                    StartDate = e.StartTime,
+                    EndDate = e.EndTime,
+                    CreatorId = e.CreatorId.ToString(),
+                    IsCancelled = e.IsCancelled,
+                    Participants = e.Participants.Select(p => new UserDto()
+                    {
+                        Id = p.UserId.ToString(),
+                        Email = p.User.Email,
+                        UserName = p.User.UserName
+                    }).ToList()
+                }).ToListAsync();
+
+            return userCancelledEvents;
         }
     }
 }

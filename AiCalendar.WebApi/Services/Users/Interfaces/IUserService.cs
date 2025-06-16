@@ -4,6 +4,9 @@ using AiCalendar.WebApi.Models;
 
 namespace AiCalendar.WebApi.Services.Users.Interfaces
 {
+    /// <summary>
+    /// Service for managing user-related operations
+    /// </summary>
     public interface IUserService
     {
         /// <summary>
@@ -49,9 +52,10 @@ namespace AiCalendar.WebApi.Services.Users.Interfaces
         Task<User?> GetUserByUserNameAndEmail(string username, string email);
 
         /// <summary>
-        /// Delete user by userId, if they exist.
+        /// Deletes a user and all their associated participant records
         /// </summary>
-        /// <param name="userId">The user's id</param>
+        /// <param name="userId">The unique identifier of the user to delete</param>
+        /// <returns>True if the user was successfully deleted</returns>
         Task DeleteUserAsync(Guid userId);
 
         /// <summary>
@@ -70,5 +74,33 @@ namespace AiCalendar.WebApi.Services.Users.Interfaces
         /// <param name="userId">The unique identifier of the user whose created events are to be retrieved.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains an enumerable collection of <see cref="EventDto"/> objects created by the user.</returns>
         Task<IEnumerable<EventDto>> GetUserCreatedEventsAsync(Guid userId);
+
+        /// <summary>
+        /// Retrieves all events where the specified user is a participant
+        /// </summary>
+        /// <param name="userId">The unique identifier of the user</param>
+        /// <returns>A collection of events where the user is a participant</returns>
+        Task<IEnumerable<EventDto>> GetUserParticipatingEventsAsync(Guid userId);
+
+        /// <summary>
+        /// Check if a user has any active events.
+        /// </summary>
+        /// <param name="userId">The unique identifier of the user</param>
+        /// <returns>Returns true if user has any active events or false if user hasn't</returns>
+        Task<bool> CheckIfUserHasActiveEvents(Guid userId);
+
+        /// <summary>
+        /// Retrieves all events active events created by the specified user.
+        /// </summary>
+        /// <param name="userId">The unique identifier of the user</param>
+        /// <returns>A collection <see cref="EventDto"/> for all active events created by the specified user</returns>
+        Task<IEnumerable<EventDto>> GetAllUserActiveEventsAsync(Guid userId);
+
+        /// <summary>
+        /// Retrieves all events cancelled events created by the specified user.
+        /// </summary>
+        /// <param name="userId">The unique identifier of the user</param>
+        /// <returns>A collection <see cref="EventDto"/> for all cancelled events created by the specified user</returns>
+        Task<IEnumerable<EventDto>> GetAllUserCancelledEventsAsync(Guid userId);
     }
 }
