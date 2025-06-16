@@ -69,13 +69,6 @@ namespace AiCalendar.WebApi.Services.Users.Interfaces
         Task<UserDto> UpdateUserAsync(Guid userId, UpdateUserDto updateUserDto);
 
         /// <summary>
-        /// Asynchronously retrieves a collection of events created by the specified user.
-        /// </summary>
-        /// <param name="userId">The unique identifier of the user whose created events are to be retrieved.</param>
-        /// <returns>A task that represents the asynchronous operation. The task result contains an enumerable collection of <see cref="EventDto"/> objects created by the user.</returns>
-        Task<IEnumerable<EventDto>> GetUserCreatedEventsAsync(Guid userId);
-
-        /// <summary>
         /// Retrieves all events where the specified user is a participant
         /// </summary>
         /// <param name="userId">The unique identifier of the user</param>
@@ -90,17 +83,11 @@ namespace AiCalendar.WebApi.Services.Users.Interfaces
         Task<bool> CheckIfUserHasActiveEvents(Guid userId);
 
         /// <summary>
-        /// Retrieves all events active events created by the specified user.
+        /// Retrieves events created by the specified user with optional filtering.
         /// </summary>
         /// <param name="userId">The unique identifier of the user</param>
-        /// <returns>A collection <see cref="EventDto"/> for all active events created by the specified user</returns>
-        Task<IEnumerable<EventDto>> GetAllUserActiveEventsAsync(Guid userId);
-
-        /// <summary>
-        /// Retrieves all events cancelled events created by the specified user.
-        /// </summary>
-        /// <param name="userId">The unique identifier of the user</param>
-        /// <returns>A collection <see cref="EventDto"/> for all cancelled events created by the specified user</returns>
-        Task<IEnumerable<EventDto>> GetAllUserCancelledEventsAsync(Guid userId);
+        /// <param name="filter">Optional filter criteria for the events</param>
+        /// <returns>A collection of <see cref="EventDto"/> matching the specified criteria</returns>
+        public Task<IEnumerable<EventDto>> GetUserEventsAsync(Guid userId, EventFilterCriteriaDto? filter = null);
     }
 }

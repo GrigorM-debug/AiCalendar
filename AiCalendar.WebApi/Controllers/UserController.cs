@@ -206,49 +206,6 @@ namespace AiCalendar.WebApi.Controllers
         }
 
         /// <summary>
-        /// Gets all user created events.
-        /// </summary>
-        /// <param name="id">The ID of the user (GUID format).</param>
-        /// <returns>Returns collection of user created events</returns>
-        /// <remarks>
-        /// Sample request:
-        ///     Put /api/v1/user/user-events/A1B2C3D4-E5F6-7890-1234-567890ABCDEF
-        /// </remarks>
-        /// <response code="200">User updated successfully.</response>
-        /// <response code="400">Invalid user ID format or bad input (e.g., invalid password).</response>
-        /// <response code="403">User is not authorized to update this account.</response>
-        [HttpGet("/user-events")]
-        [ProducesResponseType(typeof(IEnumerable<EventDto>), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        public async Task<IActionResult> GetUserCreatedEvents()
-        {
-            string? id = User.FindFirst("id")?.Value;
-
-            if (!Guid.TryParse(id, out Guid userId))
-            {
-                return BadRequest("Invalid user ID format.");
-            }
-
-            if (User.Identity == null || !User.Identity.IsAuthenticated || User.FindFirst("id")?.Value != userId.ToString())
-            {
-                return Forbid("You are not authorized to access this resource.");
-            }
-
-            bool userExists = await _userService.UserExistsByIdAsync(userId);
-
-            if (!userExists)
-            {
-                return NotFound("User not found.");
-            }
-
-            IEnumerable<EventDto> userEvents = await _userService.GetUserCreatedEventsAsync(userId);
-
-            return Ok(userEvents);
-        }
-
-        /// <summary>
         /// Retrieves all events where the authenticated user is a participant
         /// </summary>
         /// <response code="200">Returns the list of events where the user is a participant</response>
@@ -336,25 +293,22 @@ namespace AiCalendar.WebApi.Controllers
         }
 
         /// <summary>
-        /// Gets all active events for the authenticated user.
+        /// Gets user events with optional filtering
         /// </summary>
-        /// <remarks>
-        /// This endpoint retrieves a list of all active events associated with the authenticated user.
-        /// </remarks>
-        /// <response code="200">Returns a collection of active events for the user.</response>
-        /// <response code="400">If the user ID format is invalid.</response>
-        /// <response code="401">If the user is not authenticated.</response>
-        /// <response code="403">If the user is not authorized to access this resource (e.g., the authenticated user ID does not match the requested ID).</response>
-        /// <response code="404">If the user is not found.</response>
-        /// <returns>A collection of <see cref="EventDto"/> representing the active events, or an appropriate error response.</returns>
-        [HttpGet("/active-events")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
+        /// <param name="filter">Optional filter criteria for the events</param>
+        /// <returns>Returns collection of filtered user events</returns>
+        /// <response code="200">Returns the filtered list of events</response>
+        /// <response code="400">Invalid user ID format</response>
+        /// <response code="401">User is not authenticated</response>
+        /// <response code="403">User is not authorized</response>
+        /// <response code="404">User not found</response>
+        [HttpGet("events")]
+        [ProducesResponseType(typeof(IEnumerable<EventDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(typeof(IEnumerable<EventDto>), StatusCodes.Status200OK)]
-        public async Task<IActionResult> GetAllUserActiveEvents()
+        public async Task<IActionResult> GetUserEvents([FromQuery] EventFilterCriteriaDto? filter)
         {
             string? id = User.FindFirst("id")?.Value;
             if (!Guid.TryParse(id, out Guid userId))
@@ -373,52 +327,11 @@ namespace AiCalendar.WebApi.Controllers
                 return NotFound("User not found.");
             }
 
-            IEnumerable<EventDto> activeEvents = await _userService.GetAllUserActiveEventsAsync(userId);
+            IEnumerable<EventDto> events = await _userService.GetUserEventsAsync(userId, filter);
 
-            return Ok(activeEvents);
+            return Ok(events);
         }
 
-        /// <summary>
-        /// Gets all cancelled events for the authenticated user.
-        /// </summary>
-        /// <remarks>
-        /// This endpoint retrieves a list of all cancelled events associated with the authenticated user.
-        /// </remarks>
-        /// <response code="200">Returns a collection of active events for the user.</response>
-        /// <response code="400">If the user ID format is invalid.</response>
-        /// <response code="401">If the user is not authenticated.</response>
-        /// <response code="403">If the user is not authorized to access this resource (e.g., the authenticated user ID does not match the requested ID).</response>
-        /// <response code="404">If the user is not found.</response>
-        /// <returns>A collection of <see cref="EventDto"/> representing the cancelled events, or an appropriate error response.</returns>
-        [HttpGet("/cancelled-events")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(typeof(IEnumerable<EventDto>), StatusCodes.Status200OK)]
-        public async Task<IActionResult> GetAllUserCancelledEvents()
-        {
-            string? id = User.FindFirst("id")?.Value;
-            if (!Guid.TryParse(id, out Guid userId))
-            {
-                return BadRequest("Invalid user ID format.");
-            }
 
-            if (User.Identity == null || !User.Identity.IsAuthenticated || User.FindFirst("id")?.Value != userId.ToString())
-            {
-                return Forbid("You are not authorized to access this resource.");
-            }
-
-            bool userExists = await _userService.UserExistsByIdAsync(userId);
-            if (!userExists)
-            {
-                return NotFound("User not found.");
-            }
-
-            IEnumerable<EventDto> cancelledEvents = await _userService.GetAllUserCancelledEventsAsync(userId);
-
-            return Ok(cancelledEvents);
-        }
     }
 }

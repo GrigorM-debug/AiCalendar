@@ -194,38 +194,6 @@ namespace AiCalendar.WebApi.Services.Users
         }
 
         /// <summary>
-        /// Asynchronously retrieves a collection of events created by the specified user.
-        /// </summary>
-        /// <param name="userId">The unique identifier of the user whose created events are to be retrieved.</param>
-        /// <returns>A task that represents the asynchronous operation. The task result contains an enumerable collection of <see cref="EventDto"/> objects created by the user.</returns>
-        public async Task<IEnumerable<EventDto>> GetUserCreatedEventsAsync(Guid userId)
-        {
-            IEnumerable<Event> userCreatedEvents = await _eventRepository
-                .WithIncludes(e => e.Participants, e => e.Participants.Select(p => p.User))
-                .Where(e => e.CreatorId == userId)
-                .ToListAsync();
-
-            IEnumerable<EventDto> userCreatedEventsDtos = userCreatedEvents.Select(e => new EventDto
-            {
-                Id = e.Id.ToString(),
-                Title = e.Title,
-                Description = e.Description,
-                StartDate = e.StartTime,
-                EndDate = e.EndTime,
-                CreatorId = e.CreatorId.ToString(),
-                IsCancelled = e.IsCancelled,
-                Participants = e.Participants.Select(p => new UserDto()
-                {
-                    Id = p.UserId.ToString(),   
-                    Email = p.User.Email,
-                    UserName = p.User.UserName
-                }).ToList()
-            });
-
-            return userCreatedEventsDtos;
-        }
-
-        /// <summary>
         /// Retrieves all events where the specified user is a participant
         /// </summary>
         /// <param name="userId">The unique identifier of the user</param>
@@ -270,15 +238,36 @@ namespace AiCalendar.WebApi.Services.Users
         }
 
         /// <summary>
-        /// Retrieves all events active events created by the specified user.
+        /// Retrieves events created by the specified user with optional filtering.
         /// </summary>
         /// <param name="userId">The unique identifier of the user</param>
-        /// <returns>A collection <see cref="EventDto"/> for all active events created by the specified user</returns>
-        public async Task<IEnumerable<EventDto>> GetAllUserActiveEventsAsync(Guid userId)
+        /// <param name="filter">Optional filter criteria for the events</param>
+        /// <returns>A collection of <see cref="EventDto"/> matching the specified criteria</returns>
+        public async Task<IEnumerable<EventDto>> GetUserEventsAsync(Guid userId, EventFilterCriteriaDto? filter = null)
         {
-            IEnumerable<EventDto> userActiveEvents = await _eventRepository
+            IQueryable<Event> query = _eventRepository
                 .WithIncludes(e => e.Participants, e => e.Participants.Select(p => p.User))
-                .Where(e => e.CreatorId == userId && e.IsCancelled == false)
+                .Where(e => e.CreatorId == userId);
+
+            if (filter != null)
+            {
+                if (filter.IsCancelled.HasValue)
+                {
+                    query = query.Where(e => e.IsCancelled == filter.IsCancelled.Value);
+                }
+
+                if (filter.StartDate.HasValue)
+                {
+                    query = query.Where(e => e.StartTime >= filter.StartDate.Value);
+                }
+
+                if (filter.EndDate.HasValue)
+                {
+                    query = query.Where(e => e.EndTime <= filter.EndDate.Value);
+                }
+            }
+
+            IEnumerable<EventDto> events = await query
                 .Select(e => new EventDto
                 {
                     Id = e.Id.ToString(),
@@ -296,37 +285,7 @@ namespace AiCalendar.WebApi.Services.Users
                     }).ToList()
                 }).ToListAsync();
 
-            return userActiveEvents;
-        }
-
-        /// <summary>
-        /// Retrieves all events cancelled events created by the specified user.
-        /// </summary>
-        /// <param name="userId">The unique identifier of the user</param>
-        /// <returns>A collection <see cref="EventDto"/> for all cancelled events created by the specified user</returns>
-        public async Task<IEnumerable<EventDto>> GetAllUserCancelledEventsAsync(Guid userId)
-        {
-            IEnumerable<EventDto> userCancelledEvents = await _eventRepository
-                .WithIncludes(e => e.Participants, e => e.Participants.Select(p => p.User))
-                .Where(e => e.CreatorId == userId && e.IsCancelled == true)
-                .Select(e => new EventDto
-                {
-                    Id = e.Id.ToString(),
-                    Title = e.Title,
-                    Description = e.Description,
-                    StartDate = e.StartTime,
-                    EndDate = e.EndTime,
-                    CreatorId = e.CreatorId.ToString(),
-                    IsCancelled = e.IsCancelled,
-                    Participants = e.Participants.Select(p => new UserDto()
-                    {
-                        Id = p.UserId.ToString(),
-                        Email = p.User.Email,
-                        UserName = p.User.UserName
-                    }).ToList()
-                }).ToListAsync();
-
-            return userCancelledEvents;
+            return events;
         }
     }
 }
