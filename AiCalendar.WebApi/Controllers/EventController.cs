@@ -7,9 +7,13 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace AiCalendar.WebApi.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
+    /// <summary>
+    /// Controller for handling events logic
+    /// </summary>
     [Authorize]
+    [ApiExplorerSettings(GroupName = "v1")]
+    [Route("api/v1/[controller]")]
+    [ApiController]
     public class EventController : ControllerBase
     {
         private readonly ILogger<EventController> _logger;
