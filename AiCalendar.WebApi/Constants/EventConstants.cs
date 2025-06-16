@@ -13,6 +13,8 @@
         public const int DescriptionMaxLength = 2000;
         public const string DescriptionLengthErrorMessage = "Description must between {1} and {2} characters long.";
 
+        public const string DateTimeFormatErrorMessage = "Invalid DateTimeFormat";
 
+        public const string StartTimeGreaterThanOrTheSameAsEndTimeErrorMessage = "Start time must be less than end time and not equal to end time.";
     }
 }
