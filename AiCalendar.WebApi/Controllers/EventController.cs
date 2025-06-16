@@ -151,5 +151,40 @@ namespace AiCalendar.WebApi.Controllers
 
             return Ok(updatedEvent);
         }
+
+        [HttpPatch("{id}/cancel")]
+        public async Task<IActionResult> CancelEventAsync(string id)
+        {
+            if (User.Identity == null || !User.Identity.IsAuthenticated)
+            {
+                return Unauthorized("You must be logged in to cancel an event.");
+            }
+
+            if (!Guid.TryParse(User.FindFirst("UserId")?.Value, out Guid userId))
+            {
+                return BadRequest("Invalid user ID.");
+            }
+
+            if (!Guid.TryParse(id, out Guid eventId))
+            {
+                return BadRequest("Invalid event ID format.");
+            }
+
+            bool isEventExists = await _eventService.EventExistsByIdAsync(eventId);
+            if (!isEventExists)
+            {
+                return NotFound("Event not found.");
+            }
+
+            bool isUserEventCreator = await _eventService.IsUserEventCreator(eventId, userId);
+            if (!isUserEventCreator)
+            {
+                return Forbid("You are not the creator of this event.");
+            }
+
+            EventDto cancelledEvent = await _eventService.CancelEventAsync(eventId, userId);
+
+            return Ok(cancelledEvent);
+        }
     }
 }

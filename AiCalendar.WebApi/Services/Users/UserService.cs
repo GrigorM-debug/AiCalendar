@@ -142,39 +142,24 @@ namespace AiCalendar.WebApi.Services.Users
         {
             User? user = await _userRepository.GetByIdAsync(userId);
 
-            if (user == null)
+            user.Email = updateUserDto.Email;
+            user.UserName = updateUserDto.UserName;
+
+            //Check if old password is correct
+            string oldPasswordHash = _passwordHasher.HashPassword(updateUserDto.OldPassword);
+            if (user.PasswordHashed != oldPasswordHash)
             {
-                return null;
+                throw new Exception("Old password is incorrect.");
             }
 
-            if (!string.IsNullOrEmpty(updateUserDto.Email))
+            string newPasswordHash = _passwordHasher.HashPassword(updateUserDto.NewPassword);
+            //Check if new password is same as the old password
+            if (user.PasswordHashed == newPasswordHash)
             {
-                user.Email = updateUserDto.Email;
+                throw new Exception("New password cannot be the same as the old password.");
             }
 
-            if(!string.IsNullOrEmpty(updateUserDto.UserName))
-            {
-                user.UserName = updateUserDto.UserName;
-            }
-
-            if(!string.IsNullOrEmpty(updateUserDto.OldPassword) && !string.IsNullOrEmpty(updateUserDto.NewPassword))
-            {
-                //Check if old password is correct
-                string oldPasswordHash = _passwordHasher.HashPassword(updateUserDto.OldPassword);
-                if (user.PasswordHashed != oldPasswordHash)
-                {
-                    throw new Exception("Old password is incorrect.");
-                }
-
-                string newPasswordHash = _passwordHasher.HashPassword(updateUserDto.NewPassword);
-                //Check if new password is same as the old password
-                if (user.PasswordHashed == newPasswordHash)
-                {
-                    throw new Exception("New password cannot be the same as the old password.");
-                }
-
-                user.PasswordHashed = newPasswordHash;
-            }
+            user.PasswordHashed = newPasswordHash;
 
             await _userRepository.SaveChangesAsync();
 

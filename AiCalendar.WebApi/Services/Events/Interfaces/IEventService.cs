@@ -1,4 +1,5 @@
 ﻿using AiCalendar.WebApi.DTOs.Event;
+using AiCalendar.WebApi.Models;
 
 namespace AiCalendar.WebApi.Services.Events.Interfaces
 {
@@ -18,5 +19,7 @@ namespace AiCalendar.WebApi.Services.Events.Interfaces
         Task<EventDto> UpdateEvent(Guid eventId, UpdateEventDto updateEventDto, Guid userId);
 
         Task<bool> HasOverlappingEventsExcludingTheCurrentEvent(Guid userId, DateTime startTime, DateTime endTime, Guid eventId);
+
+        Task<EventDto> CancelEventAsync(Guid eventId, Guid userId);
     }
 }

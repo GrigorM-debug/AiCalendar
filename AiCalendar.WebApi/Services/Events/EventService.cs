@@ -158,5 +158,36 @@ namespace AiCalendar.WebApi.Services.Events
 
             return hasOverlappingEvents;
         }
+
+        public async Task<EventDto> CancelEventAsync(Guid eventId, Guid userId)
+        {
+            Event? eventToCancel = await _eventRepository
+                .WithIncludes(e => e.Participants, e => e.Participants.Select(p => p.User))
+                .FirstOrDefaultAsync(e => e.Id == eventId && e.CreatorId == userId);
+
+            eventToCancel.IsCancelled = true;
+
+            _eventRepository.UpdateAsync(eventToCancel);
+            await _eventRepository.SaveChangesAsync();
+
+            EventDto cancelledEventDto = new EventDto
+            {
+                Id = eventToCancel.Id.ToString(),
+                Title = eventToCancel.Title,
+                Description = eventToCancel.Description,
+                StartDate = eventToCancel.StartTime,
+                EndDate = eventToCancel.EndTime,
+                CreatorId = eventToCancel.CreatorId.ToString(),
+                IsCancelled = eventToCancel.IsCancelled,
+                Participants = eventToCancel.Participants.Select(p => new UserDto
+                {
+                    Id = p.UserId.ToString(),
+                    UserName = p.User.UserName,
+                    Email = p.User.Email
+                }).ToList()
+            };
+
+            return cancelledEventDto;
+        }
     }
 }
