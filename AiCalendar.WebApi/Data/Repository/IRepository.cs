@@ -17,5 +17,7 @@ namespace AiCalendar.WebApi.Data.Repository
         Task SaveChangesAsync();
 
         IQueryable<TEntity> WithIncludes(params Expression<Func<TEntity, object>>[] includes);
+
+        void RemoveRange(IEnumerable<TEntity> entities);
     }
 }

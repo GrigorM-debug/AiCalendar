@@ -80,5 +80,10 @@ namespace AiCalendar.WebApi.Data.Repository
             }
             return query;
         }
+
+        public void RemoveRange(IEnumerable<TEntity> entities)
+        {
+            _context.Set<TEntity>().RemoveRange(entities);
+        }
     }
 }
