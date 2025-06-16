@@ -1,6 +1,8 @@
 ﻿using System.Reflection;
 using AiCalendar.WebApi.Data;
 using AiCalendar.WebApi.Data.Repository;
+using AiCalendar.WebApi.Services.Events;
+using AiCalendar.WebApi.Services.Events.Interfaces;
 using AiCalendar.WebApi.Services.Users;
 using AiCalendar.WebApi.Services.Users.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -17,6 +19,7 @@ namespace AiCalendar.WebApi.Extensions
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IPasswordHasher, PasswordHasher>();
             services.AddScoped<ITokenProvider, TokenProvider>();
+            services.AddScoped<IEventService, EventService>();
             // Add other necessary services
             return services;
         }
