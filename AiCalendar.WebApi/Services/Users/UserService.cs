@@ -3,6 +3,7 @@ using AiCalendar.WebApi.DTOs.Event;
 using AiCalendar.WebApi.DTOs.Users;
 using AiCalendar.WebApi.Models;
 using AiCalendar.WebApi.Services.Users.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace AiCalendar.WebApi.Services.Users
 {
@@ -194,8 +195,10 @@ namespace AiCalendar.WebApi.Services.Users
         /// <returns>A task that represents the asynchronous operation. The task result contains an enumerable collection of <see cref="EventDto"/> objects created by the user.</returns>
         public async Task<IEnumerable<EventDto>> GetUserCreatedEventsAsync(Guid userId)
         {
-            //Check this
-            IEnumerable<Event> userCreatedEvents = await _eventRepository.GetAllByExpressionAsync(e => e.CreatorId == userId);
+            IEnumerable<Event> userCreatedEvents = await _eventRepository
+                .WithIncludes(e => e.Participants, e => e.Participants.Select(p => p.User))
+                .Where(e => e.CreatorId == userId)
+                .ToListAsync();
 
             IEnumerable<EventDto> userCreatedEventsDtos = userCreatedEvents.Select(e => new EventDto
             {
@@ -208,7 +211,7 @@ namespace AiCalendar.WebApi.Services.Users
                 IsCancelled = e.IsCancelled,
                 Participants = e.Participants.Select(p => new UserDto()
                 {
-                    Id = p.UserId.ToString(),
+                    Id = p.UserId.ToString(),   
                     Email = p.User.Email,
                     UserName = p.User.UserName
                 }).ToList()

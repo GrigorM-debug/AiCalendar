@@ -70,5 +70,15 @@ namespace AiCalendar.WebApi.Data.Repository
         {
             await _context.SaveChangesAsync();
         }
+
+        public IQueryable<TEntity> WithIncludes(params Expression<Func<TEntity, object>>[] includes)
+        {
+            IQueryable<TEntity> query = _dbSet;
+            foreach (var include in includes)
+            {
+                query = query.Include(include);
+            }
+            return query;
+        }
     }
 }

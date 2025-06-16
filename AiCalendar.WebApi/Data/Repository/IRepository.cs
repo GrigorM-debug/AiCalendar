@@ -15,5 +15,7 @@ namespace AiCalendar.WebApi.Data.Repository
         Task<bool> ExistsByExpressionAsync(Expression<Func<TEntity, bool>> expression);
         Task<int> CountAsync();
         Task SaveChangesAsync();
+
+        IQueryable<TEntity> WithIncludes(params Expression<Func<TEntity, object>>[] includes);
     }
 }
