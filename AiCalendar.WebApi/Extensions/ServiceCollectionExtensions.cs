@@ -5,6 +5,7 @@ using AiCalendar.WebApi.Services.EventParticipants;
 using AiCalendar.WebApi.Services.EventParticipants.Interfaces;
 using AiCalendar.WebApi.Services.Events;
 using AiCalendar.WebApi.Services.Events.Interfaces;
+using AiCalendar.WebApi.Services.FindingAvailableSlots;
 using AiCalendar.WebApi.Services.Users;
 using AiCalendar.WebApi.Services.Users.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -23,6 +24,7 @@ namespace AiCalendar.WebApi.Extensions
             services.AddScoped<ITokenProvider, TokenProvider>();
             services.AddScoped<IEventService, EventService>();
             services.AddScoped<IEventParticipantsService, EventParticipantsService>();
+            services.AddScoped<IFindingAvailableSlotsService, FindingAvailableSlotsService>();
             // Add other necessary services
             return services;
         }
