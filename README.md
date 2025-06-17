@@ -50,5 +50,6 @@ This project utilizes .NET Aspire for orchestration and local development. The A
 
 ## TODOs
 
+- Fix some things
 - Unit Tests
 - Mcp server
