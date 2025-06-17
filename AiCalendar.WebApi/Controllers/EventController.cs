@@ -43,6 +43,7 @@ namespace AiCalendar.WebApi.Controllers
         {
             if (!Guid.TryParse(id, out Guid eventId))
             {
+                _logger.LogWarning("Invalid event ID format: {EventId}", id);
                 return BadRequest("Invalid user ID format.");
             }
 
@@ -50,6 +51,7 @@ namespace AiCalendar.WebApi.Controllers
 
             if (!isEventExists)
             {
+                _logger.LogWarning("Event not found for ID: {EventId}", eventId);
                 return NotFound("Event not found.");
             }
 
@@ -79,11 +81,13 @@ namespace AiCalendar.WebApi.Controllers
 
             if (User.Identity == null || !User.Identity.IsAuthenticated || userIdString == null)
             {
+                _logger.LogWarning("Unauthorized attempt to create an event without authentication.");
                 return Unauthorized("You must be logged in to create an event.");
             }
 
             if (!Guid.TryParse(userIdString, out Guid userId))
             {
+                _logger.LogWarning("Invalid user ID format: {UserId}", userIdString);
                 return BadRequest("Invalid user ID.");
             }
 
@@ -91,6 +95,7 @@ namespace AiCalendar.WebApi.Controllers
 
             if (hasOverlappingEvents)
             {
+                _logger.LogWarning("User {UserId} already has an event scheduled for the time period: {StartTime} - {EndTime}", userId, createEventDto.StartTime, createEventDto.EndTime);
                 return Conflict("You already have an event scheduled for this time period");
             }
 
@@ -121,16 +126,19 @@ namespace AiCalendar.WebApi.Controllers
 
             if (User.Identity == null || !User.Identity.IsAuthenticated || userIdString == null)
             {
+                _logger.LogWarning("Unauthorized attempt to delete an event without authentication.");
                 return Unauthorized("You must be logged in to create an event.");
             }
 
             if (!Guid.TryParse(userIdString, out Guid userId))
             {
+                _logger.LogWarning("Invalid user ID format: {UserId}", userIdString);
                 return BadRequest("Invalid user ID.");
             }
 
             if (!Guid.TryParse(id, out Guid eventId))
             {
+                _logger.LogWarning("Invalid event ID format: {EventId}", id);
                 return BadRequest("Invalid user ID format.");
             }
 
@@ -138,6 +146,7 @@ namespace AiCalendar.WebApi.Controllers
 
             if (!isEventExists)
             {
+                _logger.LogWarning("Event not found for ID: {EventId}", eventId);
                 return NotFound("Event not found.");
             }
 
@@ -145,6 +154,7 @@ namespace AiCalendar.WebApi.Controllers
 
             if (!isUserEventCreator)
             {
+                _logger.LogWarning("User {UserId} is not the creator of the event with ID: {EventId}", userId, eventId);
                 return Forbid("You are not the creator of this event.");
             }
 
@@ -178,28 +188,33 @@ namespace AiCalendar.WebApi.Controllers
 
             if (User.Identity == null || !User.Identity.IsAuthenticated || userIdString == null)
             {
+                _logger.LogWarning("Unauthorized attempt to update an event without authentication.");
                 return Unauthorized("You must be logged in to update an event.");
             }
 
             if (!Guid.TryParse(userIdString, out Guid userId))
             {
+                _logger.LogWarning("Invalid user ID format: {UserId}", userIdString);
                 return BadRequest("Invalid user ID.");
             }
 
             if (!Guid.TryParse(id, out Guid eventId))
             {
+                _logger.LogWarning("Invalid event ID format: {EventId}", id);
                 return BadRequest("Invalid event ID format.");
             }
 
             bool isEventExists = await _eventService.EventExistsByIdAsync(eventId);
             if (!isEventExists)
             {
+                _logger.LogWarning("Event not found for ID: {EventId}", eventId);
                 return NotFound("Event not found.");
             }
 
             bool isUserEventCreator = await _eventService.IsUserEventCreator(eventId, userId);
             if (!isUserEventCreator)
             {
+                _logger.LogWarning("User {UserId} is not the creator of the event with ID: {EventId}", userId, eventId);
                 return Forbid("You are not the creator of this event.");
             }
 
@@ -209,6 +224,7 @@ namespace AiCalendar.WebApi.Controllers
 
             if (hasOverlappingEventsExcludingTheCurrentOne)
             {
+                _logger.LogWarning("User {UserId} already has an event scheduled for the time period: {StartTime} - {EndTime}", userId, updateEventDto.StartTime, updateEventDto.EndTime);
                 return Conflict("You already have an event scheduled for this time period");
             }
 
@@ -239,28 +255,33 @@ namespace AiCalendar.WebApi.Controllers
 
             if (User.Identity == null || !User.Identity.IsAuthenticated || userIdString == null)
             {
+                _logger.LogWarning("Unauthorized attempt to cancel an event without authentication.");
                 return Unauthorized("You must be logged in to cancel an event.");
             }
 
             if (!Guid.TryParse(userIdString, out Guid userId))
             {
+                _logger.LogWarning("Invalid user ID format: {UserId}", userIdString);
                 return BadRequest("Invalid user ID.");
             }
 
             if (!Guid.TryParse(id, out Guid eventId))
             {
+                _logger.LogWarning("Invalid event ID format: {EventId}", id);
                 return BadRequest("Invalid event ID format.");
             }
 
             bool isEventExists = await _eventService.EventExistsByIdAsync(eventId);
             if (!isEventExists)
             {
+                _logger.LogWarning("Event not found for ID: {EventId}", eventId);
                 return NotFound("Event not found.");
             }
 
             bool isUserEventCreator = await _eventService.IsUserEventCreator(eventId, userId);
             if (!isUserEventCreator)
             {
+                _logger.LogWarning("User {UserId} is not the creator of the event with ID: {EventId}", userId, eventId);
                 return Forbid("You are not the creator of this event.");
             }
 

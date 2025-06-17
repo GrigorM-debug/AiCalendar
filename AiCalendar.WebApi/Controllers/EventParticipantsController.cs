@@ -57,11 +57,13 @@ namespace AiCalendar.WebApi.Controllers
 
             if (User.Identity == null || !User.Identity.IsAuthenticated || userIdString == null)
             {
+                _logger.LogWarning("Unauthorized access attempt to get event participants without authentication.");
                 return Unauthorized("You must be logged in to create an event.");
             }
 
             if (!Guid.TryParse(userIdString, out Guid userId))
             {
+                _logger.LogError("Invalid user ID format: {UserId}", userIdString);
                 return BadRequest("Invalid user ID.");
             }
 
@@ -84,7 +86,8 @@ namespace AiCalendar.WebApi.Controllers
             bool isUserEventCreator = await _eventService.IsUserEventCreator(parsedEventId, userId);
 
             bool isUserEventParticipant = await _eventParticipantsService.IsUserEventParticipant(parsedEventId, userId);
-            if (!isUserEventCreator && !isUserEventParticipant)
+
+            if (!isUserEventCreator || !isUserEventParticipant)
             {
                 _logger.LogError("User {UserId} is not authorized to view participants for event {EventId}", userId, parsedEventId);
                 return Forbid("You are not authorized to view participants for this event.");
@@ -120,6 +123,7 @@ namespace AiCalendar.WebApi.Controllers
 
             if (User.Identity == null || !User.Identity.IsAuthenticated || userIdString == null)
             {
+                _logger.LogWarning("Unauthorized access attempt to add participant without authentication.");
                 return Unauthorized("You must be logged in to add a participant.");
             }
 
@@ -148,6 +152,7 @@ namespace AiCalendar.WebApi.Controllers
             bool isUserEventCreator = await _eventService.IsUserEventCreator(parsedEventId, currentUserId);
             if (!isUserEventCreator)
             {
+                _logger.LogError("User {UserId} is not authorized to add participants to event {EventId}", currentUserId, parsedEventId);
                 return Forbid("You are not authorized to add participants to this event.");
             }
 
@@ -198,6 +203,7 @@ namespace AiCalendar.WebApi.Controllers
 
             if (User.Identity == null || !User.Identity.IsAuthenticated || userIdString == null)
             {
+                _logger.LogWarning("Unauthorized access attempt to remove participant without authentication.");
                 return Unauthorized("You must be logged in to remove a participant.");
             }
 
@@ -226,6 +232,7 @@ namespace AiCalendar.WebApi.Controllers
             bool isUserEventCreator = await _eventService.IsUserEventCreator(parsedEventId, currentUserId);
             if (!isUserEventCreator)
             {
+                _logger.LogError("User {UserId} is not authorized to remove participants from event {EventId}", currentUserId, parsedEventId);
                 return Forbid("You are not authorized to remove participants from this event.");
             }
 
@@ -233,6 +240,7 @@ namespace AiCalendar.WebApi.Controllers
             bool isParticipant = await _eventParticipantsService.IsUserEventParticipant(parsedParticipantId, parsedEventId);
             if (!isParticipant)
             {
+                _logger.LogError("User {ParticipantId} is not a participant in event {EventId}", parsedParticipantId, parsedEventId);
                 return BadRequest("User is not a participant in this event.");
             }
 

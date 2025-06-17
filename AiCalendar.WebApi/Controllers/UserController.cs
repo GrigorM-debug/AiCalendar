@@ -57,8 +57,9 @@ namespace AiCalendar.WebApi.Controllers
         [ProducesResponseType(StatusCodes.Status409Conflict)]
         public async Task<IActionResult> Register([FromBody] LoginAndRegisterInputDto input)
         {
-            if (User.Identity != null && User.Identity.IsAuthenticated)
+            if (User.Identity != null || User.Identity.IsAuthenticated)
             {
+                _logger.LogWarning("User is already authenticated. Cannot register a new account.");
                 return Forbid("User is already authenticated. Please log out before registering a new account.");
             }
 
@@ -104,8 +105,9 @@ namespace AiCalendar.WebApi.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> Login([FromBody] LoginAndRegisterInputDto input)
         {
-            if (User.Identity != null && User.Identity.IsAuthenticated)
+            if (User.Identity != null || User.Identity.IsAuthenticated)
             {
+                _logger.LogWarning("User is already authenticated. Cannot log in again.");
                 return Forbid();
             }
 
@@ -175,21 +177,25 @@ namespace AiCalendar.WebApi.Controllers
 
             if (User.Identity == null || !User.Identity.IsAuthenticated || currentUserIdString == null)
             {
+                _logger.LogWarning("Unauthorized access attempt to update user with ID {UserId}.", id);
                 return Forbid("You are not authorized to delete this account.");
             }
 
             if (!Guid.TryParse(id, out Guid userId))
             {
+                _logger.LogWarning("Invalid user ID format: {UserId}.", id);
                 return BadRequest("Invalid user ID format.");
             }
 
             if (!Guid.TryParse(currentUserIdString, out Guid currentUserId))
             {
+                _logger.LogWarning("Invalid current user ID format: {CurrentUserId}.", currentUserIdString);
                 return BadRequest("Invalid user ID format.");
             }
 
             if (currentUserId != userId)
             {
+                _logger.LogWarning("User with ID {CurrentUserId} attempted to update user with ID {UserId} without authorization.", currentUserId, userId);
                 return Forbid("You are not authorized to delete this account.");
             }
 
@@ -198,6 +204,7 @@ namespace AiCalendar.WebApi.Controllers
 
             if (!userExists)
             {
+                _logger.LogWarning("User with ID {UserId} not found.", userId);
                 return NotFound("User no found.");
             }
 
@@ -205,12 +212,15 @@ namespace AiCalendar.WebApi.Controllers
             {
                 UserDto updatedUser = await _userService.UpdateUserAsync(userId, updateUserDto);
 
+                _logger.LogInformation("User with ID {UserId} updated successfully.", userId);
+
                 return Ok(updatedUser);
             }
             catch(Exception ex)
             {
                 if (ex.Message.Contains("password"))
                 {
+                    _logger.LogWarning(ex, "Error updating user with ID {UserId}: {Message}", userId, ex.Message);
                     return BadRequest(new {error = ex.Message});
                 }
                 _logger.LogError(ex, "Error updating user with ID {UserId}.", userId);
@@ -236,11 +246,13 @@ namespace AiCalendar.WebApi.Controllers
 
             if (User.Identity == null || !User.Identity.IsAuthenticated || id == null)
             {
+                _logger.LogWarning("Unauthorized access attempt to get user participating events.");
                 return Forbid("You are not authorized to access this resource.");
             }
 
             if (!Guid.TryParse(id, out Guid userId))
             {
+                _logger.LogWarning("Invalid user ID format: {UserId}.", id);
                 return BadRequest("Invalid user ID format.");
             }
 
@@ -248,6 +260,7 @@ namespace AiCalendar.WebApi.Controllers
 
             if (!userExists)
             {
+                _logger.LogWarning("User with ID {UserId} not found.", userId);
                 return NotFound("User not found.");
             }
 
@@ -278,27 +291,32 @@ namespace AiCalendar.WebApi.Controllers
 
             if (User.Identity == null || !User.Identity.IsAuthenticated || currentUserIdString == null)
             {
+                _logger.LogWarning("Unauthorized access attempt to delete user with ID {UserId}.", id);
                 return Forbid("You are not authorized to access this resource.");
             }
 
             if (!Guid.TryParse(currentUserIdString, out Guid currentUserId))
             {
+                _logger.LogWarning("Invalid current user ID format: {CurrentUserId}.", currentUserIdString);
                 return BadRequest("Invalid user ID format.");
             }
 
             if (!Guid.TryParse(id, out Guid userId))
             {
+                _logger.LogWarning("Invalid user ID format: {UserId}.", id);
                 return BadRequest("Invalid user ID format.");
             }
 
             if (currentUserId != userId)
             {
+                _logger.LogWarning("User with ID {CurrentUserId} attempted to delete user with ID {UserId} without authorization.", currentUserId, userId);
                 return Forbid("You are not authorized to delete this account.");
             }
 
             bool userExists = await _userService.UserExistsByIdAsync(userId);
             if (!userExists)
             {
+                _logger.LogWarning("User with ID {UserId} not found.", userId);
                 return NotFound("User not found.");
             }
 
@@ -307,6 +325,7 @@ namespace AiCalendar.WebApi.Controllers
 
             if (isUserHasActiveEvents)
             {
+                _logger.LogWarning("User with ID {UserId} has active events and cannot be deleted.", userId);
                 return BadRequest("User has active events. Please cancel them before deleting your account.");
             }
 
@@ -339,17 +358,20 @@ namespace AiCalendar.WebApi.Controllers
 
             if (User.Identity == null || !User.Identity.IsAuthenticated || id == null)
             {
+                _logger.LogWarning("Unauthorized access attempt to get user events.");
                 return Forbid("You are not authorized to access this resource.");
             }
 
             if (!Guid.TryParse(id, out Guid userId))
             {
+                _logger.LogWarning("Invalid user ID format: {UserId}.", id);
                 return BadRequest("Invalid user ID format.");
             }
 
             bool userExists = await _userService.UserExistsByIdAsync(userId);
             if (!userExists)
             {
+                _logger.LogWarning("User with ID {UserId} not found.", userId);
                 return NotFound("User not found.");
             }
 
