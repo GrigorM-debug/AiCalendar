@@ -40,17 +40,13 @@ The API endpoints are documented and accessible via Swagger UI.
 
 Below is a snapshot of the available API endpoints from Swagger UI:
 
-![Swagger UI Endpoints](http://googleusercontent.com/image_collection/image_retrieval/image_5937a9.png)
+![Swagger UI Endpoints](![alt text](image-1.png))
 
 ## .NET Aspire Orchestration
 
 This project utilizes .NET Aspire for orchestration and local development. The Aspire dashboard provides a centralized view of all running resources.
 
-![.NET Aspire Dashboard](http://googleusercontent.com/image_collection/image_retrieval/image_59385e.png)
-
-## Getting Started
-
-_(Add instructions on how to set up and run the project locally. This would typically include cloning the repo, installing .NET 9, and running the Aspire host project.)_
+![.NET Aspire Dashboard](![alt text](image.png))
 
 ## TODOs
 
