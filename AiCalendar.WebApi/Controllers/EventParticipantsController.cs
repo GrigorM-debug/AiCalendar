@@ -1,4 +1,5 @@
 ﻿using AiCalendar.WebApi.DTOs.Users;
+using AiCalendar.WebApi.Extensions;
 using AiCalendar.WebApi.Services.EventParticipants.Interfaces;
 using AiCalendar.WebApi.Services.Events.Interfaces;
 using AiCalendar.WebApi.Services.Users.Interfaces;
@@ -52,12 +53,14 @@ namespace AiCalendar.WebApi.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetEventParticipantsAsync(string eventId)
         {
-            if (User.Identity == null || !User.Identity.IsAuthenticated)
+            string? userIdString = User.GetUserId();
+
+            if (User.Identity == null || !User.Identity.IsAuthenticated || userIdString == null)
             {
                 return Unauthorized("You must be logged in to create an event.");
             }
 
-            if (!Guid.TryParse(User.FindFirst("UserId")?.Value, out Guid userId))
+            if (!Guid.TryParse(userIdString, out Guid userId))
             {
                 return BadRequest("Invalid user ID.");
             }
@@ -113,7 +116,9 @@ namespace AiCalendar.WebApi.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> AddEventParticipant(string eventId, string participantId)
         {
-            if (User.Identity == null || !User.Identity.IsAuthenticated)
+            string? userIdString = User.GetUserId();
+
+            if (User.Identity == null || !User.Identity.IsAuthenticated || userIdString == null)
             {
                 return Unauthorized("You must be logged in to add a participant.");
             }
@@ -139,7 +144,7 @@ namespace AiCalendar.WebApi.Controllers
             }
 
             //Check if the current user is authorized to add participants (e.g., is event creator)
-            var currentUserId = Guid.Parse(User.FindFirst("UserId")!.Value);
+            var currentUserId = Guid.Parse(userIdString);
             bool isUserEventCreator = await _eventService.IsUserEventCreator(parsedEventId, currentUserId);
             if (!isUserEventCreator)
             {
@@ -189,7 +194,9 @@ namespace AiCalendar.WebApi.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> RemoveParticipantAsync(string eventId, string participantId)
         {
-            if (User.Identity == null || !User.Identity.IsAuthenticated)
+            string? userIdString = User.GetUserId();
+
+            if (User.Identity == null || !User.Identity.IsAuthenticated || userIdString == null)
             {
                 return Unauthorized("You must be logged in to remove a participant.");
             }
@@ -215,7 +222,7 @@ namespace AiCalendar.WebApi.Controllers
             }
 
             // Only event creator can remove participants
-            var currentUserId = Guid.Parse(User.FindFirst("UserId")!.Value);
+            var currentUserId = Guid.Parse(userIdString);
             bool isUserEventCreator = await _eventService.IsUserEventCreator(parsedEventId, currentUserId);
             if (!isUserEventCreator)
             {

@@ -1,4 +1,5 @@
 ﻿using AiCalendar.WebApi.DTOs.Event;
+using AiCalendar.WebApi.Extensions;
 using AiCalendar.WebApi.Models;
 using AiCalendar.WebApi.Services.Events.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -74,19 +75,16 @@ namespace AiCalendar.WebApi.Controllers
         [ProducesResponseType(StatusCodes.Status409Conflict)]
         public async Task<IActionResult> CreateEventAsync([FromBody] CreateEventDto createEventDto)
         {
-            if (User.Identity == null || !User.Identity.IsAuthenticated)
+            string? userIdString = User.GetUserId();
+
+            if (User.Identity == null || !User.Identity.IsAuthenticated || userIdString == null)
             {
                 return Unauthorized("You must be logged in to create an event.");
             }
 
-            if (!Guid.TryParse(User.FindFirst("UserId")?.Value, out Guid userId))
+            if (!Guid.TryParse(userIdString, out Guid userId))
             {
                 return BadRequest("Invalid user ID.");
-            }
-
-            if (createEventDto == null)
-            {
-                return BadRequest("Invalid event data.");
             }
 
             bool hasOverlappingEvents = await _eventService.HasOverlappingEvents(userId, createEventDto.StartTime, createEventDto.EndTime);
@@ -119,12 +117,14 @@ namespace AiCalendar.WebApi.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> DeleteEvent(string id)
         {
-            if (User.Identity == null || !User.Identity.IsAuthenticated)
+            string? userIdString = User.GetUserId();
+
+            if (User.Identity == null || !User.Identity.IsAuthenticated || userIdString == null)
             {
                 return Unauthorized("You must be logged in to create an event.");
             }
 
-            if (!Guid.TryParse(User.FindFirst("UserId")?.Value, out Guid userId))
+            if (!Guid.TryParse(userIdString, out Guid userId))
             {
                 return BadRequest("Invalid user ID.");
             }
@@ -174,12 +174,14 @@ namespace AiCalendar.WebApi.Controllers
         [ProducesResponseType(StatusCodes.Status409Conflict)]
         public async Task<IActionResult> UpdateEventAsync(string id, [FromBody] UpdateEventDto updateEventDto)
         {
-            if (User.Identity == null || !User.Identity.IsAuthenticated)
+            string? userIdString = User.GetUserId();
+
+            if (User.Identity == null || !User.Identity.IsAuthenticated || userIdString == null)
             {
                 return Unauthorized("You must be logged in to update an event.");
             }
 
-            if (!Guid.TryParse(User.FindFirst("UserId")?.Value, out Guid userId))
+            if (!Guid.TryParse(userIdString, out Guid userId))
             {
                 return BadRequest("Invalid user ID.");
             }
@@ -233,12 +235,14 @@ namespace AiCalendar.WebApi.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> CancelEventAsync(string id)
         {
-            if (User.Identity == null || !User.Identity.IsAuthenticated)
+            string? userIdString = User.GetUserId();
+
+            if (User.Identity == null || !User.Identity.IsAuthenticated || userIdString == null)
             {
                 return Unauthorized("You must be logged in to cancel an event.");
             }
 
-            if (!Guid.TryParse(User.FindFirst("UserId")?.Value, out Guid userId))
+            if (!Guid.TryParse(userIdString, out Guid userId))
             {
                 return BadRequest("Invalid user ID.");
             }

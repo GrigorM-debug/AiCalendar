@@ -1,6 +1,7 @@
 ﻿using System.Runtime.CompilerServices;
 using AiCalendar.WebApi.DTOs.Event;
 using AiCalendar.WebApi.DTOs.Users;
+using AiCalendar.WebApi.Extensions;
 using AiCalendar.WebApi.Models;
 using AiCalendar.WebApi.Services.Users.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -143,7 +144,7 @@ namespace AiCalendar.WebApi.Controllers
         /// <summary>
         /// Updates the details of an existing user.
         /// </summary>
-        /// <param name="id">The ID of the user to update (GUID format).</param>
+        /// <param name="id">The ID of the user to update</param>
         /// <param name="updateUserDto">The updated user information.</param>
         /// <returns>Returns the updated user object if successful.</returns>
         /// <remarks>
@@ -170,14 +171,26 @@ namespace AiCalendar.WebApi.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> UpdateUser(string id, [FromBody] UpdateUserDto updateUserDto)
         {
+            string? currentUserIdString = User.GetUserId();
+
+            if (User.Identity == null || !User.Identity.IsAuthenticated || currentUserIdString == null)
+            {
+                return Forbid("You are not authorized to delete this account.");
+            }
+
             if (!Guid.TryParse(id, out Guid userId))
             {
                 return BadRequest("Invalid user ID format.");
             }
 
-            if(User.Identity == null || !User.Identity.IsAuthenticated || User.FindFirst("id")?.Value != userId.ToString())
+            if (!Guid.TryParse(currentUserIdString, out Guid currentUserId))
             {
-                return Forbid();
+                return BadRequest("Invalid user ID format.");
+            }
+
+            if (currentUserId != userId)
+            {
+                return Forbid("You are not authorized to delete this account.");
             }
 
             //Check if user exists
@@ -185,7 +198,7 @@ namespace AiCalendar.WebApi.Controllers
 
             if (!userExists)
             {
-                return NotFound();
+                return NotFound("User no found.");
             }
 
             try
@@ -211,7 +224,7 @@ namespace AiCalendar.WebApi.Controllers
         /// <response code="200">Returns the list of events where the user is a participant</response>
         /// <response code="401">User is not authenticated</response>
         /// <returns>A collection of events where the user is a participant</returns>
-        [HttpGet("/participating-events")]
+        [HttpGet("participating-events")]
         [ProducesResponseType(typeof(IEnumerable<EventDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -219,16 +232,16 @@ namespace AiCalendar.WebApi.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> GetUserParticipatingEvents()
         {
-            string? id = User.FindFirst("id")?.Value;
+            string? id = User.GetUserId();
+
+            if (User.Identity == null || !User.Identity.IsAuthenticated || id == null)
+            {
+                return Forbid("You are not authorized to access this resource.");
+            }
 
             if (!Guid.TryParse(id, out Guid userId))
             {
                 return BadRequest("Invalid user ID format.");
-            }
-
-            if (User.Identity == null || !User.Identity.IsAuthenticated || User.FindFirst("id")?.Value != userId.ToString())
-            {
-                return Forbid("You are not authorized to access this resource.");
             }
 
             bool userExists = await _userService.UserExistsByIdAsync(userId);
@@ -246,29 +259,41 @@ namespace AiCalendar.WebApi.Controllers
         /// <summary>
         /// Deletes the authenticated user's account
         /// </summary>
+        /// <param name="id">The ID of the user to delete</param>
         /// <response code="204">User was successfully deleted</response>
         /// <response code="400">User has active events that need to be cancelled first</response>
         /// <response code="401">User is not authenticated</response>
         /// <response code="404">User is not found</response>
         /// <response code="403">User is not authorized</response>
         /// <returns>No content</returns>
-        [HttpDelete]
+        [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        public async Task<IActionResult> DeleteUser()
+        public async Task<IActionResult> DeleteUser(string id)
         {
-            string? id = User.FindFirst("id")?.Value;
+            string? currentUserIdString = User.GetUserId();
+
+            if (User.Identity == null || !User.Identity.IsAuthenticated || currentUserIdString == null)
+            {
+                return Forbid("You are not authorized to access this resource.");
+            }
+
+            if (!Guid.TryParse(currentUserIdString, out Guid currentUserId))
+            {
+                return BadRequest("Invalid user ID format.");
+            }
+
             if (!Guid.TryParse(id, out Guid userId))
             {
                 return BadRequest("Invalid user ID format.");
             }
 
-            if (User.Identity == null || !User.Identity.IsAuthenticated || User.FindFirst("id")?.Value != userId.ToString())
+            if (currentUserId != userId)
             {
-                return Forbid("You are not authorized to access this resource.");
+                return Forbid("You are not authorized to delete this account.");
             }
 
             bool userExists = await _userService.UserExistsByIdAsync(userId);
@@ -310,15 +335,16 @@ namespace AiCalendar.WebApi.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetUserEvents([FromBody] EventFilterCriteriaDto? filter)
         {
-            string? id = User.FindFirst("id")?.Value;
+            string? id = User.GetUserId();
+
+            if (User.Identity == null || !User.Identity.IsAuthenticated || id == null)
+            {
+                return Forbid("You are not authorized to access this resource.");
+            }
+
             if (!Guid.TryParse(id, out Guid userId))
             {
                 return BadRequest("Invalid user ID format.");
-            }
-
-            if (User.Identity == null || !User.Identity.IsAuthenticated || User.FindFirst("id")?.Value != userId.ToString())
-            {
-                return Forbid("You are not authorized to access this resource.");
             }
 
             bool userExists = await _userService.UserExistsByIdAsync(userId);
@@ -339,7 +365,7 @@ namespace AiCalendar.WebApi.Controllers
         /// <returns>Returns collection of filtered users</returns>
         /// <response code="200">Returns the filtered list of users</response>
         [AllowAnonymous]
-        [HttpGet("/users")]
+        [HttpGet("users")]
         [ProducesResponseType(typeof(IEnumerable<UserDtoExtended>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
