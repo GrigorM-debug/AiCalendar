@@ -12,6 +12,8 @@ using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.AddServiceDefaults();
+
 // Add services to the container.
 
 builder.Services.AddEndpointsApiExplorer();
@@ -51,6 +53,8 @@ builder.Services.AddOpenApi();
 
 var app = builder.Build();
 
+app.MapDefaultEndpoints();
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -62,6 +66,16 @@ if (app.Environment.IsDevelopment())
 else
 {
     app.UseExceptionHandler("/error");
+}
+
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    // Ensure the database is created and apply migrations
+    //var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+    //Console.WriteLine($"[DEBUG] Connection String retrieved: '{connectionString}'");
+
+    dbContext.Database.Migrate();
 }
 
 app.UseHttpsRedirection();

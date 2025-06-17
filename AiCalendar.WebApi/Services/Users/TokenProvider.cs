@@ -34,7 +34,7 @@ namespace AiCalendar.WebApi.Services.Users
                         new Claim(JwtRegisteredClaimNames.Email, user.Email),
                     new Claim("username", user.UserName)
                 ]),
-                Expires = DateTime.UtcNow.AddMinutes(_configuration.GetValue<int>("Jwt:ExpirationInMinutes")),
+                Expires = DateTime.UtcNow.AddMinutes(_configuration.GetValue<int>("Jwt:ExpirationInDays")),
                 SigningCredentials = credentials,
                 Issuer = _configuration["Jwt:Issuer"],
                 Audience = _configuration["Jwt:Audience"]

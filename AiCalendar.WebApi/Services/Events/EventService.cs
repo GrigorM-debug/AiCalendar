@@ -9,12 +9,10 @@ namespace AiCalendar.WebApi.Services.Events
 {
     public class EventService : IEventService
     {
-        private readonly IEventService _eventService;
         private readonly IRepository<Event> _eventRepository;
 
-        public EventService(IEventService eventService, IRepository<Event> eventRepository)
+        public EventService(IRepository<Event> eventRepository)
         {
-            _eventService = eventService;
             _eventRepository = eventRepository;
         }
 

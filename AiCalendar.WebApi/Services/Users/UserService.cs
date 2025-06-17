@@ -162,24 +162,34 @@ namespace AiCalendar.WebApi.Services.Users
         {
             User? user = await _userRepository.GetByIdAsync(userId);
 
-            user.Email = updateUserDto.Email;
-            user.UserName = updateUserDto.UserName;
+            if (!string.IsNullOrEmpty(updateUserDto.Email))
+            {
+                user.Email = updateUserDto.Email;
+            }
+
+            if (!string.IsNullOrEmpty(updateUserDto.UserName))
+            {
+                user.UserName = updateUserDto.UserName;
+            }
 
             //Check if old password is correct
-            string oldPasswordHash = _passwordHasher.HashPassword(updateUserDto.OldPassword);
-            if (user.PasswordHashed != oldPasswordHash)
+            if (!string.IsNullOrEmpty(updateUserDto.OldPassword) && !string.IsNullOrEmpty(updateUserDto.NewPassword))
             {
-                throw new Exception("Old password is incorrect.");
-            }
+                string oldPasswordHash = _passwordHasher.HashPassword(updateUserDto.OldPassword);
+                if (user.PasswordHashed != oldPasswordHash)
+                {
+                    throw new Exception("Old password is incorrect.");
+                }
 
-            string newPasswordHash = _passwordHasher.HashPassword(updateUserDto.NewPassword);
-            //Check if new password is same as the old password
-            if (user.PasswordHashed == newPasswordHash)
-            {
-                throw new Exception("New password cannot be the same as the old password.");
-            }
+                string newPasswordHash = _passwordHasher.HashPassword(updateUserDto.NewPassword);
+                //Check if new password is same as the old password
+                if (user.PasswordHashed == newPasswordHash)
+                {
+                    throw new Exception("New password cannot be the same as the old password.");
+                }
 
-            user.PasswordHashed = newPasswordHash;
+                user.PasswordHashed = newPasswordHash;
+            }
 
             await _userRepository.SaveChangesAsync();
 
@@ -298,9 +308,13 @@ namespace AiCalendar.WebApi.Services.Users
             IQueryable<User> query = _userRepository
                 .WithIncludes(
                     u => u.CreatedEvents,
-                    u => u.Participations,
-                    u => u.Participations.Select(p => p.Event))
-                .AsQueryable();
+                    u => u.Participations);
+
+            query = query
+                .Include(u => u.Participations)
+                .ThenInclude(p => p.Event)
+                .ThenInclude(e => e.Participants)
+                .ThenInclude(ep => ep.User);
 
             if (filter != null)
             {

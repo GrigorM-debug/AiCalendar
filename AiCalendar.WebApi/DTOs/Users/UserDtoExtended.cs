@@ -10,8 +10,8 @@ namespace AiCalendar.WebApi.DTOs.Users
 
         public string Email { get; set; } = string.Empty;
 
-        public IEnumerable<EventDto> CreatedEvents = new HashSet<EventDto>();
+        public IEnumerable<EventDto> CreatedEvents { get; set; } = new HashSet<EventDto>();
 
-        public IEnumerable<EventDto> ParticipatingEvents = new HashSet<EventDto>();
+        public IEnumerable<EventDto> ParticipatingEvents { get; set; } = new HashSet<EventDto>();
     }
 }

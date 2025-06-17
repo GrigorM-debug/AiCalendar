@@ -57,7 +57,7 @@ namespace AiCalendar.WebApi.Controllers
         [ProducesResponseType(StatusCodes.Status409Conflict)]
         public async Task<IActionResult> Register([FromBody] LoginAndRegisterInputDto input)
         {
-            if (User.Identity != null || User.Identity.IsAuthenticated)
+            if (User.Identity != null && User.Identity.IsAuthenticated)
             {
                 _logger.LogWarning("User is already authenticated. Cannot register a new account.");
                 return Forbid("User is already authenticated. Please log out before registering a new account.");
@@ -105,7 +105,7 @@ namespace AiCalendar.WebApi.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> Login([FromBody] LoginAndRegisterInputDto input)
         {
-            if (User.Identity != null || User.Identity.IsAuthenticated)
+            if (User.Identity != null && User.Identity.IsAuthenticated)
             {
                 _logger.LogWarning("User is already authenticated. Cannot log in again.");
                 return Forbid();
@@ -175,7 +175,7 @@ namespace AiCalendar.WebApi.Controllers
         {
             string? currentUserIdString = User.GetUserId();
 
-            if (User.Identity == null || !User.Identity.IsAuthenticated || currentUserIdString == null)
+            if (User.Identity == null && !User.Identity.IsAuthenticated && currentUserIdString == null)
             {
                 _logger.LogWarning("Unauthorized access attempt to update user with ID {UserId}.", id);
                 return Forbid("You are not authorized to delete this account.");
@@ -244,7 +244,7 @@ namespace AiCalendar.WebApi.Controllers
         {
             string? id = User.GetUserId();
 
-            if (User.Identity == null || !User.Identity.IsAuthenticated || id == null)
+            if (User.Identity == null && !User.Identity.IsAuthenticated && id == null)
             {
                 _logger.LogWarning("Unauthorized access attempt to get user participating events.");
                 return Forbid("You are not authorized to access this resource.");
@@ -289,7 +289,7 @@ namespace AiCalendar.WebApi.Controllers
         {
             string? currentUserIdString = User.GetUserId();
 
-            if (User.Identity == null || !User.Identity.IsAuthenticated || currentUserIdString == null)
+            if (User.Identity == null && !User.Identity.IsAuthenticated && currentUserIdString == null)
             {
                 _logger.LogWarning("Unauthorized access attempt to delete user with ID {UserId}.", id);
                 return Forbid("You are not authorized to access this resource.");
@@ -389,7 +389,7 @@ namespace AiCalendar.WebApi.Controllers
         [AllowAnonymous]
         [HttpGet("users")]
         [ProducesResponseType(typeof(IEnumerable<UserDtoExtended>), StatusCodes.Status200OK)]
-        public async Task<IActionResult> GetUsers([FromBody] UserFilterCriteriaDto? filter)
+        public async Task<IActionResult> GetUsers([FromQuery] UserFilterCriteriaDto? filter)
         {
             IEnumerable<UserDtoExtended> users = await _userService.GetUsersAsync(filter);
 
