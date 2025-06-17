@@ -23,9 +23,16 @@ namespace AiCalendar.WebApi.Services.Events
         /// <returns>The event matching the specified identifier, or <c>null</c> if not found.</returns>
         public async Task<EventDto?> GetEventByIdAsync(Guid id)
         {
-            Event? e = await _eventRepository
-                .WithIncludes(e => e.Participants, e => e.Participants.Select(p => p.User))
-                .FirstOrDefaultAsync(e => e.Id == id);
+           IQueryable<Event> query = _eventRepository
+                .WithIncludes(e => e.Participants)
+                .AsQueryable();
+
+           query = query
+               .Include(e => e.Participants)
+               .ThenInclude(p => p.User);
+            
+           Event? e = await query
+                .FirstOrDefaultAsync(e => e.Id == id && e.IsCancelled == false);
 
             if (e == null)
             {
@@ -251,11 +258,12 @@ namespace AiCalendar.WebApi.Services.Events
         public async Task<IEnumerable<EventDto>> GetEventsAsync(EventFilterCriteriaDto? filter = null)
         {
             IQueryable<Event> query = _eventRepository
-                .WithIncludes(
-                    e => e.Creator,
-                    e => e.Participants,
-                    e => e.Participants.Select(p => p.User))
+                .WithIncludes(e => e.Creator) 
                 .AsQueryable();
+
+            query = query
+                .Include(e => e.Participants)          
+                .ThenInclude(p => p.User);
 
             if (filter != null)
             {

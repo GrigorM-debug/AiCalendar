@@ -87,9 +87,9 @@ namespace AiCalendar.WebApi.Controllers
         /// Sample request:
         ///     POST /api/v1/user/login
         ///     {
-        ///         "UserName": "Heisenberg",
-        ///         "Email": "heisenberg@example.com",
-        ///         "Password": "hashedpassword456"
+        ///         "UserName": "exampleUserName",
+        ///         "Email": "example@example.com",
+        ///         "Password": "password"
         ///     }
         /// </remarks>
         /// <response code="200">Login successful.</response>

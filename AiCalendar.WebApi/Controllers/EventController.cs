@@ -79,7 +79,7 @@ namespace AiCalendar.WebApi.Controllers
         {
             string? userIdString = User.GetUserId();
 
-            if (User.Identity == null || !User.Identity.IsAuthenticated || userIdString == null)
+            if (User.Identity == null && !User.Identity.IsAuthenticated && userIdString == null)
             {
                 _logger.LogWarning("Unauthorized attempt to create an event without authentication.");
                 return Unauthorized("You must be logged in to create an event.");
@@ -124,7 +124,7 @@ namespace AiCalendar.WebApi.Controllers
         {
             string? userIdString = User.GetUserId();
 
-            if (User.Identity == null || !User.Identity.IsAuthenticated || userIdString == null)
+            if (User.Identity == null && !User.Identity.IsAuthenticated && userIdString == null)
             {
                 _logger.LogWarning("Unauthorized attempt to delete an event without authentication.");
                 return Unauthorized("You must be logged in to create an event.");
@@ -186,7 +186,7 @@ namespace AiCalendar.WebApi.Controllers
         {
             string? userIdString = User.GetUserId();
 
-            if (User.Identity == null || !User.Identity.IsAuthenticated || userIdString == null)
+            if (User.Identity == null && !User.Identity.IsAuthenticated && userIdString == null)
             {
                 _logger.LogWarning("Unauthorized attempt to update an event without authentication.");
                 return Unauthorized("You must be logged in to update an event.");
@@ -253,7 +253,7 @@ namespace AiCalendar.WebApi.Controllers
         {
             string? userIdString = User.GetUserId();
 
-            if (User.Identity == null || !User.Identity.IsAuthenticated || userIdString == null)
+            if (User.Identity == null && !User.Identity.IsAuthenticated && userIdString == null)
             {
                 _logger.LogWarning("Unauthorized attempt to cancel an event without authentication.");
                 return Unauthorized("You must be logged in to cancel an event.");
@@ -299,7 +299,7 @@ namespace AiCalendar.WebApi.Controllers
         [HttpGet]
         [AllowAnonymous]
         [ProducesResponseType(typeof(IEnumerable<EventDto>), StatusCodes.Status200OK)]
-        public async Task<IActionResult> GetEvents([FromBody] EventFilterCriteriaDto? filter)
+        public async Task<IActionResult> GetEvents([FromQuery] EventFilterCriteriaDto? filter)
         {
             IEnumerable<EventDto> events = await _eventService.GetEventsAsync(filter);
 

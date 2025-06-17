@@ -211,9 +211,10 @@ namespace AiCalendar.WebApi.Services.Users
         public async Task<IEnumerable<EventDto>> GetUserParticipatingEventsAsync(Guid userId)
         {
             IEnumerable<EventDto> userParticipatingEvents = await _userRepository
-                .WithIncludes(u => u.Participations, u => u.Participations.Select(p => p.Event))
+                .WithIncludes(u => u.Participations) 
                 .Where(u => u.Id == userId)
-                .SelectMany(u => u.Participations.Select(p => new EventDto()
+                .SelectMany(u => u.Participations) 
+                .Select(p => new EventDto() 
                 {
                     Id = p.Event.Id.ToString(),
                     Title = p.Event.Title,
@@ -228,7 +229,7 @@ namespace AiCalendar.WebApi.Services.Users
                         Email = participant.User.Email,
                         UserName = participant.User.UserName
                     }).ToList()
-                }))
+                })
                 .ToListAsync();
 
             return userParticipatingEvents;

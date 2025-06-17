@@ -32,6 +32,7 @@ namespace AiCalendar.WebApi.Data
             Guid user2Id = Guid.Parse("F0E9D8C7-B6A5-4321-FEDC-BA9876543210");
             Guid user3Id = Guid.Parse("11223344-5566-7788-99AA-BBCCDDEEFF00");
 
+            // I forgot to hash passwords
             modelBuilder.Entity<User>().HasData(
                 new User
                 {
