@@ -4,6 +4,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace AiCalendar.WebApi.Controllers
 {
+    /// <summary>
+    /// Handles application-wide error responses.
+    /// </summary>
     [ApiController]
     [ApiExplorerSettings(IgnoreApi = true)]
     public class ErrorController : ControllerBase
@@ -14,7 +17,16 @@ namespace AiCalendar.WebApi.Controllers
             _logger = logger;
         }
 
+        /// <summary>
+        /// Handles errors in the development environment and returns detailed exception information.
+        /// </summary>
+        /// <param name="hostEnvironment">The current hosting environment.</param>
+        /// <returns>
+        /// A <see cref="ProblemDetails"/> response with detailed error information if in development;
+        /// otherwise, a 404 Not Found response.
+        /// </returns>
         [Route("/error-development")]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
         public IActionResult ErrorDevelopment([FromServices] IHostEnvironment hostEnvironment)
         {
             //This endpoint is only for development environment.
@@ -38,7 +50,14 @@ namespace AiCalendar.WebApi.Controllers
             );  
         }
 
+        /// <summary>
+        /// Handles errors in non-development environments and returns a generic error response.
+        /// </summary>
+        /// <returns>
+        /// A <see cref="ProblemDetails"/> response with a generic error message.
+        /// </returns>
         [Route("/error")]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
         public IActionResult Error()
         {
             IExceptionHandlerFeature exceptionHandlerFeature = HttpContext.Features.Get<IExceptionHandlerFeature>();
