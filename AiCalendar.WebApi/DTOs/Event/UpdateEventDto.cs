@@ -1,33 +1,54 @@
 ﻿using AiCalendar.WebApi.Constants;
 using System.ComponentModel.DataAnnotations;
+using Microsoft.VisualBasic.CompilerServices;
 
 namespace AiCalendar.WebApi.DTOs.Event
 {
     public class UpdateEventDto : IValidatableObject
     {
-        [Required(ErrorMessage = EventConstants.TitleRequiredMessage)]
-        [StringLength(EventConstants.TitleMaxLength, ErrorMessage = EventConstants.TitleLengthErrorMessage, MinimumLength = EventConstants.TitleMinLength)]
-        public string Title { get; set; } = string.Empty;
+        public string? Title { get; set; } = string.Empty;
 
-        [StringLength(EventConstants.DescriptionMaxLength, ErrorMessage = EventConstants.DescriptionLengthErrorMessage, MinimumLength = EventConstants.DescriptionMinLength)]
         public string? Description { get; set; } = string.Empty;
 
-        [Required]
         [DataType(DataType.DateTime, ErrorMessage = EventConstants.DateTimeFormatErrorMessage)]
-        public DateTime StartTime { get; set; }
+        public DateTime? StartTime { get; set; }
 
-        [Required]
         [DataType(DataType.DateTime, ErrorMessage = EventConstants.DateTimeFormatErrorMessage)]
-        public DateTime EndTime { get; set; }
+        public DateTime? EndTime { get; set; }
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
-            if (StartTime >= EndTime)
+            if (!string.IsNullOrEmpty(Title))
             {
-                yield return new ValidationResult(
-                    EventConstants.StartTimeGreaterThanOrTheSameAsEndTimeErrorMessage,
-                    new[] { nameof(StartTime), nameof(EndTime) });
+                if (Title.Length < EventConstants.TitleMinLength || Title.Length > EventConstants.TitleMaxLength)
+                {
+                    yield return new ValidationResult(
+                        EventConstants.TitleLengthErrorMessage,
+                        new[] { nameof(Title) });
+                }
             }
+
+            if (!string.IsNullOrEmpty(Description))
+            {
+                if (Description.Length < EventConstants.DescriptionMinLength ||
+                    Description.Length > EventConstants.DescriptionMaxLength)
+                {
+                    yield return new ValidationResult(
+                        EventConstants.DescriptionLengthErrorMessage,
+                        new[] { nameof(Description) });
+                }
+            }
+
+            if (StartTime.HasValue && EndTime.HasValue)
+            {
+                if (StartTime >= EndTime)
+                {
+                    yield return new ValidationResult(
+                        EventConstants.StartTimeGreaterThanOrTheSameAsEndTimeErrorMessage,
+                        new[] { nameof(StartTime), nameof(EndTime) });
+                }
+            }
+            
         }
     }
 }

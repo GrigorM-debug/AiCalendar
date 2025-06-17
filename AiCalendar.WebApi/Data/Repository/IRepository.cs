@@ -10,7 +10,10 @@ namespace AiCalendar.WebApi.Data.Repository
         Task<IEnumerable<TEntity>> GetAllByExpressionAsync(Expression<Func<TEntity, bool>> expression);
         Task AddAsync(TEntity entity);
         void UpdateAsync(TEntity entity);
-        Task DeleteAsync(Guid id);  
+        Task DeleteAsync(Guid id);
+
+        void DeleteEntity(TEntity entity);
+        
         Task<bool> ExistsByIdAsync(Guid id);
         Task<bool> ExistsByExpressionAsync(Expression<Func<TEntity, bool>> expression);
         Task<int> CountAsync();

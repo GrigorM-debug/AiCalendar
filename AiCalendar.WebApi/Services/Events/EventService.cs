@@ -157,15 +157,38 @@ namespace AiCalendar.WebApi.Services.Events
         /// <returns>The updated event.</returns>
         public async Task<EventDto> UpdateEvent(Guid eventId, UpdateEventDto updateEventDto, Guid userId)
         {
+            IQueryable<Event> query = _eventRepository
+                .WithIncludes(e => e.Creator)
+                .AsQueryable();
+
+            query = query
+                .Include(e => e.Participants)
+                .ThenInclude(p => p.User);
+
             Event? eventToUpdate =
-                await _eventRepository
-                    .WithIncludes(e => e.Participants, e => e.Participants.Select(p => p.User))
+                await query
                     .FirstOrDefaultAsync(e => e.Id == eventId && e.CreatorId == userId);
 
-            eventToUpdate.Title = updateEventDto.Title;
-            eventToUpdate.Description = updateEventDto.Description;
-            eventToUpdate.StartTime = updateEventDto.StartTime;
-            eventToUpdate.EndTime = updateEventDto.EndTime;
+            if (!string.IsNullOrEmpty(updateEventDto.Title))
+            {
+                eventToUpdate.Title = updateEventDto.Title;
+            }
+
+            if (!string.IsNullOrEmpty(updateEventDto.Description))
+            {
+                eventToUpdate.Description = updateEventDto.Description;
+            }
+
+            if (updateEventDto.StartTime.HasValue)
+            {
+                eventToUpdate.StartTime = updateEventDto.StartTime.Value;
+            }
+
+            if (updateEventDto.EndTime.HasValue)
+            {
+                eventToUpdate.EndTime = updateEventDto.EndTime.Value;
+            }
+
 
             _eventRepository.UpdateAsync(eventToUpdate);
             await _eventRepository.SaveChangesAsync();
@@ -221,8 +244,15 @@ namespace AiCalendar.WebApi.Services.Events
         /// <returns>The updated event with its cancellation status set.</returns>
         public async Task<EventDto> CancelEventAsync(Guid eventId, Guid userId)
         {
-            Event? eventToCancel = await _eventRepository
-                .WithIncludes(e => e.Participants, e => e.Participants.Select(p => p.User))
+            IQueryable<Event> query = _eventRepository
+                .WithIncludes(e => e.Creator)
+                .AsQueryable();
+
+            query = query
+                .Include(e => e.Participants)
+                .ThenInclude(p => p.User);
+
+            Event? eventToCancel = await query
                 .FirstOrDefaultAsync(e => e.Id == eventId && e.CreatorId == userId);
 
             eventToCancel.IsCancelled = true;

@@ -24,6 +24,7 @@ namespace AiCalendar.WebApi.Services.EventParticipants
         {
             IEnumerable<UserDto> participants = await _participantRepository
                 .WithIncludes(p => p.User)
+                .Where(p => p.EventId == eventId)
                 .Select(p => new UserDto()
                 {
                     Id = p.UserId.ToString(),
@@ -79,7 +80,8 @@ namespace AiCalendar.WebApi.Services.EventParticipants
 
             if (participant != null)
             {
-                _participantRepository.DeleteAsync(participantId);
+                //await _participantRepository.DeleteAsync(participantId);
+                _participantRepository.DeleteEntity(participant);
                 await _participantRepository.SaveChangesAsync();
             }
         }

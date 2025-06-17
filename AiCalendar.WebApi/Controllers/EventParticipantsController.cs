@@ -76,7 +76,7 @@ namespace AiCalendar.WebApi.Controllers
 
             //Check if event exists
             bool eventExists = await _eventService.EventExistsByIdAsync(parsedEventId);
-            if (eventExists)
+            if (!eventExists)
             {
                 _logger.LogError("Event not found: {EventId}", parsedEventId);
                 return NotFound($"Event with ID {parsedEventId} not found.");
@@ -87,7 +87,7 @@ namespace AiCalendar.WebApi.Controllers
 
             bool isUserEventParticipant = await _eventParticipantsService.IsUserEventParticipant(parsedEventId, userId);
 
-            if (!isUserEventCreator || !isUserEventParticipant)
+            if (!isUserEventCreator && !isUserEventParticipant)
             {
                 _logger.LogError("User {UserId} is not authorized to view participants for event {EventId}", userId, parsedEventId);
                 return Forbid("You are not authorized to view participants for this event.");

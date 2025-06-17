@@ -218,14 +218,17 @@ namespace AiCalendar.WebApi.Controllers
                 return Forbid("You are not the creator of this event.");
             }
 
-            bool hasOverlappingEventsExcludingTheCurrentOne =
-                await _eventService.HasOverlappingEventsExcludingTheCurrentEvent(userId, updateEventDto.StartTime,
-                    updateEventDto.EndTime, eventId);
-
-            if (hasOverlappingEventsExcludingTheCurrentOne)
+            if (updateEventDto.StartTime.HasValue && updateEventDto.EndTime.HasValue)
             {
-                _logger.LogWarning("User {UserId} already has an event scheduled for the time period: {StartTime} - {EndTime}", userId, updateEventDto.StartTime, updateEventDto.EndTime);
-                return Conflict("You already have an event scheduled for this time period");
+                bool hasOverlappingEventsExcludingTheCurrentOne =
+                    await _eventService.HasOverlappingEventsExcludingTheCurrentEvent(userId, updateEventDto.StartTime.Value,
+                        updateEventDto.EndTime.Value, eventId);
+
+                if (hasOverlappingEventsExcludingTheCurrentOne)
+                {
+                    _logger.LogWarning("User {UserId} already has an event scheduled for the time period: {StartTime} - {EndTime}", userId, updateEventDto.StartTime, updateEventDto.EndTime);
+                    return Conflict("You already have an event scheduled for this time period");
+                }
             }
 
             EventDto updatedEvent = await _eventService.UpdateEvent(eventId, updateEventDto, userId);
