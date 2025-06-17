@@ -299,7 +299,6 @@ namespace AiCalendar.WebApi.Controllers
         [HttpGet]
         [AllowAnonymous]
         [ProducesResponseType(typeof(IEnumerable<EventDto>), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> GetEvents([FromBody] EventFilterCriteriaDto? filter)
         {
             IEnumerable<EventDto> events = await _eventService.GetEventsAsync(filter);

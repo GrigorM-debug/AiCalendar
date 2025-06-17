@@ -389,8 +389,6 @@ namespace AiCalendar.WebApi.Controllers
         [AllowAnonymous]
         [HttpGet("users")]
         [ProducesResponseType(typeof(IEnumerable<UserDtoExtended>), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         public async Task<IActionResult> GetUsers([FromBody] UserFilterCriteriaDto? filter)
         {
             IEnumerable<UserDtoExtended> users = await _userService.GetUsersAsync(filter);
