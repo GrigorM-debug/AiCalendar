@@ -133,7 +133,7 @@ namespace AiCalendar.WebApi.Services.Users
         /// <returns>True if the user was successfully deleted</returns>
         public async Task DeleteUserAsync(Guid userId)
         {
-            User? user = await _userRepository.GetByIdAsync(userId);
+            //User? user = await _userRepository.GetByIdAsync(userId);
 
             // Delete all participations of the user
             IEnumerable<Participant> participations = await _userRepository
