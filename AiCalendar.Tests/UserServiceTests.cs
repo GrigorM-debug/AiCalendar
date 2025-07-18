@@ -43,5 +43,32 @@ namespace AiCalendar.Tests
 
             Assert.That(isUserExists, $"User with username {username} should exist.");
         }
+
+        [Test]
+        [TestCase("NonExistentUser")]
+        [TestCase("AnotherNonExistentUser")]
+        [TestCase("ThirdNonExistingUser")]
+        public async Task UserExistsByUsernameAsyncShouldReturnFalseIfTheUserDoesNotExist(string username)
+        {
+            bool isUserExists = await _userService.UserExistsByUsernameAsync(username);
+            Assert.That(isUserExists, Is.False, $"User with username {username} should not exist.");
+        }
+
+        [Test]
+        public async Task GetUserByUsernameAsyncShouldReturnUserIfExists()
+        {
+            string username = "JessiePinkman";
+            User? user = await _userService.GetUserByUsernameAsync(username);
+            Assert.That(user, Is.Not.Null, $"User with username {username} should exist.");
+            Assert.That(user?.UserName, Is.EqualTo(username), "Returned user does not match the requested username.");
+        }
+
+        [Test]
+        public async Task GetUserByUsernameAsyncShouldReturnNullIfUserDoesNotExist()
+        {
+            string username = "NonExistentUser";
+            User? user = await _userService.GetUserByUsernameAsync(username);
+            Assert.That(user, Is.Null, $"User with username {username} should not exist.");
+        }
     }
 }
