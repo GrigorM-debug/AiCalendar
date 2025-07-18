@@ -175,18 +175,21 @@ namespace AiCalendar.WebApi.Services.Users
             //Check if old password is correct
             if (!string.IsNullOrEmpty(updateUserDto.OldPassword) && !string.IsNullOrEmpty(updateUserDto.NewPassword))
             {
-                string oldPasswordHash = _passwordHasher.HashPassword(updateUserDto.OldPassword);
-                if (user.PasswordHashed != oldPasswordHash)
+                bool isOldPasswordValid =
+                    _passwordHasher.VerifyPassword(user.PasswordHashed, updateUserDto.OldPassword);
+
+                if (!isOldPasswordValid)
                 {
                     throw new Exception("Old password is incorrect.");
                 }
 
-                string newPasswordHash = _passwordHasher.HashPassword(updateUserDto.NewPassword);
                 //Check if new password is same as the old password
-                if (user.PasswordHashed == newPasswordHash)
+                if (updateUserDto.OldPassword == updateUserDto.NewPassword)
                 {
                     throw new Exception("New password cannot be the same as the old password.");
                 }
+
+                string newPasswordHash = _passwordHasher.HashPassword(updateUserDto.NewPassword);
 
                 user.PasswordHashed = newPasswordHash;
             }
