@@ -259,8 +259,15 @@ namespace AiCalendar.WebApi.Services.Users
         /// <returns>A collection of <see cref="EventDto"/> matching the specified criteria</returns>
         public async Task<IEnumerable<EventDto>> GetUserEventsAsync(Guid userId, EventFilterCriteriaDto? filter = null)
         {
+            //IQueryable<Event> query = _eventRepository
+            //    .WithIncludes(e => e.Participants, e => e.Participants.Select(p => p.User))
+            //    .Where(e => e.CreatorId == userId);
+
             IQueryable<Event> query = _eventRepository
-                .WithIncludes(e => e.Participants, e => e.Participants.Select(p => p.User))
+                .WithIncludes(u => u.Participants);
+
+            query = query.Include(e => e.Participants)
+                .ThenInclude(p => p.User)
                 .Where(e => e.CreatorId == userId);
 
             if (filter != null)
@@ -345,7 +352,7 @@ namespace AiCalendar.WebApi.Services.Users
                     else
                     {
                         // User has no active events (all events are cancelled or no events)
-                        query = query.Where(u => !u.CreatedEvents.Any(e => !e.IsCancelled));
+                        query = query.Where(u => u.CreatedEvents.Any(e => e.IsCancelled));
                     }
                 }
             }

@@ -10,6 +10,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using AiCalendar.WebApi.Services.Events;
+using AiCalendar.WebApi.Services.Events.Interfaces;
 
 namespace AiCalendar.Tests
 {
@@ -20,6 +22,7 @@ namespace AiCalendar.Tests
         private IRepository<Event> _eventRepository;
         private IRepository<Participant> _participantRepository;
         private IUserService _userService;
+        private IEventService _eventService;
 
         [SetUp]
         public async Task Setup()
@@ -29,6 +32,7 @@ namespace AiCalendar.Tests
             _eventRepository = new Repository<Event>(_context);
             _participantRepository = new Repository<Participant>(_context);
             _userService = new UserService(_userRepository, _passwordHasher, _eventRepository, _participantRepository);
+            _eventService = new EventService(_eventRepository);
         }
 
         [TearDown]
@@ -330,19 +334,271 @@ namespace AiCalendar.Tests
         }
 
         [Test]
-        public async Task GetUserEventsAsyncShouldReturnAllEventsCreatedByTheUserIFNoFilterIsApplied()
+        public async Task GetUsersAsyncShouldReturnAllUsersIfNoFilterIsApplied()
         {
-            //You have to make some fixes in the method logic
+            var users = await _userService.GetUsersAsync(null);
 
-            Guid user1Id = Guid.Parse("A1B2C3D4-E5F6-7890-1234-567890ABCDEF");
+            Assert.That(users, Is.Not.Null, "Users should not be null.");
+            Assert.That(users.Count(), Is.EqualTo(3), "There should be 3 users in the system.");
+            Assert.That(users.Any(u => u.UserName == "JessiePinkman"), "JessiePinkman should be in the users list.");
+            Assert.That(users.Any(u => u.UserName == "Heisenberg"), "Heisenberg should be in the users list.");
+            Assert.That(users.Any(u => u.UserName == "admin"), "admin should be in the users list.");
+            Assert.That(users.Any(u => u.Email == "admin@example.com"), "Users should have emails.");
+            Assert.That(users.Any(u => u.Email == "heisenberg@example.com"), "Users should have emails.");
+            Assert.That(users.Any(u => u.Email == "jessie@example.com"), "Users should have emails.");
+        }
 
-            IEnumerable<EventDto> events = await _userService.GetUserEventsAsync(user1Id, null);
+        [Test]
+        [TestCase("admin@example.com")]
+        [TestCase("heisenberg@example.com")]
+        [TestCase("jessie@example.com")]
+        public async Task GetUsersAsyncShouldReturnTheUserWhichHasProvidedEmailInTheFilterIfOnlyEmailIsProvided(string email)
+        {
+            UserFilterCriteriaDto filter = new UserFilterCriteriaDto
+            {
+                Email = email,
+            };
+
+            var users = await _userService.GetUsersAsync(filter);
+
+            Assert.That(users, Is.Not.Null, "Users should not be null.");
+            Assert.That(users.Any(u => u.Email == email), "Returned user email does not match the filter.");
+        }
+
+        [Test]
+        [TestCase("nonexisting@example.com")]
+        [TestCase("2nonexistinguser@xample.com")]
+        [TestCase("2nonexistinguser@xample.com")]
+        public async Task GetUsersAsyncShouldReturnEmptyCollectionIfNoUsersMatchTheEmailFilterIfOnlyTheEmailIsProvided(string email)
+        {
+            UserFilterCriteriaDto filter = new UserFilterCriteriaDto
+            {
+                Email = email
+            };
+
+            var users = await _userService.GetUsersAsync(filter);
+            Assert.That(users, Is.Empty, "Users should not be null.");
+        }
+
+        [Test]
+        [TestCase("JessiePinkman")]
+        [TestCase("Heisenberg")]
+        [TestCase("admin")]
+        public async Task GetUsersAsyncShouldReturnTheUserWhichHasProvidedUsernameInTheFilterIfOnlyUsernameIsProvided(string username)
+        {
+            UserFilterCriteriaDto filter = new UserFilterCriteriaDto
+            {
+                Username = username,
+            };
+            var users = await _userService.GetUsersAsync(filter);
+            Assert.That(users, Is.Not.Null, "Users should not be null.");
+            Assert.That(users.Any(u => u.UserName == username), "Returned user username does not match the filter.");
+        }
+
+        [Test]
+        [TestCase("NonExisting")]
+        [TestCase("NonExisting2")]
+        [TestCase("NonExisting3")]
+        public async Task GetUsersAsyncShouldReturnEmptyCollectionIfTheFilterIsNotMatchingWhenOnlyTheUsernameIsProvided(string username)
+        {
+            UserFilterCriteriaDto filter = new UserFilterCriteriaDto
+            {
+                Username = username
+            };
+
+            var users = await _userService.GetUsersAsync(filter);
+            Assert.That(users, Is.Empty, "Users should be null.");
+        }
+
+        [Test]
+        [TestCase("JessiePinkman", "jessie@example.com")]
+        [TestCase("Heisenberg", "heisenberg@example.com")]
+        [TestCase("admin", "admin@example.com")]
+        public async Task GetUsersAsyncShouldReturnTheUserWhichHasProvidedUsernameAndEmailInTheFilterIfBothAreProvided(string username, string email)
+        {
+            UserFilterCriteriaDto filter = new UserFilterCriteriaDto
+            {
+                Username = username,
+                Email = email
+            };
+
+            var users = await _userService.GetUsersAsync(filter);
+            Assert.That(users, Is.Not.Null, "Users should not be null.");
+            Assert.That(users.Count(), Is.EqualTo(1), "There should be 3 users in the system.");
+            Assert.That(users.Any(u => u.UserName == username), "JessiePinkman should be in the users list.");
+            Assert.That(users.Any(u => u.Email == email), "Users should have emails.");
+        }
+
+        [Test]
+        [TestCase("NonExistingUser", "nonexisting@example.com")]
+        [TestCase("AnotherNonExistingUser", "2nonexistinguser@xample.com")]
+        [TestCase("ThirdNonExistingUser", "2nonexistinguser@xample.com")]
+        public async Task GetUsersAsyncShouldReturnEmptyCollectionIfTheFilterIsNotMatchingWhenEmailAndUsernameAreProvided(
+            string username, string email)
+        {
+            UserFilterCriteriaDto filter = new UserFilterCriteriaDto
+            {
+                Username = username,
+                Email = email
+            };
+
+            var users = await _userService.GetUsersAsync(filter);
+            Assert.That(users, Is.Empty, "Users should be null.");
+        }
+
+        [Test]
+        [TestCase("JessiePinkman", "jessie@example.com")]
+        [TestCase("Heisenberg", "heisenberg@example.com")]
+        [TestCase("admin", "admin@example.com")]
+        public async Task GetUsersAsyncShouldReturnOnlyUsersWithActiveEventsIfTheFilterIsAppliedWithValueTrue(string username, string email)
+        {
+            UserFilterCriteriaDto filter = new UserFilterCriteriaDto
+            {
+                Username = username,
+                Email = email,
+                HasActiveEvents = true
+            };
+
+            var users = await _userService.GetUsersAsync(filter);
+            Assert.That(users, Is.Not.Null, "Users should not be null.");
+            foreach (var user in users)
+            {
+                Assert.That(user.UserName, Is.EqualTo(username), "Returned user username does not match the filter.");
+                Assert.That(user.Email, Is.EqualTo(email), "Returned user email does not match the filter.");
+                foreach (var createdEvent in user.CreatedEvents)
+                {
+                    Assert.That(createdEvent.IsCancelled, Is.False);
+                }
+            }
+        }
+
+        [Test]
+        public async Task GetUsersAsyncShouldReturnUsersWithCancelledEventsIfTheFilterIsAppliedWithValueFalse()
+        {
+            Guid eventId = Guid.Parse("E1000000-0000-0000-0000-000000000001");
+            Guid userId = Guid.Parse("A1B2C3D4-E5F6-7890-1234-567890ABCDEF");
+            EventDto cancelledEventDto = await _eventService.CancelEventAsync(eventId, userId);
+
+            UserFilterCriteriaDto filter = new UserFilterCriteriaDto
+            {
+                HasActiveEvents = false
+            };
+
+            var users = await _userService.GetUsersAsync(filter);
+            Assert.That(users, Is.Not.Null, "Users should not be null.");
+            Assert.That(users.Count(), Is.EqualTo(1), "There should be 1 user with cancelled events.");
+            Assert.That(users.Any(u => u.UserName == "admin"), "User with cancelled events should be admin.");
+            Assert.That(users.Any(u => u.Email == "admin@example.com"), "User with cancelled events should have email");
+            Assert.That(users.Any(u => u.CreatedEvents.Any(e => e.IsCancelled)),
+                "User should have at least one cancelled event.");
+        }
+
+        [Test]
+        [TestCase("A1B2C3D4-E5F6-7890-1234-567890ABCDEF")]
+        [TestCase("F0E9D8C7-B6A5-4321-FEDC-BA9876543210")]
+        [TestCase("11223344-5566-7788-99AA-BBCCDDEEFF00")]
+        public async Task GetUserEventsAsyncShouldReturnAllEventsCreatedByTheUserIFNoFilterIsApplied(string id)
+        {
+            Guid userId = Guid.Parse(id);
+
+            IEnumerable<EventDto> events = await _userService.GetUserEventsAsync(userId, null);
 
             Assert.That(events, Is.Not.Null, "Events should not be null.");
-            Assert.That(events.Count(), Is.EqualTo(2), "User should have created events.");
-            Assert.That(events.All(e => e.CreatorId == user1Id.ToString()),
+            Assert.That(events.All(e => e.CreatorId == userId.ToString()),
                 "All returned events should be created by the user.");
+        }
 
+        [Test]
+        public async Task GetUserEventsAsyncShouldReturnAllEventsCreatedByTheUserMatchingStartDateFilterIfItIsApplied()
+        {
+            EventFilterCriteriaDto filter = new EventFilterCriteriaDto
+            {
+                StartDate = DateTime.Parse("2023-10-01T00:00:00Z")
+            };
+
+            Guid userId = Guid.Parse("A1B2C3D4-E5F6-7890-1234-567890ABCDEF");
+            IEnumerable<EventDto> events = await _userService.GetUserEventsAsync(userId, filter);
+            Assert.That(events, Is.Not.Null, "Events should not be null.");
+            Assert.That(events.First().StartDate, Is.GreaterThanOrEqualTo(DateTime.Parse("2023-10-01T00:00:00Z")),
+                "Event start time does not match the filter.");
+            Assert.That(events.All(e => e.CreatorId == userId.ToString()),
+                "All returned events should be created by the user.");
+        }
+
+        [Test]
+        public async Task GetUserEventsAsyncShouldReturnAllEventsCreatedByTheUserMatchingEndDateFilterIfItIsApplied()
+        {
+            EventFilterCriteriaDto filter = new EventFilterCriteriaDto
+            {
+                EndDate = DateTime.Parse("2025-10-31T23:59:59Z")
+            };
+            Guid userId = Guid.Parse("A1B2C3D4-E5F6-7890-1234-567890ABCDEF");
+            IEnumerable<EventDto> events = await _userService.GetUserEventsAsync(userId, filter);
+            Assert.That(events, Is.Not.Null, "Events should not be null.");
+            Assert.That(events.First().EndDate, Is.LessThanOrEqualTo(DateTime.Parse("2025-10-31T23:59:59Z")),
+                "Event end time does not match the filter.");
+            Assert.That(events.All(e => e.CreatorId == userId.ToString()),
+                "All returned events should be created by the user.");
+        }
+
+        [Test]
+        public async Task
+            GetUserEventsAsyncShouldReturnAllEventsCreatedByTheUserMatchingStartDateAndEndDateFilterIfBothProvided()
+        {
+            EventFilterCriteriaDto filter = new EventFilterCriteriaDto
+            {
+                StartDate = DateTime.Parse("2023-10-01T00:00:00Z"),
+                EndDate = DateTime.Parse("2025-10-31T23:59:59Z")
+            };
+
+            Guid userId = Guid.Parse("A1B2C3D4-E5F6-7890-1234-567890ABCDEF");
+            IEnumerable<EventDto> events = await _userService.GetUserEventsAsync(userId, filter);
+
+            Assert.That(events, Is.Not.Null, "Events should not be null.");
+            Assert.That(events.First().StartDate, Is.GreaterThanOrEqualTo(DateTime.Parse("2023-10-01T00:00:00Z")));
+            Assert.That(events.First().EndDate, Is.LessThanOrEqualTo(DateTime.Parse("2025-10-31T23:59:59Z")),
+                "Event end time does not match the filter.");
+            Assert.That(events.All(e => e.CreatorId == userId.ToString()),
+                "All returned events should be created by the user.");
+        }
+
+        [Test]
+        public async Task GetUserEventsAsyncShouldReturnEmptyCollectionIfUserHasNoEvents()
+        {
+            Guid userId = Guid.NewGuid(); // Random ID that does not exist
+            IEnumerable<EventDto> events = await _userService.GetUserEventsAsync(userId, null);
+            Assert.That(events, Is.Not.Null, "Events should not be null.");
+            Assert.That(events.Count(), Is.EqualTo(0), "User should not have any events.");
+        }
+
+        [Test]
+        public async Task GetUserEventsAsyncShouldReturnEmptyCollectionIfUserHasNoEventsMatchingTheFilter()
+        {
+            Guid userId = Guid.Parse("A1B2C3D4-E5F6-7890-1234-567890ABCDEF");
+            EventFilterCriteriaDto filter = new EventFilterCriteriaDto
+            {
+                StartDate = DateTime.Parse("2025-10-01T00:00:00Z"),
+                EndDate = DateTime.Parse("2025-10-31T23:59:59Z")
+            };
+            IEnumerable<EventDto> events = await _userService.GetUserEventsAsync(userId, filter);
+            Assert.That(events, Is.Not.Null, "Events should not be null.");
+            Assert.That(events.Count(), Is.EqualTo(0), "User should not have any events matching the filter.");
+        }
+
+        [Test]
+        public async Task GetUserEventsAsyncShouldReturnAllCancelledEventsIfTheFilterIsApplied()
+        {
+            Guid eventId = Guid.Parse("E1000000-0000-0000-0000-000000000001");
+            Guid userId = Guid.Parse("A1B2C3D4-E5F6-7890-1234-567890ABCDEF");
+            EventDto cancelledEventDto = await _eventService.CancelEventAsync(eventId, userId);
+            EventFilterCriteriaDto filter = new EventFilterCriteriaDto
+            {
+                IsCancelled = true
+            };
+            IEnumerable<EventDto> events = await _userService.GetUserEventsAsync(userId, filter);
+            Assert.That(events, Is.Not.Null, "Events should not be null.");
+            Assert.That(events.Count(), Is.EqualTo(1), "User should have 1 cancelled event.");
+            Assert.That(events.All(e => e.IsCancelled), "All returned events should be cancelled.");
         }
     }
 }
