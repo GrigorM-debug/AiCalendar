@@ -116,6 +116,7 @@ namespace AiCalendar.WebApi.Services.Events
         public async Task<bool> HasOverlappingEvents(Guid userId, DateTime startTime, DateTime endTime)
         {
             var hasOverlappingEvents = await _eventRepository.ExistsByExpressionAsync(e =>
+                e.CreatorId == userId &&
                 e.IsCancelled == false &&
                 (startTime >= e.StartTime && startTime < e.EndTime) ||
                 (endTime > e.StartTime && endTime <= e.EndTime) ||

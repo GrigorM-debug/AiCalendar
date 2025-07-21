@@ -8,6 +8,7 @@ using AiCalendar.WebApi.DTOs.Event;
 using AiCalendar.WebApi.Models;
 using AiCalendar.WebApi.Services.Events;
 using AiCalendar.WebApi.Services.Events.Interfaces;
+using Microsoft.Identity.Client;
 
 namespace AiCalendar.Tests
 {
@@ -145,5 +146,417 @@ namespace AiCalendar.Tests
             Assert.That(result, Is.Empty);
         }
 
+        [Test]
+        public async Task GetAllEventsAsync_ShouldReturnFilteredEvents_WhenFilterIsApplied()
+        {
+            // Arrange
+            var filter = new EventFilterCriteriaDto()
+            {
+                StartDate = new DateTime(2025, 6, 16, 0, 0, 0, DateTimeKind.Utc),
+                EndDate = new DateTime(2025, 6, 20, 23, 59, 59, DateTimeKind.Utc)
+            };
+            // Act
+            var result = await _eventService.GetEventsAsync(filter);
+            // Assert
+            Assert.That(result, Is.Not.Empty);
+            Assert.That(result.Count(),
+                Is.EqualTo(3)); // Assuming we have seeded 4 events and only 3 fall within this range
+            Assert.That(result.Any(e => e.Title == "Team Stand-up Meeting"));
+            
+            Assert.That(result.Any(e => e.Description == "Daily team synchronization meeting."));
+            Assert.That(result.Any(e => e.Title == "Project X Review"));
+       
+            Assert.That(result.Any(e => e.Description == "Review progress on Project X with stakeholders."));
+            Assert.That(result.Any(e => e.Title == "Dentist Appointment"));
+           
+            Assert.That(result.Any(e => e.Description == "Routine check-up."));
+            Assert.That(result.All(e => e.IsCancelled == false));
+
+            Assert.That(result.All(e => e.StartDate >= new DateTime(2025, 6, 16, 0, 0, 0, DateTimeKind.Utc)));
+
+            Assert.That(result.All(e => e.EndDate <= new DateTime(2025, 6, 20, 23, 59, 59, DateTimeKind.Utc)));
+        }
+
+        [Test]
+        public async Task GetAllEventsAsync_ShouldReturnEmptyCollection_WhenNoEventsMatchFilter()
+        {
+            // Arrange
+            var filter = new EventFilterCriteriaDto()
+            {
+                StartDate = new DateTime(2025, 6, 22, 0, 0, 0, DateTimeKind.Utc),
+                EndDate = new DateTime(2025, 6, 22, 23, 59, 59, DateTimeKind.Utc)
+            };
+            // Act
+            var result = await _eventService.GetEventsAsync(filter);
+            // Assert
+            Assert.That(result, Is.Empty);
+            Assert.That(result.Count(), Is.EqualTo(0));
+        }
+
+        [Test]
+        public async Task GetAllEventsAsync_ShouldReturnEvents_MatchingTheStartDateFilter()
+        {
+            var filter = new EventFilterCriteriaDto()
+            {
+                StartDate = new DateTime(2025, 6, 16, 9, 0, 0, DateTimeKind.Utc)
+            };
+            var result = await _eventService.GetEventsAsync(filter);
+            // Assert
+            Assert.That(result, Is.Not.Empty);
+            Assert.That(result.All(e => e.IsCancelled == false));
+
+            Assert.That(result.All(e => e.StartDate >= new DateTime(2025, 6, 16, 9, 0, 0, DateTimeKind.Utc)));
+        }
+
+        [Test]
+        public async Task GetAllEventsAsync_ShouldReturnEmptyCollection_WhenNoEventsMatchStartDateFilter()
+        {
+            var filter = new EventFilterCriteriaDto()
+            {
+                StartDate = new DateTime(2025, 6, 23, 0, 0, 0, DateTimeKind.Utc)
+            };
+            var result = await _eventService.GetEventsAsync(filter);
+            // Assert
+            Assert.That(result, Is.Empty);
+            Assert.That(result.Count(), Is.EqualTo(0));
+        }
+
+        [Test]
+        public async Task GetAllEventsAsync_ShouldReturnEvents_MatchingTheEndDateFilter()
+        {
+            var filter = new EventFilterCriteriaDto()
+            {
+                EndDate = new DateTime(2025, 6, 22, 23, 59, 59, DateTimeKind.Utc)
+            };
+            var result = await _eventService.GetEventsAsync(filter);
+            // Assert
+            Assert.That(result, Is.Not.Empty);
+            Assert.That(result.All(e => e.IsCancelled == false));
+            Assert.That(result.All(e => e.EndDate <= new DateTime(2025, 6, 22, 23, 59, 59, DateTimeKind.Utc)));
+        }
+
+        [Test]
+        public async Task GetAllEventsAsync_ShouldReturnEmptyCollection_WhenNoEventsMatchEndDateFilter()
+        {
+            var filter = new EventFilterCriteriaDto()
+            {
+                EndDate = new DateTime(2020, 6, 21, 15, 0, 0, DateTimeKind.Utc)
+            };
+            var result = await _eventService.GetEventsAsync(filter);
+            // Assert
+            Assert.That(result, Is.Empty);
+            Assert.That(result.Count(), Is.EqualTo(0));
+        }
+
+        [Test]
+        public async Task GetAllEventsAsync_ShouldReturnOnlyCancelledEvents_WhenTheFilterIsApplied()
+        {
+            Guid event4Id = Guid.Parse("E1000000-0000-0000-0000-000000000004");
+            Guid user1Id = Guid.Parse("A1B2C3D4-E5F6-7890-1234-567890ABCDEF");
+
+            await _eventService.CancelEventAsync(event4Id, user1Id);
+            var filter = new EventFilterCriteriaDto()
+            {
+                IsCancelled = true
+            };
+
+            var result = await _eventService.GetEventsAsync(filter);
+            // Assert
+            Assert.That(result, Is.Not.Empty);
+            Assert.That(result.Count(), Is.EqualTo(1)); // Only one event should be cancelled
+            Assert.That(result.First().Id, Is.EqualTo(event4Id.ToString()));
+            Assert.That(result.First().IsCancelled, Is.True);
+        }
+
+        [Test]
+        public async Task GetAllEventsAsync_ShouldReturnEmptyCollection_WhenNoCancelledEventsExist()
+        {
+            var filter = new EventFilterCriteriaDto()
+            {
+                IsCancelled = true
+            };
+            var result = await _eventService.GetEventsAsync(filter);
+            // Assert
+            Assert.That(result, Is.Empty);
+            Assert.That(result.Count(), Is.EqualTo(0));
+        }
+
+        [Test]
+        public async Task DeleteEventAsync_ShouldDeleteEvent_WhenIdExists()
+        {
+            // Arrange
+            Guid eventId = Guid.Parse("E1000000-0000-0000-0000-000000000001");
+            // Act
+            await _eventService.DeleteEventAsync(eventId);
+            // Assert
+            var deletedEvent = await _eventService.GetEventByIdAsync(eventId);
+            Assert.That(deletedEvent, Is.Null);
+        }
+
+        [Test]
+        public async Task IsUserEventCreator_ShouldReturnTrue_IfUserIsEventCreator()
+        {
+            Guid eventId = Guid.Parse("E1000000-0000-0000-0000-000000000001");
+            Guid userId = Guid.Parse("A1B2C3D4-E5F6-7890-1234-567890ABCDEF"); // Assuming this user is the creator
+            bool isCreator = await _eventService.IsUserEventCreator(eventId, userId);
+            Assert.That(isCreator, Is.True);
+        }
+
+        [Test]
+        public async Task IsUserEventCreator_ShouldReturnFalse_IfUserIsNotEventCreator()
+        {
+            Guid eventId = Guid.Parse("E1000000-0000-0000-0000-000000000001");
+            Guid userId = Guid.Parse("11223344-5566-7788-99AA-BBCCDDEEFF00"); 
+            bool isCreator = await _eventService.IsUserEventCreator(eventId, userId);
+            Assert.That(isCreator, Is.False);
+        }
+
+        [Test]
+        public async Task CancelEventAsync_ShouldCancelEvent_IfItExists()
+        {
+            Guid event4Id = Guid.Parse("E1000000-0000-0000-0000-000000000004");
+            Guid user1Id = Guid.Parse("A1B2C3D4-E5F6-7890-1234-567890ABCDEF");
+
+            var result = await _eventService.CancelEventAsync(event4Id, user1Id);
+
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.IsCancelled, Is.True);
+            Assert.That(result.Id, Is.EqualTo(event4Id.ToString()));
+            Assert.That(result.CreatorId, Is.EqualTo(user1Id.ToString()));
+        }
+
+        [Test]
+        public async Task UpdateEventAsync_ShouldUpdateEvent_WhenValidDataProvided()
+        {
+            // Arrange
+            Guid eventId = Guid.Parse("E1000000-0000-0000-0000-000000000001");
+            Guid userId = Guid.Parse("A1B2C3D4-E5F6-7890-1234-567890ABCDEF"); 
+            var updateEventDto = new UpdateEventDto
+            {
+                Title = "Updated Event",
+                Description = "This event has been updated.",
+                StartTime = new DateTime(2025, 6, 22, 11, 0, 0, DateTimeKind.Utc),
+                EndTime = new DateTime(2025, 6, 22, 13, 0, 0, DateTimeKind.Utc)
+            };
+            // Act
+            var updatedEvent = await _eventService.UpdateEvent(eventId, updateEventDto, userId);
+            // Assert
+            Assert.That(updatedEvent, Is.Not.Null);
+            Assert.That(updatedEvent.Title, Is.EqualTo(updateEventDto.Title));
+            Assert.That(updatedEvent.Description, Is.EqualTo(updateEventDto.Description));
+            Assert.That(updatedEvent.StartDate, Is.EqualTo(updateEventDto.StartTime));
+            Assert.That(updatedEvent.EndDate, Is.EqualTo(updateEventDto.EndTime));
+        }
+
+        [Test]
+        public async Task UpdateEventAsync_ShouldUpdateOnlyTheTitle_WhenOnlyTheTitleIsProvided()
+        {
+            Guid event4Id = Guid.Parse("E1000000-0000-0000-0000-000000000004");
+            Guid user1Id = Guid.Parse("A1B2C3D4-E5F6-7890-1234-567890ABCDEF");
+
+            var updateEventDto = new UpdateEventDto
+            {
+                Title = "Updated Weekend Hike"
+            };
+
+            var updatedEvent = await _eventService.UpdateEvent(event4Id, updateEventDto, user1Id);
+
+            Assert.That(updatedEvent, Is.Not.Null);
+            Assert.That(updatedEvent.Title, Is.EqualTo(updateEventDto.Title));
+            Assert.That(updatedEvent.Description, Is.EqualTo("Exploring the Vitosha mountains."));
+            Assert.That(updatedEvent.StartDate, Is.EqualTo(new DateTime(2025, 6, 21, 7, 0, 0, DateTimeKind.Utc)));
+            Assert.That(updatedEvent.EndDate, Is.EqualTo(new DateTime(2025, 6, 21, 15, 0, 0, DateTimeKind.Utc)));
+        }
+
+        [Test]
+        public async Task UpdateEventAsync_ShouldUpdateOnlyTheDescription_WhenOnlyTheDescriptionIsProvided()
+        {
+            Guid event4Id = Guid.Parse("E1000000-0000-0000-0000-000000000004");
+            Guid user1Id = Guid.Parse("A1B2C3D4-E5F6-7890-1234-567890ABCDEF");
+
+            var updateEventDto = new UpdateEventDto
+            {
+                Description = "Exploring the Vitosha mountains. Updated"
+            };
+
+            var updatedEvent = await _eventService.UpdateEvent(event4Id, updateEventDto, user1Id);
+
+            Assert.That(updatedEvent, Is.Not.Null);
+            Assert.That(updatedEvent.Title, Is.EqualTo("Weekend Hike"));
+            Assert.That(updatedEvent.Description, Is.EqualTo(updateEventDto.Description));
+            Assert.That(updatedEvent.StartDate, Is.EqualTo(new DateTime(2025, 6, 21, 7, 0, 0, DateTimeKind.Utc)));
+            Assert.That(updatedEvent.EndDate, Is.EqualTo(new DateTime(2025, 6, 21, 15, 0, 0, DateTimeKind.Utc)));
+        }
+
+        [Test]
+        public async Task UpdateEventAsync_ShouldUpdateOnlyTheStartTime_WhenOnlyTheStartTimeIsProvided()
+        {
+            Guid event4Id = Guid.Parse("E1000000-0000-0000-0000-000000000004");
+            Guid user1Id = Guid.Parse("A1B2C3D4-E5F6-7890-1234-567890ABCDEF");
+            var updateEventDto = new UpdateEventDto
+            {
+                StartTime = new DateTime(2025, 6, 21, 8, 0, 0, DateTimeKind.Utc)
+            };
+            var updatedEvent = await _eventService.UpdateEvent(event4Id, updateEventDto, user1Id);
+            Assert.That(updatedEvent, Is.Not.Null);
+            Assert.That(updatedEvent.Title, Is.EqualTo("Weekend Hike"));
+            Assert.That(updatedEvent.Description, Is.EqualTo("Exploring the Vitosha mountains."));
+            Assert.That(updatedEvent.StartDate, Is.EqualTo(updateEventDto.StartTime));
+            Assert.That(updatedEvent.EndDate, Is.EqualTo(new DateTime(2025, 6, 21, 15, 0, 0, DateTimeKind.Utc)));
+        }
+
+        [Test]
+        public async Task UpdateEventAsync_ShouldUpdateOnlyTheEndDate_WhenOnlyTheEndDateIsProvided()
+        {
+            Guid event4Id = Guid.Parse("E1000000-0000-0000-0000-000000000004");
+            Guid user1Id = Guid.Parse("A1B2C3D4-E5F6-7890-1234-567890ABCDEF");
+            var updateEventDto = new UpdateEventDto
+            {
+                EndTime = new DateTime(2026, 7, 28, 5, 0, 0, DateTimeKind.Utc)
+            };
+            var updatedEvent = await _eventService.UpdateEvent(event4Id, updateEventDto, user1Id);
+            Assert.That(updatedEvent, Is.Not.Null);
+            Assert.That(updatedEvent.Title, Is.EqualTo("Weekend Hike"));
+            Assert.That(updatedEvent.Description, Is.EqualTo("Exploring the Vitosha mountains."));
+            Assert.That(updatedEvent.StartDate, Is.EqualTo(new DateTime(2025, 6, 21, 7, 0, 0, DateTimeKind.Utc)));
+            Assert.That(updatedEvent.EndDate, Is.EqualTo(updateEventDto.EndTime));
+        }
+
+        [Test]
+        public async Task UpdateEventAsync_ShouldUpdateOnlyTheTitleAndDescription_WhenOnlyTheyAreProvided()
+        {
+            Guid event4Id = Guid.Parse("E1000000-0000-0000-0000-000000000004");
+            Guid user1Id = Guid.Parse("A1B2C3D4-E5F6-7890-1234-567890ABCDEF");
+            var updateEventDto = new UpdateEventDto
+            {
+                Title = "Updated Weekend Hike",
+                Description = "Exploring the Vitosha mountains. Updated"
+            };
+            var updatedEvent = await _eventService.UpdateEvent(event4Id, updateEventDto, user1Id);
+            Assert.That(updatedEvent, Is.Not.Null);
+            Assert.That(updatedEvent.Title, Is.EqualTo(updateEventDto.Title));
+            Assert.That(updatedEvent.Description, Is.EqualTo(updateEventDto.Description));
+            Assert.That(updatedEvent.StartDate, Is.EqualTo(new DateTime(2025, 6, 21, 7, 0, 0, DateTimeKind.Utc)));
+            Assert.That(updatedEvent.EndDate, Is.EqualTo(new DateTime(2025, 6, 21, 15, 0, 0, DateTimeKind.Utc)));
+        }
+
+        [Test]
+        public async Task UpdateEventAsync_ShouldUpdateOnlyTheTitleAndTheStartDate_WhenOnlyTheyAreProvided()
+        {
+            Guid event4Id = Guid.Parse("E1000000-0000-0000-0000-000000000004");
+            Guid user1Id = Guid.Parse("A1B2C3D4-E5F6-7890-1234-567890ABCDEF");
+
+            var updateEventDto = new UpdateEventDto
+            {
+                Title = "Updated Weekend Hike",
+                StartTime = new DateTime(2025, 6, 21, 8, 0, 0, DateTimeKind.Utc)
+            };
+
+            var updatedEvent = await _eventService.UpdateEvent(event4Id, updateEventDto, user1Id);
+            Assert.That(updatedEvent, Is.Not.Null);
+            Assert.That(updatedEvent.Title, Is.EqualTo(updateEventDto.Title));
+            Assert.That(updatedEvent.Description, Is.EqualTo("Exploring the Vitosha mountains."));
+            Assert.That(updatedEvent.StartDate, Is.EqualTo(updateEventDto.StartTime));
+            Assert.That(updatedEvent.EndDate, Is.EqualTo(new DateTime(2025, 6, 21, 15, 0, 0, DateTimeKind.Utc)));
+        }
+
+        [Test]
+        public async Task UpdateEventAsync_ShouldUpdateOnlyTheTitleAndTheEndDate_WhenOnlyTheyAreProvided()
+        {
+            Guid event4Id = Guid.Parse("E1000000-0000-0000-0000-000000000004");
+            Guid user1Id = Guid.Parse("A1B2C3D4-E5F6-7890-1234-567890ABCDEF");
+            var updateEventDto = new UpdateEventDto
+            {
+                Title = "Updated Weekend Hike",
+                EndTime = new DateTime(2026, 7, 28, 5, 0, 0, DateTimeKind.Utc)
+            };
+            var updatedEvent = await _eventService.UpdateEvent(event4Id, updateEventDto, user1Id);
+            Assert.That(updatedEvent, Is.Not.Null);
+            Assert.That(updatedEvent.Title, Is.EqualTo(updateEventDto.Title));
+            Assert.That(updatedEvent.Description, Is.EqualTo("Exploring the Vitosha mountains."));
+            Assert.That(updatedEvent.StartDate, Is.EqualTo(new DateTime(2025, 6, 21, 7, 0, 0, DateTimeKind.Utc)));
+            Assert.That(updatedEvent.EndDate, Is.EqualTo(updateEventDto.EndTime));
+        }
+
+        [Test]
+        public async Task UpdateEventAsync_ShouldUpdateOnlyTheDescriptionAndStartDate_WhenOnlyTheyAreProvided()
+        {
+            Guid event4Id = Guid.Parse("E1000000-0000-0000-0000-000000000004");
+            Guid user1Id = Guid.Parse("A1B2C3D4-E5F6-7890-1234-567890ABCDEF");
+            var updateEventDto = new UpdateEventDto
+            {
+                Description = "Exploring the Vitosha mountains. Updated",
+                StartTime = new DateTime(2025, 6, 21, 8, 0, 0, DateTimeKind.Utc)
+            };
+
+            var updatedEvent = await _eventService.UpdateEvent(event4Id, updateEventDto, user1Id);
+            Assert.That(updatedEvent, Is.Not.Null);
+            Assert.That(updatedEvent.Title, Is.EqualTo("Weekend Hike"));
+            Assert.That(updatedEvent.Description, Is.EqualTo(updateEventDto.Description));
+            Assert.That(updatedEvent.StartDate, Is.EqualTo(updateEventDto.StartTime));
+            Assert.That(updatedEvent.EndDate, Is.EqualTo(new DateTime(2025, 6, 21, 15, 0, 0, DateTimeKind.Utc)));
+        }
+
+        [Test]
+        public async Task UpdateEventAsync_ShouldUpdateOnlyTheDescriptionAndEndDate_WhenOnlyTheyAreProvided()
+        {
+            Guid event4Id = Guid.Parse("E1000000-0000-0000-0000-000000000004");
+            Guid user1Id = Guid.Parse("A1B2C3D4-E5F6-7890-1234-567890ABCDEF");
+            var updateEventDto = new UpdateEventDto
+            {
+                Description = "Exploring the Vitosha mountains. Updated",
+                EndTime = new DateTime(2026, 7, 28, 5, 0, 0, DateTimeKind.Utc)
+            };
+            var updatedEvent = await _eventService.UpdateEvent(event4Id, updateEventDto, user1Id);
+            Assert.That(updatedEvent, Is.Not.Null);
+            Assert.That(updatedEvent.Title, Is.EqualTo("Weekend Hike"));
+            Assert.That(updatedEvent.Description, Is.EqualTo(updateEventDto.Description));
+            Assert.That(updatedEvent.StartDate, Is.EqualTo(new DateTime(2025, 6, 21, 7, 0, 0, DateTimeKind.Utc)));
+            Assert.That(updatedEvent.EndDate, Is.EqualTo(updateEventDto.EndTime));
+        }
+
+        [Test]
+        public async Task HasOverlappingEvents_ShouldReturnTrue_WhenUserHasOverlappingEvents()
+        {
+            Guid userId = Guid.Parse("A1B2C3D4-E5F6-7890-1234-567890ABCDEF");
+            DateTime startTime = new DateTime(2025, 6, 16, 9, 15, 0, DateTimeKind.Utc);
+            DateTime endTime = new DateTime(2025, 6, 16, 9, 45, 0, DateTimeKind.Utc);
+            bool hasOverlapping = await _eventService.HasOverlappingEvents(userId, startTime, endTime);
+            Assert.That(hasOverlapping, Is.True);
+        }
+
+        [Test]
+        public async Task HasOverlappingEvents_ShouldReturnFalse_WhenUserHasNoOverlappingEvents()
+        {
+            Guid userId = Guid.Parse("A1B2C3D4-E5F6-7890-1234-567890ABCDEF");
+            DateTime startTime = new DateTime(2025, 6, 22, 10, 0, 0, DateTimeKind.Utc);
+            DateTime endTime = new DateTime(2025, 6, 22, 12, 0, 0, DateTimeKind.Utc);
+            bool hasOverlapping = await _eventService.HasOverlappingEvents(userId, startTime, endTime);
+            Assert.That(hasOverlapping, Is.False);
+        }
+
+        [Test]
+        public async Task HasOverlappingEventsExcludingTheCurrentEvent_ShouldReturnTrue_WhenUserhasOverlappingEvents()
+        {
+            Guid userId = Guid.Parse("A1B2C3D4-E5F6-7890-1234-567890ABCDEF");
+            Guid currentEventId = Guid.Parse("E1000000-0000-0000-0000-000000000003");
+            DateTime startTime = new DateTime(2025, 6, 16, 9, 15, 0, DateTimeKind.Utc);
+            DateTime endTime = new DateTime(2025, 6, 16, 9, 45, 0, DateTimeKind.Utc);
+
+            bool hasOverlapping = await _eventService.HasOverlappingEventsExcludingTheCurrentEvent(userId, startTime, endTime, currentEventId);
+
+            Assert.That(hasOverlapping, Is.True);
+        }
+
+        [Test]
+        public async Task HasOverlappingEventsExcludingTheCurrentEvent_ShouldReturnFalse_WhenUserHasNoOverlappingEvents()
+        {
+            Guid userId = Guid.Parse("A1B2C3D4-E5F6-7890-1234-567890ABCDEF");
+            Guid currentEventId = Guid.Parse("E1000000-0000-0000-0000-000000000003");
+            DateTime startTime = new DateTime(2025, 6, 22, 10, 0, 0, DateTimeKind.Utc);
+            DateTime endTime = new DateTime(2025, 6, 22, 12, 0, 0, DateTimeKind.Utc);
+            bool hasOverlapping = await _eventService.HasOverlappingEventsExcludingTheCurrentEvent(userId, startTime, endTime, currentEventId);
+            Assert.That(hasOverlapping, Is.False);
+        }
     }
 }
