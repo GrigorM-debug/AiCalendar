@@ -38,6 +38,7 @@ namespace AiCalendar.Tests
             await Dispose();
         }
 
+        #region IsUserEventParticipant
         [Test]
         [TestCase("A1B2C3D4-E5F6-7890-1234-567890ABCDEF")]
         [TestCase("F0E9D8C7-B6A5-4321-FEDC-BA9876543210")]
@@ -61,6 +62,9 @@ namespace AiCalendar.Tests
             Assert.That(isParticipant, Is.False);
         }
 
+        #endregion
+
+        #region GetParticipantsByEventIdAsync
         [Test]
         public async Task GetParticipantsByEventIdAsync_ShouldReturnParticipants_ForValidEventId()
         {
@@ -106,6 +110,9 @@ namespace AiCalendar.Tests
             Assert.That(participants, Is.Not.Null);
         }
 
+        #endregion
+
+        #region AddParticipantAsync
         [Test]
         public async Task AddParticipantAsync_ShouldAddParticipant_ToEvent()
         {
@@ -137,5 +144,7 @@ namespace AiCalendar.Tests
             bool isParticipant = await _eventParticipantsService.IsUserEventParticipant(participantId, eventId);
             Assert.That(isParticipant, Is.False);
         }
+        
+        #endregion
     }
 }

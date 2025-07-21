@@ -41,6 +41,7 @@ namespace AiCalendar.Tests
             await Dispose();
         }
 
+        #region UserExistsByUsernameAsync
         [Test]
         [TestCase("JessiePinkman")]
         [TestCase("Heisenberg")]
@@ -61,7 +62,9 @@ namespace AiCalendar.Tests
             bool isUserExists = await _userService.UserExistsByUsernameAsync(username);
             Assert.That(isUserExists, Is.False, $"User with username {username} should not exist.");
         }
+        #endregion
 
+        #region GetUserByUsernameAsync
         [Test]
         public async Task GetUserByUsernameAsyncShouldReturnUserIfExists()
         {
@@ -78,7 +81,9 @@ namespace AiCalendar.Tests
             User? user = await _userService.GetUserByUsernameAsync(username);
             Assert.That(user, Is.Null, $"User with username {username} should not exist.");
         }
+        #endregion
 
+        #region GetUserByIdAsync
         [Test]
         public async Task GetUserByIdAsyncShouldReturnUserIfExists()
         {
@@ -95,7 +100,9 @@ namespace AiCalendar.Tests
             User? user = await _userService.GetUserByIdAsync(userId);
             Assert.That(user, Is.Null, $"User with ID {userId} should not exist.");
         }
+        #endregion
 
+        #region UserExistsByIdAsync
         [Test]
         public async Task UserExistsByIdAsyncShouldReturnTrueIfUserExists()
         {
@@ -111,7 +118,9 @@ namespace AiCalendar.Tests
             bool exists = await _userService.UserExistsByIdAsync(userId);
             Assert.That(exists, Is.False, $"User with ID {userId} should not exist.");
         }
+        #endregion
 
+        #region GetUserByUserNameAndEmail
         [Test]
         [TestCase("JessiePinkman", "jessie@example.com")]
         [TestCase("Heisenberg", "heisenberg@example.com")]
@@ -134,7 +143,9 @@ namespace AiCalendar.Tests
 
             Assert.That(user, Is.Null, $"User with username {username} and email {email} should not exist.");
         }
+        #endregion
 
+        #region RegisterAsync
         [Test]
         public async Task RegisterAsyncShouldCreateNewUser()
         {
@@ -151,7 +162,9 @@ namespace AiCalendar.Tests
             Assert.That(newUser.UserName, Is.EqualTo(input.UserName), "New user's username does not match the input.");
             Assert.That(newUser.Email, Is.EqualTo(input.Email), "New user's email does not match the input.");
         }
+        #endregion
 
+        #region CheckIfUserHasActiveEvents
         [Test]
         public async Task CheckIfUserHasActiveEventsShouldReturnTrueIfUserHasActiveEvents()
         {
@@ -176,7 +189,9 @@ namespace AiCalendar.Tests
             bool hasActiveEvents = await _userService.CheckIfUserHasActiveEvents(Guid.Parse(newUser.Id));
             Assert.That(hasActiveEvents, Is.False, $"User with ID {newUser.Id} should not have active events.");
         }
+        #endregion
 
+        #region DeleteUserAsync
         [Test]
         public async Task DeleteUserAsyncShouldDeleteUserAndAssociatedParticipants()
         {
@@ -189,7 +204,9 @@ namespace AiCalendar.Tests
             Assert.That(participantsExist, Is.False,
                 "Participants associated with the deleted user should also be deleted.");
         }
+        #endregion
 
+        #region UpdateUserAsync
         [Test]
         public async Task UpdateUserAsyncShouldUpdateOnlyEmailOfTheUserIfOnlyTheEmailIsProvided()
         {
@@ -310,7 +327,9 @@ namespace AiCalendar.Tests
             Assert.That(exception?.Message, Is.EqualTo("New password cannot be the same as the old password."),
                 "Exception message does not match.");
         }
+        #endregion
 
+        #region GetUserParticipatingEventsAsync
         [Test]
         public async Task GetUserParticipatingEventsAsyncShouldReturnTheEventsWhereUserIsParticipant()
         {
@@ -332,7 +351,9 @@ namespace AiCalendar.Tests
             Assert.That(events, Is.Not.Null, "Events should not be null.");
             Assert.That(events.Count(), Is.EqualTo(0), "User should not have participating events.");
         }
+        #endregion
 
+        #region GetUsersAsync
         [Test]
         public async Task GetUsersAsyncShouldReturnAllUsersIfNoFilterIsApplied()
         {
@@ -492,7 +513,9 @@ namespace AiCalendar.Tests
             Assert.That(users.Any(u => u.CreatedEvents.Any(e => e.IsCancelled)),
                 "User should have at least one cancelled event.");
         }
+        #endregion
 
+        #region GetUserEventsAsync
         [Test]
         [TestCase("A1B2C3D4-E5F6-7890-1234-567890ABCDEF")]
         [TestCase("F0E9D8C7-B6A5-4321-FEDC-BA9876543210")]
@@ -542,8 +565,7 @@ namespace AiCalendar.Tests
         }
 
         [Test]
-        public async Task
-            GetUserEventsAsyncShouldReturnAllEventsCreatedByTheUserMatchingStartDateAndEndDateFilterIfBothProvided()
+        public async Task GetUserEventsAsyncShouldReturnAllEventsCreatedByTheUserMatchingStartDateAndEndDateFilterIfBothProvided()
         {
             EventFilterCriteriaDto filter = new EventFilterCriteriaDto
             {
@@ -600,5 +622,6 @@ namespace AiCalendar.Tests
             Assert.That(events.Count(), Is.EqualTo(1), "User should have 1 cancelled event.");
             Assert.That(events.All(e => e.IsCancelled), "All returned events should be cancelled.");
         }
+        #endregion
     }
 }

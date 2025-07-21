@@ -31,6 +31,7 @@ namespace AiCalendar.Tests
             await Dispose();
         }
 
+        #region GetEventById
         [Test]
         [TestCase("E1000000-0000-0000-0000-000000000001")]
         [TestCase("E1000000-0000-0000-0000-000000000002")]
@@ -60,6 +61,9 @@ namespace AiCalendar.Tests
             Assert.That(result, Is.Null);
         }
 
+        #endregion
+
+        #region EventExistsByIdAsync
         [Test]
         [TestCase("E1000000-0000-0000-0000-000000000001")]
         [TestCase("E1000000-0000-0000-0000-000000000002")]
@@ -84,6 +88,9 @@ namespace AiCalendar.Tests
             Assert.That(result, Is.False);
         }
 
+        #endregion
+
+        #region CreateEventAsync
         [Test]
         public async Task CreateEventAsync_ShouldCreateEvent_WhenValidDataProvided()
         {
@@ -105,7 +112,9 @@ namespace AiCalendar.Tests
             Assert.That(createdEvent.StartDate, Is.EqualTo(createEventDto.StartTime));
             Assert.That(createdEvent.EndDate, Is.EqualTo(createEventDto.EndTime));
         }
+        #endregion
 
+        #region GetAllEventsAsync
         [Test]
         public async Task GetAllEventsAsync_ShouldReturnAllEvents_IfNoFilterIsApplied()
         {
@@ -280,7 +289,9 @@ namespace AiCalendar.Tests
             Assert.That(result, Is.Empty);
             Assert.That(result.Count(), Is.EqualTo(0));
         }
+        #endregion
 
+        #region DeleteEventAsync
         [Test]
         public async Task DeleteEventAsync_ShouldDeleteEvent_WhenIdExists()
         {
@@ -292,7 +303,9 @@ namespace AiCalendar.Tests
             var deletedEvent = await _eventService.GetEventByIdAsync(eventId);
             Assert.That(deletedEvent, Is.Null);
         }
+        #endregion
 
+        #region IsUserEventCreator
         [Test]
         public async Task IsUserEventCreator_ShouldReturnTrue_IfUserIsEventCreator()
         {
@@ -310,7 +323,9 @@ namespace AiCalendar.Tests
             bool isCreator = await _eventService.IsUserEventCreator(eventId, userId);
             Assert.That(isCreator, Is.False);
         }
+        #endregion
 
+        #region CancelEventAsync
         [Test]
         public async Task CancelEventAsync_ShouldCancelEvent_IfItExists()
         {
@@ -324,7 +339,9 @@ namespace AiCalendar.Tests
             Assert.That(result.Id, Is.EqualTo(event4Id.ToString()));
             Assert.That(result.CreatorId, Is.EqualTo(user1Id.ToString()));
         }
+        #endregion
 
+        #region UpdateEventAsync
         [Test]
         public async Task UpdateEventAsync_ShouldUpdateEvent_WhenValidDataProvided()
         {
@@ -514,7 +531,9 @@ namespace AiCalendar.Tests
             Assert.That(updatedEvent.StartDate, Is.EqualTo(new DateTime(2025, 6, 21, 7, 0, 0, DateTimeKind.Utc)));
             Assert.That(updatedEvent.EndDate, Is.EqualTo(updateEventDto.EndTime));
         }
+        #endregion
 
+        #region HasOverlappingEvents
         [Test]
         public async Task HasOverlappingEvents_ShouldReturnTrue_WhenUserHasOverlappingEvents()
         {
@@ -534,7 +553,9 @@ namespace AiCalendar.Tests
             bool hasOverlapping = await _eventService.HasOverlappingEvents(userId, startTime, endTime);
             Assert.That(hasOverlapping, Is.False);
         }
+        #endregion
 
+        #region HasOverlappingEventsExcludingTheCurrentEvent
         [Test]
         public async Task HasOverlappingEventsExcludingTheCurrentEvent_ShouldReturnTrue_WhenUserhasOverlappingEvents()
         {
@@ -558,5 +579,6 @@ namespace AiCalendar.Tests
             bool hasOverlapping = await _eventService.HasOverlappingEventsExcludingTheCurrentEvent(userId, startTime, endTime, currentEventId);
             Assert.That(hasOverlapping, Is.False);
         }
+        #endregion
     }
 }
