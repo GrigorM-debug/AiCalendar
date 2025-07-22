@@ -27,7 +27,6 @@ namespace AiCalendar.Tests
         private IEventParticipantsService _eventParticipantsService;
         private IUserService _userService;
         private IRepository<Event> _eventRepository;
-        private IPasswordHasher _passwordHasher;
         private IRepository<Participant> _participantRepository;
         private IRepository<User> _userRepository;
         private EventParticipantsController _controller;
@@ -38,7 +37,6 @@ namespace AiCalendar.Tests
             await Init();
             _userRepository = new Repository<User>(_context);
             _participantRepository = new Repository<Participant>(_context);
-            _passwordHasher = new PasswordHasher();
             _logger = new Logger<EventParticipantsController>(new LoggerFactory());
             _eventRepository = new Repository<Event>(_context);
             _eventService = new EventService(_eventRepository);
