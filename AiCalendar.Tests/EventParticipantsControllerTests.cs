@@ -441,8 +441,159 @@ namespace AiCalendar.Tests
         #endregion
 
         #region RemoveParticipantAsync
+        [Test]
+        public async Task RemoveParticipantAsync_ShouldReturnNoContent_WhenParticipantRemovedSuccessfully()
+        {
+            string eventId = "E1000000-0000-0000-0000-000000000001".ToLower();
+            string participantId = "11223344-5566-7788-99AA-BBCCDDEEFF00".ToLower(); // JessiePinkman
+            var result = await _controller.RemoveParticipantAsync(eventId, participantId);
+            Assert.That(result, Is.InstanceOf<NoContentResult>());
+            // Verify that the participant was removed
+            bool isParticipant =
+                await _eventParticipantsService.IsUserEventParticipant(Guid.Parse(participantId), Guid.Parse(eventId));
+            Assert.That(isParticipant, Is.False, "The user should be removed as a participant from the event.");
+        }
 
+        [Test]
+        public async Task RemoveParticipantAsync_ShouldReturnBadRequest_WhenEventIdIsInvalid()
+        {
+            string eventId = "invalid id".ToLower();
+            string participantId = "11223344-5566-7788-99AA-BBCCDDEEFF00".ToLower(); // JessiePinkman
+            var result = await _controller.RemoveParticipantAsync(eventId, participantId);
+            Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
+            var badRequestResult = result as BadRequestObjectResult;
+            Assert.That(badRequestResult?.Value, Is.EqualTo("Invalid eventId format."));
+        }
 
+        [Test]
+        public async Task RemoveParticipantAsync_ShouldReturnBadRequest_WhenParticipantIdIsInvalid()
+        {
+            string eventId = "E1000000-0000-0000-0000-000000000001".ToLower();
+            string participantId = "invalid id";
+            var result = await _controller.RemoveParticipantAsync(eventId, participantId);
+            Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
+            var badRequestResult = result as BadRequestObjectResult;
+            Assert.That(badRequestResult?.Value, Is.EqualTo("Invalid participantId format."));
+        }
+
+        [Test]
+        public async Task RemoveParticipantAsync_ShouldReturnUnAuthorized_IfUserIsUnauthorized()
+        {
+            string eventId = "E1000000-0000-0000-0000-000000000001".ToLower();
+            string participantId = "F0E9D8C7-B6A5-4321-FEDC-BA9876543210".ToLower(); // Heisenberg
+            _controller.ControllerContext = new ControllerContext();
+            _controller.ControllerContext.HttpContext = new DefaultHttpContext();
+            _controller.ControllerContext.HttpContext.User = new ClaimsPrincipal();
+            var result = await _controller.RemoveParticipantAsync(eventId, participantId);
+            Assert.That(result, Is.InstanceOf<UnauthorizedObjectResult>());
+            var unauthorizedResult = result as UnauthorizedObjectResult;
+            Assert.That(unauthorizedResult?.Value, Is.EqualTo("You must be logged in to remove a participant."));
+        }
+
+        [Test]
+        public async Task RemoveParticipantAsync_ShouldReturnNotFound_WhenCurrentUserDoesNotExist()
+        {
+            var userId = Guid.NewGuid().ToString();
+            var claims = new List<Claim>()
+            {
+                new Claim(ClaimTypes.NameIdentifier, userId),
+                new Claim(ClaimTypes.Name, "Mohamed"),
+                new Claim(ClaimTypes.Email, "mohamed@example.com")
+            };
+
+            string eventId = "E1000000-0000-0000-0000-000000000001".ToLower();
+            string participantId = "F0E9D8C7-B6A5-4321-FEDC-BA9876543210".ToLower();
+
+            var identity = new ClaimsIdentity(claims, "TestAuthType");
+            var principal = new ClaimsPrincipal(identity);
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext
+                {
+                    User = principal
+                }
+            };
+
+            var result = await _controller.RemoveParticipantAsync(eventId, participantId);
+            Assert.That(result, Is.InstanceOf<NotFoundObjectResult>());
+            var resultObjectResult = result as NotFoundObjectResult;
+            Assert.That(resultObjectResult?.Value, Is.EqualTo($"User with ID {userId} not found."));
+        }
+
+        [Test]
+        public async Task RemoveParticipantAsync_ShouldReturnNotFound_WhenEventDoesNotExist()
+        {
+            string eventId = Guid.NewGuid().ToString();
+            string participantId = "11223344-5566-7788-99AA-BBCCDDEEFF00".ToLower(); // JessiePinkman
+            var result = await _controller.RemoveParticipantAsync(eventId, participantId);
+            Assert.That(result, Is.InstanceOf<NotFoundObjectResult>());
+            var notFoundResult = result as NotFoundObjectResult;
+            Assert.That(notFoundResult?.Value, Is.EqualTo($"Event with ID {eventId} not found."));
+        }
+
+        [Test]
+        public async Task RemoveParticipantAsync_ShouldReturnNotFound_WhenParticipantDoesNotExist()
+        {
+            string eventId = "E1000000-0000-0000-0000-000000000001".ToLower();
+            string participantId = Guid.NewGuid().ToString(); // Non-existent user ID
+            var result = await _controller.RemoveParticipantAsync(eventId, participantId);
+            Assert.That(result, Is.InstanceOf<NotFoundObjectResult>());
+            var notFoundResult = result as NotFoundObjectResult;
+            Assert.That(notFoundResult?.Value, Is.EqualTo($"Participant with ID {participantId} not found."));
+        }
+
+        [Test]
+        public async Task RemoveParticipantAsync_ShouldReturnForbidden_WhenCurrentUserIsNotTheCreatorOfTheEvent()
+        {
+            string eventId = "E1000000-0000-0000-0000-000000000001".ToLower();
+            string participantId = "11223344-5566-7788-99AA-BBCCDDEEFF00".ToLower(); // JessiePinkman
+
+            Guid user2Id = Guid.Parse("F0E9D8C7-B6A5-4321-FEDC-BA9876543210");
+
+            var claims = new List<Claim>()
+            {
+                new Claim(ClaimTypes.NameIdentifier, user2Id.ToString()),
+                new Claim(ClaimTypes.Name, "Heisenberg"),
+                new Claim(ClaimTypes.Email, "heisenberg@example.com")
+            };
+
+            var identity = new ClaimsIdentity(claims, "TestAuthType");
+            var principal = new ClaimsPrincipal(identity);
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext
+                {
+                    User = principal
+                }
+            };
+
+            var result = await _controller.RemoveParticipantAsync(eventId, participantId);
+            Assert.That(result, Is.InstanceOf<ForbidResult>());
+            var forbidResult = result as ForbidResult;
+            Assert.That(forbidResult, Is.Not.Null);
+        }
+
+        [Test]
+        public async Task RemoveParticipantAsync_ShouldReturnBadRequest_WhenParticipantIsNotInEvent()
+        {
+            string eventId = "E1000000-0000-0000-0000-000000000001".ToLower();
+
+            var newUser = new LoginAndRegisterInputDto()
+            {
+                UserName = "New User",
+                Email = "example@example.com",
+                Password = "password123"
+            };
+
+            var newUserData = await _userService.RegisterAsync(newUser);
+
+            string participantId = newUserData.Id;
+
+            var result = await _controller.RemoveParticipantAsync(eventId, participantId);
+            Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
+            var badRequestResult = result as BadRequestObjectResult;
+            Assert.That(badRequestResult?.Value, Is.EqualTo("User is not a participant in this event."));
+        }
 
         #endregion
     }

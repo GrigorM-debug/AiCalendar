@@ -262,6 +262,13 @@ namespace AiCalendar.WebApi.Controllers
                 return NotFound($"Event with ID {parsedEventId} not found.");
             }
 
+            bool participantExists = await _userService.UserExistsByIdAsync(parsedParticipantId);
+            if (!participantExists)
+            {
+                _logger.LogError("Participant not found: {ParticipantId}", parsedParticipantId);
+                return NotFound($"Participant with ID {parsedParticipantId} not found.");
+            }
+
             // Only event creator can remove participants
             bool isUserEventCreator = await _eventService.IsUserEventCreator(parsedEventId, currentUserId);
             if (!isUserEventCreator)
