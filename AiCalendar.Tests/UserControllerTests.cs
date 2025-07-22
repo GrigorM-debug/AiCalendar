@@ -15,6 +15,8 @@ using System.Linq;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+using AiCalendar.WebApi.Services.Events;
+using AiCalendar.WebApi.Services.Events.Interfaces;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
 
 namespace AiCalendar.Tests
@@ -28,6 +30,7 @@ namespace AiCalendar.Tests
         private IRepository<Event> _eventRepository;
         private IRepository<User> _userRepository;
         private IRepository<Participant> _participantRepository;
+        private IEventService _eventService;
         private IConfiguration _configuration;
 
         [SetUp]
@@ -42,6 +45,7 @@ namespace AiCalendar.Tests
             _configuration = new ConfigurationManager();
             _tokenProvider = new TokenProvider(_configuration);
             _userController = new UserController(_logger, _userService, _passwordHasher, _tokenProvider);
+            _eventService = new EventService(_eventRepository);
         }
 
         [TearDown]
@@ -231,9 +235,171 @@ namespace AiCalendar.Tests
 
             Assert.That(userData.Email, Is.EqualTo(user.Email));
             Assert.That(userData.Username, Is.EqualTo(user.UserName));
-
-
         }
+        #endregion
+
+        #region GetUsers
+        [Test]
+        public async Task GetUsers_ShouldReturnAllUsers()
+        {
+            var result = await _userController.GetUsers(null);
+            Assert.That(result, Is.InstanceOf<OkObjectResult>());
+            var objectResult = result as OkObjectResult;
+            Assert.That(objectResult.Value, Is.InstanceOf<List<UserDtoExtended>>());
+            var users = objectResult.Value as List<UserDtoExtended>;
+            Assert.That(users.Count, Is.EqualTo(3)); // We seeded 3 users
+        }
+
+        [Test]
+        [TestCase("admin")]
+        [TestCase("Heisenberg")]
+        [TestCase("JessiePinkman")]
+        public async Task GetUsers_ShouldReturnFilteredUsers_WhenUsernameFilterIsProvided(string username)
+        {
+            var filter = new UserFilterCriteriaDto()
+            {
+                Username = username
+            };
+
+            var result = await _userController.GetUsers(filter);
+            Assert.That(result, Is.InstanceOf<OkObjectResult>());
+            var objectResult = result as OkObjectResult;
+            Assert.That(objectResult.Value, Is.InstanceOf<List<UserDtoExtended>>());
+            var users = objectResult.Value as List<UserDtoExtended>;
+            Assert.That(users.Count, Is.EqualTo(1)); // Only one user matches the search term
+            Assert.That(users[0].UserName, Is.EqualTo(username));
+        }
+
+        [Test]
+        [TestCase("nonexistinguser")]
+        [TestCase("anothernonexistinguser")]
+        public async Task GetUsers_ShouldReturnEmptyList_WhenNoUsersMatchFilter(string username)
+        {
+            var filter = new UserFilterCriteriaDto()
+            {
+                Username = username
+            };
+            var result = await _userController.GetUsers(filter);
+            Assert.That(result, Is.InstanceOf<OkObjectResult>());
+            var objectResult = result as OkObjectResult;
+            Assert.That(objectResult.Value, Is.InstanceOf<List<UserDtoExtended>>());
+            var users = objectResult.Value as List<UserDtoExtended>;
+            Assert.That(users.Count, Is.EqualTo(0)); // No users match the search term
+        }
+
+        [Test]
+        [TestCase("admin@example.com")]
+        [TestCase("heisenberg@example.com")]
+        [TestCase("jessie@example.com")]
+        public async Task GetUsers_ShouldReturnFilteredUsers_WhenEmailFilterIsApplied(string email)
+        {
+            var filter = new UserFilterCriteriaDto()
+            {
+                Email = email
+            };
+
+            var result = await _userController.GetUsers(filter);
+            Assert.That(result, Is.InstanceOf<OkObjectResult>());
+            var objectResult = result as OkObjectResult;
+            Assert.That(objectResult.Value, Is.InstanceOf<List<UserDtoExtended>>());
+            var users = objectResult.Value as List<UserDtoExtended>;
+            Assert.That(users.Count, Is.EqualTo(1));
+            Assert.That(users[0].Email, Is.EqualTo(email));
+        }
+
+        [Test]
+        [TestCase("nonexisting@example.com")]
+        [TestCase("nonexisting2@example.com")]
+        [TestCase("nonexisting3@example.com")]
+        public async Task GetUsers_ShouldReturnEmptyCollection_WhenNoUsersMatchEmailFilter(string email)
+        {
+            var filter = new UserFilterCriteriaDto()
+            {
+                Email = email
+            };
+
+            var result = await _userController.GetUsers(filter);
+            Assert.That(result, Is.InstanceOf<OkObjectResult>());
+            var objectResult = result as OkObjectResult;
+            Assert.That(objectResult.Value, Is.InstanceOf<List<UserDtoExtended>>());
+            var users = objectResult.Value as List<UserDtoExtended>;
+            Assert.That(users.Count, Is.EqualTo(0));
+        }
+
+        [Test]
+        [TestCase("admin", "admin@example.com")]
+        [TestCase("Heisenberg", "heisenberg@example.com")]
+        [TestCase("JessiePinkman", "jessie@example.com")]
+        public async Task GetUsers_ShouldReturnUsersMatchingTheFilter_WhenAllFilterAreApplied(string username,
+            string email)
+        {
+            var filter = new UserFilterCriteriaDto()
+            {
+                Email = email,
+                Username = username,
+                HasActiveEvents = true
+            };
+
+            var result = await _userController.GetUsers(filter);
+            Assert.That(result, Is.InstanceOf<OkObjectResult>());
+            var objectResult = result as OkObjectResult;
+            Assert.That(objectResult.Value, Is.InstanceOf<List<UserDtoExtended>>());
+            var users = objectResult.Value as List<UserDtoExtended>;
+            Assert.That(users.Count, Is.EqualTo(1));
+            Assert.That(users[0].UserName, Is.EqualTo(username));
+            Assert.That(users[0].Email, Is.EqualTo(email));
+            Assert.That(users[0].CreatedEvents
+                .All(e => e.IsCancelled == false)); // Assuming all seeded users have active events
+        }
+
+        [Test]
+        [TestCase("nonexistinguser", "nonexisting@example.com")]
+        [TestCase("anothernonexistinguser", "anothernonexistinguser@example.com")]
+        [TestCase("yetanothernonexistinguser", "yetanothernonexistinguser@example.com")]
+        public async Task GetUsers_ShouldReturnEmptyList_WhenNoUsersMatchAllFilters(string username, string email)
+        {
+            var filter = new UserFilterCriteriaDto()
+            {
+                Email = email,
+                Username = username,
+                HasActiveEvents = true
+            };
+            var result = await _userController.GetUsers(filter);
+            Assert.That(result, Is.InstanceOf<OkObjectResult>());
+            var objectResult = result as OkObjectResult;
+            Assert.That(objectResult.Value, Is.InstanceOf<List<UserDtoExtended>>());
+            var users = objectResult.Value as List<UserDtoExtended>;
+            Assert.That(users.Count, Is.EqualTo(0));
+        }
+
+        [Test]
+        public async Task GetUsers_ShouldReturnUsersWithCancelledEvents_WhenTheFilterIsApplied()
+        {
+            Guid user1Id = Guid.Parse("A1B2C3D4-E5F6-7890-1234-567890ABCDEF");
+            Guid event1Id = Guid.Parse("E1000000-0000-0000-0000-000000000001");
+            await _eventService.CancelEventAsync(event1Id, user1Id);
+
+            var filter = new UserFilterCriteriaDto()
+            {
+                HasActiveEvents = false
+            };
+
+            var result = await _userController.GetUsers(filter);
+
+            Assert.That(result, Is.InstanceOf<OkObjectResult>());
+            var objectResult = result as OkObjectResult;
+            Assert.That(objectResult.Value, Is.InstanceOf<List<UserDtoExtended>>());
+            var users = objectResult.Value as List<UserDtoExtended>;
+            Assert.That(users.Count, Is.EqualTo(1)); // Only one user has a cancelled event
+            Assert.That(users[0].CreatedEvents.Count, Is.EqualTo(2)); // The user has one cancelled event
+            Assert.That(users[0].CreatedEvents.Any(e => e.IsCancelled)); // The event is cancelled
+            Assert.That(users[0].CreatedEvents.First().Id, Is.EqualTo(event1Id.ToString()));
+        }
+        #endregion
+
+        #region GetUserParticipatingEvents
+
+
 
         #endregion
     }

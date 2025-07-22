@@ -344,7 +344,7 @@ namespace AiCalendar.WebApi.Services.Users
                 // Apply active events filter if provided
                 if (filter.HasActiveEvents.HasValue)
                 {
-                    if (filter.HasActiveEvents.Value)
+                    if (filter.HasActiveEvents.Value == true)
                     {
                         // User has active events (not cancelled)
                         query = query.Where(u => u.CreatedEvents.Any(e => !e.IsCancelled));

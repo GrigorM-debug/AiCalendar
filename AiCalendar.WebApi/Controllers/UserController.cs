@@ -174,7 +174,7 @@ namespace AiCalendar.WebApi.Controllers
         {
             string? currentUserIdString = User.GetUserId();
 
-            if (User.Identity == null && !User.Identity.IsAuthenticated && currentUserIdString == null)
+            if (User?.Identity == null && User?.Identity?.IsAuthenticated == null && currentUserIdString == null)
             {
                 _logger.LogWarning("Unauthorized access attempt to update user with ID {UserId}.", id);
                 return Forbid("You are not authorized to delete this account.");
@@ -243,7 +243,7 @@ namespace AiCalendar.WebApi.Controllers
         {
             string? id = User.GetUserId();
 
-            if (User.Identity == null && !User.Identity.IsAuthenticated && id == null)
+            if (User?.Identity == null && User?.Identity?.IsAuthenticated == null && id == null)
             {
                 _logger.LogWarning("Unauthorized access attempt to get user participating events.");
                 return Forbid("You are not authorized to access this resource.");
@@ -288,7 +288,7 @@ namespace AiCalendar.WebApi.Controllers
         {
             string? currentUserIdString = User.GetUserId();
 
-            if (User.Identity == null && !User.Identity.IsAuthenticated && currentUserIdString == null)
+            if (User?.Identity == null && User?.Identity?.IsAuthenticated == null && currentUserIdString == null)
             {
                 _logger.LogWarning("Unauthorized access attempt to delete user with ID {UserId}.", id);
                 return Forbid("You are not authorized to access this resource.");
@@ -355,7 +355,7 @@ namespace AiCalendar.WebApi.Controllers
         {
             string? id = User.GetUserId();
 
-            if (User.Identity == null || !User.Identity.IsAuthenticated || id == null)
+            if (User?.Identity == null || User?.Identity?.IsAuthenticated == null || id == null)
             {
                 _logger.LogWarning("Unauthorized access attempt to get user events.");
                 return Forbid("You are not authorized to access this resource.");
