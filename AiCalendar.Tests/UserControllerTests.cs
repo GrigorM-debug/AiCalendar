@@ -2,22 +2,24 @@
 using AiCalendar.WebApi.Data.Repository;
 using AiCalendar.WebApi.DTOs.Users;
 using AiCalendar.WebApi.Models;
+using AiCalendar.WebApi.Services.Events;
+using AiCalendar.WebApi.Services.Events.Interfaces;
 using AiCalendar.WebApi.Services.Users;
 using AiCalendar.WebApi.Services.Users.Interfaces;
 using Grpc.Core;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using OpenTelemetry.Resources;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
-using AiCalendar.WebApi.Services.Events;
-using AiCalendar.WebApi.Services.Events.Interfaces;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
+using AiCalendar.WebApi.DTOs.Event;
 
 namespace AiCalendar.Tests
 {
@@ -138,9 +140,11 @@ namespace AiCalendar.Tests
             Assert.That(conflictResult.StatusCode, Is.EqualTo(409)); // Or (int)System.Net.HttpStatusCode.Conflict
             Assert.That(conflictResult.Value, Is.EqualTo($"User with this username '{username}' already exists."));
         }
+
         #endregion
 
         #region Login
+
         [Test]
         public async Task Login_ShouldReturnForbidden_WhenUserIsAlreadyAuthenticated()
         {
@@ -189,7 +193,7 @@ namespace AiCalendar.Tests
             };
 
             var result = await _userController.Login(user);
-            
+
             Assert.That(result, Is.InstanceOf<NotFoundObjectResult>());
             var resultObj = result as NotFoundObjectResult;
             Assert.That(resultObj.Value, Is.EqualTo("User not found."));
@@ -236,9 +240,11 @@ namespace AiCalendar.Tests
             Assert.That(userData.Email, Is.EqualTo(user.Email));
             Assert.That(userData.Username, Is.EqualTo(user.UserName));
         }
+
         #endregion
 
         #region GetUsers
+
         [Test]
         public async Task GetUsers_ShouldReturnAllUsers()
         {
@@ -395,9 +401,299 @@ namespace AiCalendar.Tests
             Assert.That(users[0].CreatedEvents.Any(e => e.IsCancelled)); // The event is cancelled
             Assert.That(users[0].CreatedEvents.First().Id, Is.EqualTo(event1Id.ToString()));
         }
+
         #endregion
 
         #region GetUserParticipatingEvents
+
+        [Test]
+        public async Task GetUserParticipatingEvents_ShouldReturnUnAuthorized_WhenUsersIsUnAuthorized()
+        {
+            _userController.ControllerContext = new ControllerContext();
+            _userController.ControllerContext.HttpContext = new DefaultHttpContext();
+            _userController.ControllerContext.HttpContext.User = new ClaimsPrincipal();
+            var result = await _userController.GetUserParticipatingEvents();
+            Assert.That(result, Is.InstanceOf<UnauthorizedObjectResult>());
+            var unauthorizedResult = result as UnauthorizedObjectResult;
+            Assert.That(unauthorizedResult.Value, Is.EqualTo("You are not authorized to access this resource."));
+        }
+
+        [Test]
+        public async Task GetUserParticipatingEvents_ShouldReturnNotFound_WhenUserDoesNotExist()
+        {
+            var claims = new List<Claim>()
+            {
+                new Claim(ClaimTypes.NameIdentifier, Guid.NewGuid().ToString()),
+                new Claim(ClaimTypes.Email, "someemail@example.com"),
+                new Claim(ClaimTypes.Name, "someusername")
+            };
+            var identity = new ClaimsIdentity(claims);
+            var principal = new ClaimsPrincipal(identity);
+            _userController.ControllerContext = new ControllerContext()
+            {
+                HttpContext = new DefaultHttpContext()
+                {
+                    User = principal
+                }
+            };
+
+            var result = await _userController.GetUserParticipatingEvents();
+            Assert.That(result, Is.InstanceOf<NotFoundObjectResult>());
+            var notFoundResult = result as NotFoundObjectResult;
+            Assert.That(notFoundResult.Value, Is.EqualTo("User not found."));
+        }
+
+        [Test]
+        public async Task GetUserParticipatingEvents_ShouldReturnBadRequest_WhenUserIdInInvalid()
+        {
+            var claims = new List<Claim>()
+            {
+                new Claim(ClaimTypes.NameIdentifier, "invalid guid"),
+                new Claim(ClaimTypes.Email, "someemail@example.com"),
+                new Claim(ClaimTypes.Name, "someusername")
+            };
+            var identity = new ClaimsIdentity(claims);
+            var principal = new ClaimsPrincipal(identity);
+            _userController.ControllerContext = new ControllerContext()
+            {
+                HttpContext = new DefaultHttpContext()
+                {
+                    User = principal
+                }
+            };
+
+            var result = await _userController.GetUserParticipatingEvents();
+            Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
+            var badRequestResult = result as BadRequestObjectResult;
+            Assert.That(badRequestResult.Value, Is.EqualTo("Invalid user ID format."));
+        }
+
+        [Test]
+        public async Task GetUserParticipatingEvents_ShouldReturnEmptyCollection_WhenUserHasNoParticipatingEvents()
+        {
+            var newUser = new LoginAndRegisterInputDto()
+            {
+                Email = "newuser@example.com",
+                UserName = "new user",
+                Password = "password123"
+            };
+
+            var newUserData = await _userService.RegisterAsync(newUser);
+
+            var claims = new List<Claim>()
+            {
+                new Claim(ClaimTypes.NameIdentifier, newUserData.Id),
+                new Claim(ClaimTypes.Email, newUserData.Email),
+                new Claim(ClaimTypes.Name, newUserData.UserName)
+            };
+
+            var identity = new ClaimsIdentity(claims);
+            var principal = new ClaimsPrincipal(identity);
+
+            _userController.ControllerContext = new ControllerContext()
+            {
+                HttpContext = new DefaultHttpContext()
+                {
+                    User = principal
+                }
+            };
+
+            var result = await _userController.GetUserParticipatingEvents();
+            Assert.That(result, Is.InstanceOf<OkObjectResult>());
+            var badRequestResult = result as OkObjectResult;
+            Assert.That(badRequestResult.Value, Is.Empty);
+        }
+
+        [Test]
+        public async Task GetUserParticipatingEvents_ShouldReturnUserParticipatingEvents()
+        {
+            var claims = new List<Claim>()
+            {
+                new Claim(ClaimTypes.NameIdentifier, "A1B2C3D4-E5F6-7890-1234-567890ABCDEF"),
+                new Claim(ClaimTypes.Email, "admin@example.com"),
+                new Claim(ClaimTypes.Name, "admin")
+            };
+
+            var identity = new ClaimsIdentity(claims);
+            var principal = new ClaimsPrincipal(identity);
+
+            _userController.ControllerContext = new ControllerContext()
+            {
+                HttpContext = new DefaultHttpContext()
+                {
+                    User = principal
+                }
+            };
+
+            var result = await _userController.GetUserParticipatingEvents();
+
+            Assert.That(result, Is.InstanceOf<OkObjectResult>());
+            var okResult = result as OkObjectResult;
+            var participatingEvents = okResult.Value as List<EventDto>;
+            Assert.That(participatingEvents, Is.Not.Empty);
+            Assert.That(participatingEvents.Count, Is.EqualTo(3)); // Assuming the user has 2 participating events
+            Assert.That(
+                participatingEvents.All(e =>
+                    e.Participants.Any(p => p.Id == "A1B2C3D4-E5F6-7890-1234-567890ABCDEF".ToLower())),
+                Is.True); // All events should have the user as a participant
+        }
+        #endregion
+
+        #region DeleteUser
+
+        [Test]
+        public async Task DeleteUser_ShouldReturnUnAuthorized_WhenUserIsUnAuthorized()
+        {
+            _userController.ControllerContext = new ControllerContext();
+            _userController.ControllerContext.HttpContext = new DefaultHttpContext();
+            _userController.ControllerContext.HttpContext.User = new ClaimsPrincipal();
+            var result = await _userController.DeleteUser("A1B2C3D4-E5F6-7890-1234-567890ABCDEF".ToLower());
+            Assert.That(result, Is.InstanceOf<UnauthorizedObjectResult>());
+            var unauthorizedResult = result as UnauthorizedObjectResult;
+            Assert.That(unauthorizedResult.Value, Is.EqualTo("You are not authorized to access this resource."));
+        }
+
+        [Test]
+        public async Task DeleteUser_ShouldReturnNotFound_WhenUserDoesNotExist()
+        {
+            var userId = Guid.NewGuid().ToString();
+            var claims = new List<Claim>()
+            {
+                new Claim(ClaimTypes.NameIdentifier, userId),
+                new Claim(ClaimTypes.Email, "nonexisting@example.com"),
+                new Claim(ClaimTypes.Name, "Non existing")
+            };
+            var identity = new ClaimsIdentity(claims);
+            var principal = new ClaimsPrincipal(identity);
+            _userController.ControllerContext = new ControllerContext()
+            {
+                HttpContext = new DefaultHttpContext()
+                {
+                    User = principal
+                }
+            };
+            var result = await _userController.DeleteUser(userId);
+            Assert.That(result, Is.InstanceOf<NotFoundObjectResult>());
+            var notFoundResult = result as NotFoundObjectResult;
+            Assert.That(notFoundResult.Value, Is.EqualTo("User not found."));
+        }
+
+        [Test]
+        public async Task DeleteUser_ShouldReturnBadRequest_WhenUserIdIsInvalid()
+        {
+            var claims = new List<Claim>()
+            {
+                new Claim(ClaimTypes.NameIdentifier, "invalid guid"),
+                new Claim(ClaimTypes.Email, "invalid@example.com"),
+                new Claim(ClaimTypes.Name, "Invalid User")
+            };
+            var identity = new ClaimsIdentity(claims);
+            var principal = new ClaimsPrincipal(identity);
+
+            _userController.ControllerContext = new ControllerContext()
+            {
+                HttpContext = new DefaultHttpContext()
+                {
+                    User = principal
+                }
+            };
+
+            var result = await _userController.DeleteUser("invalid guid");
+            Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
+            var badRequestResult = result as BadRequestObjectResult;
+            Assert.That(badRequestResult.Value, Is.EqualTo("Invalid user ID format."));
+        }
+
+        [Test]
+        public async Task DeleteUser_ShouldReturnForbidden_WhenUserTriesToDeleteOtherUserAccount()
+        {
+            var claims = new List<Claim>()
+            {
+                new Claim(ClaimTypes.NameIdentifier, "A1B2C3D4-E5F6-7890-1234-567890ABCDEF".ToLower()),
+                new Claim(ClaimTypes.Email, "admin@example.com"),
+                new Claim(ClaimTypes.Name, "admin")
+            };
+            var identity = new ClaimsIdentity(claims);
+            var principal = new ClaimsPrincipal(identity);
+
+            _userController.ControllerContext = new ControllerContext()
+            {
+                HttpContext = new DefaultHttpContext()
+                {
+                    User = principal
+                }
+            };
+
+            var result = await _userController.DeleteUser("F0E9D8C7-B6A5-4321-FEDC-BA9876543210".ToLower());
+            Assert.That(result, Is.InstanceOf<ForbidResult>());
+            var forbidResult = result as ForbidResult;
+            Assert.That(forbidResult, Is.Not.Null);
+        }
+
+        [Test]
+        public async Task DeleteUser_ShouldReturnBadRequest_WhenUserHasActiveEvents()
+        {
+            Guid user1Id = Guid.Parse("A1B2C3D4-E5F6-7890-1234-567890ABCDEF");
+            var claims = new List<Claim>()
+            {
+                new Claim(ClaimTypes.NameIdentifier, user1Id.ToString()),
+                new Claim(ClaimTypes.Email, "admin@example.com"),
+                new Claim(ClaimTypes.Name, "admin")
+            };
+            var identity = new ClaimsIdentity(claims);
+            var principal = new ClaimsPrincipal(identity);
+
+            _userController.ControllerContext = new ControllerContext()
+            {
+                HttpContext = new DefaultHttpContext()
+                {
+                    User = principal
+                }
+            };
+
+            var result = await _userController.DeleteUser(user1Id.ToString().ToLower());
+            Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
+            var badRequestResult = result as BadRequestObjectResult;
+            Assert.That(badRequestResult.Value,
+                Is.EqualTo("User has active events. Please cancel them before deleting your account."));
+        }
+
+        [Test]
+        public async Task DeleteUser_ShouldDeleteUserSuccessfully_WhenUserHasNoActiveEvents()
+        {
+            var newUser = new LoginAndRegisterInputDto()
+            {
+                Email = "newuser@example.com",
+                UserName = "New User",
+                Password = "password123"
+            };
+
+            var newUserData = await _userService.RegisterAsync(newUser);
+
+            var claims = new List<Claim>()
+            {
+                new Claim(ClaimTypes.NameIdentifier, newUserData.Id),
+                new Claim(ClaimTypes.Email, newUserData.Email),
+                new Claim(ClaimTypes.Name, newUserData.UserName)
+            };
+
+            var identity = new ClaimsIdentity(claims);
+            var principal = new ClaimsPrincipal(identity);
+
+            _userController.ControllerContext = new ControllerContext()
+            {
+                HttpContext = new DefaultHttpContext()
+                {
+                    User = principal
+                }
+            };
+
+            var result = await _userController.DeleteUser(newUserData.Id.ToLower());
+            Assert.That(result, Is.InstanceOf<NoContentResult>());
+        }
+        #endregion
+
+        #region GetUserEvents
 
 
 

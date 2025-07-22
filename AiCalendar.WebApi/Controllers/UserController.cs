@@ -236,7 +236,6 @@ namespace AiCalendar.WebApi.Controllers
         [HttpGet("participating-events")]
         [ProducesResponseType(typeof(IEnumerable<EventDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> GetUserParticipatingEvents()
@@ -246,7 +245,7 @@ namespace AiCalendar.WebApi.Controllers
             if (User?.Identity == null && User?.Identity?.IsAuthenticated == null && id == null)
             {
                 _logger.LogWarning("Unauthorized access attempt to get user participating events.");
-                return Forbid("You are not authorized to access this resource.");
+                return Unauthorized("You are not authorized to access this resource.");
             }
 
             if (!Guid.TryParse(id, out Guid userId))
@@ -291,7 +290,7 @@ namespace AiCalendar.WebApi.Controllers
             if (User?.Identity == null && User?.Identity?.IsAuthenticated == null && currentUserIdString == null)
             {
                 _logger.LogWarning("Unauthorized access attempt to delete user with ID {UserId}.", id);
-                return Forbid("You are not authorized to access this resource.");
+                return Unauthorized("You are not authorized to access this resource.");
             }
 
             if (!Guid.TryParse(currentUserIdString, out Guid currentUserId))
