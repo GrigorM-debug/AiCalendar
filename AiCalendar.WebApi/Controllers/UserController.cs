@@ -51,13 +51,12 @@ namespace AiCalendar.WebApi.Controllers
         /// <response code="409">User with the same username already exists.</response>
         [HttpPost("register")]
         [AllowAnonymous]
-        [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(typeof(UserDto), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status409Conflict)]
         public async Task<IActionResult> Register([FromBody] LoginAndRegisterInputDto input)
         {
-            if (User.Identity != null && User.Identity.IsAuthenticated)
+            if (User?.Identity != null && User?.Identity?.IsAuthenticated != null)
             {
                 _logger.LogWarning("User is already authenticated. Cannot register a new account.");
                 return Forbid("User is already authenticated. Please log out before registering a new account.");
@@ -105,7 +104,7 @@ namespace AiCalendar.WebApi.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> Login([FromBody] LoginAndRegisterInputDto input)
         {
-            if (User.Identity != null && User.Identity.IsAuthenticated)
+            if (User?.Identity != null && User?.Identity?.IsAuthenticated != null)
             {
                 _logger.LogWarning("User is already authenticated. Cannot log in again.");
                 return Forbid();
