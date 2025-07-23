@@ -348,7 +348,6 @@ namespace AiCalendar.WebApi.Controllers
         [ProducesResponseType(typeof(IEnumerable<EventDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetUserEvents([FromBody] EventFilterCriteriaDto? filter)
         {
@@ -357,7 +356,7 @@ namespace AiCalendar.WebApi.Controllers
             if (User?.Identity == null || User?.Identity?.IsAuthenticated == null || id == null)
             {
                 _logger.LogWarning("Unauthorized access attempt to get user events.");
-                return Forbid("You are not authorized to access this resource.");
+                return Unauthorized("You are not authorized to access this resource.");
             }
 
             if (!Guid.TryParse(id, out Guid userId))

@@ -401,7 +401,6 @@ namespace AiCalendar.Tests
             Assert.That(users[0].CreatedEvents.Any(e => e.IsCancelled)); // The event is cancelled
             Assert.That(users[0].CreatedEvents.First().Id, Is.EqualTo(event1Id.ToString()));
         }
-
         #endregion
 
         #region GetUserParticipatingEvents
@@ -694,6 +693,217 @@ namespace AiCalendar.Tests
         #endregion
 
         #region GetUserEvents
+
+        [Test]
+        public async Task GetUserEvents_ShouldReturnUnAuthorized_WhenUserIsUnAuthorized()
+        {
+            _userController.ControllerContext = new ControllerContext();
+            _userController.ControllerContext.HttpContext = new DefaultHttpContext();
+            _userController.ControllerContext.HttpContext.User = new ClaimsPrincipal();
+            var result = await _userController.GetUserEvents(null);
+            Assert.That(result, Is.InstanceOf<UnauthorizedObjectResult>());
+            var unauthorizedResult = result as UnauthorizedObjectResult;
+            Assert.That(unauthorizedResult.Value, Is.EqualTo("You are not authorized to access this resource."));
+        }
+
+        [Test]
+        public async Task GetUserEvents_ShouldReturnNotFound_WhenUserDoesNotExist()
+        {
+            var userId = Guid.NewGuid().ToString();
+            var claims = new List<Claim>()
+            {
+                new Claim(ClaimTypes.NameIdentifier, userId),
+                new Claim(ClaimTypes.Email, "ivan@example.com"),
+                new Claim(ClaimTypes.Name, "ivan76")
+            };
+            var identity = new ClaimsIdentity(claims);
+            var principal = new ClaimsPrincipal(identity);
+
+            _userController.ControllerContext = new ControllerContext()
+            {
+                HttpContext = new DefaultHttpContext()
+                {
+                    User = principal
+                }
+            };
+
+            var result = await _userController.GetUserEvents(null);
+            Assert.That(result, Is.InstanceOf<NotFoundObjectResult>());
+            var notFoundResult = result as NotFoundObjectResult;
+            Assert.That(notFoundResult.Value, Is.EqualTo("User not found."));
+        }
+
+        [Test]
+        public async Task GetUserEvents_ShouldReturnEmptyCollection_WhenUserHasNoEvents()
+        {
+            var newUser = new LoginAndRegisterInputDto()
+            {
+                UserName = "Ivan7630",
+                Email = "ivan@example.com",
+                Password = "newpassword456"
+            };
+            var newUserData = await _userService.RegisterAsync(newUser);
+
+            var claims = new List<Claim>()
+            {
+                new Claim(ClaimTypes.NameIdentifier, newUserData.Id),
+                new Claim(ClaimTypes.Email, newUserData.Email),
+                new Claim(ClaimTypes.Name, newUserData.UserName)
+            };
+            var identity = new ClaimsIdentity(claims);
+            var principal = new ClaimsPrincipal(identity);
+
+            _userController.ControllerContext = new ControllerContext()
+            {
+                HttpContext = new DefaultHttpContext()
+                {
+                    User = principal
+                }
+            };
+
+            var result = await _userController.GetUserEvents(null);
+            Assert.That(result, Is.InstanceOf<OkObjectResult>());
+            var okResult = result as OkObjectResult;
+            var userEvents = okResult.Value as IEnumerable<EventDto>;
+            Assert.That(userEvents, Is.Empty);
+        }
+
+        [Test]
+        public async Task GetUserEvents_ShouldReturnUserEvents()
+        {
+            var claims = new List<Claim>()
+            {
+                new Claim(ClaimTypes.NameIdentifier, "A1B2C3D4-E5F6-7890-1234-567890ABCDEF"),
+                new Claim(ClaimTypes.Email, "admin@example.com"),
+                new Claim(ClaimTypes.Name, "admin")
+            };
+            var identity = new ClaimsIdentity(claims);
+            var principal = new ClaimsPrincipal(identity);
+
+            _userController.ControllerContext = new ControllerContext()
+            {
+                HttpContext = new DefaultHttpContext()
+                {
+                    User = principal
+                }
+            };
+
+            var result = await _userController.GetUserEvents(null);
+            Assert.That(result, Is.InstanceOf<OkObjectResult>());
+            var okResult = result as OkObjectResult;
+            var userEvents = okResult.Value as IEnumerable<EventDto>;
+            Assert.That(userEvents, Is.Not.Empty);
+            Assert.That(userEvents.Count(), Is.EqualTo(2));
+            Assert.That(userEvents.All(e => e.CreatorId == "A1B2C3D4-E5F6-7890-1234-567890ABCDEF".ToLower()),
+                Is.True); // All events should be created by the user
+        }
+
+        [Test]
+        public async Task GetUserEvents_ShouldReturnFilteredEvents_WhenStartDateFilterIsApplied()
+        {
+            var claims = new List<Claim>()
+            {
+                new Claim(ClaimTypes.NameIdentifier, "A1B2C3D4-E5F6-7890-1234-567890ABCDEF"),
+                new Claim(ClaimTypes.Email, "admin@example.com"),
+                new Claim(ClaimTypes.Name, "admin")
+            };
+            var identity = new ClaimsIdentity(claims);
+            var principal = new ClaimsPrincipal(identity);
+
+            _userController.ControllerContext = new ControllerContext()
+            {
+                HttpContext = new DefaultHttpContext()
+                {
+                    User = principal
+                }
+            };
+
+            var filter = new EventFilterCriteriaDto()
+            {
+               StartDate = new DateTime(2025, 6, 16, 9, 0, 0, DateTimeKind.Utc)
+            };
+
+            var result = await _userController.GetUserEvents(filter);
+            Assert.That(result, Is.InstanceOf<OkObjectResult>());
+            var okResult = result as OkObjectResult;
+            var userEvents = okResult.Value as IEnumerable<EventDto>;
+            Assert.That(userEvents, Is.Not.Empty);
+            Assert.That(userEvents.Count(), Is.EqualTo(2)); 
+            Assert.That(userEvents.First().StartDate, Is.EqualTo(new DateTime(2025, 6, 16, 9, 0, 0, DateTimeKind.Utc)));
+
+            Assert.That(userEvents.All(e => e.CreatorId == "A1B2C3D4-E5F6-7890-1234-567890ABCDEF".ToLower()),
+                Is.True); // All events should be created by the user
+            Assert.That(userEvents.All(e => e.StartDate >= new DateTime(2025, 6, 16, 9, 0, 0, DateTimeKind.Utc)));
+        }
+
+        [Test]
+        public async Task GetUserEvents_ShouldReturnEmptyCollection_WhenThereAreNoEventsMatchingTheStartDateFilter()
+        {
+            var claims = new List<Claim>()
+            {
+                new Claim(ClaimTypes.NameIdentifier, "A1B2C3D4-E5F6-7890-1234-567890ABCDEF"),
+                new Claim(ClaimTypes.Email, "admin@example.com"),
+                new Claim(ClaimTypes.Name, "admin")
+            };
+            var identity = new ClaimsIdentity(claims);
+            var principal = new ClaimsPrincipal(identity);
+
+            _userController.ControllerContext = new ControllerContext()
+            {
+                HttpContext = new DefaultHttpContext()
+                {
+                    User = principal
+                }
+            };
+
+            var filter = new EventFilterCriteriaDto()
+            {
+                StartDate = new DateTime(2030, 6, 16, 9, 0, 0, DateTimeKind.Utc)
+            };
+
+            var result = await _userController.GetUserEvents(filter);
+
+            Assert.That(result, Is.InstanceOf<OkObjectResult>());
+            var okResult = result as OkObjectResult;
+            var userEvents = okResult.Value as IEnumerable<EventDto>;
+            Assert.That(userEvents, Is.Empty);
+        }
+
+        [Test]
+        public async Task GetUserEvents_ShouldReturnAllEvents_MatchingTheEndDateFilter()
+        {
+            var claims = new List<Claim>()
+            {
+                new Claim(ClaimTypes.NameIdentifier, "A1B2C3D4-E5F6-7890-1234-567890ABCDEF"),
+                new Claim(ClaimTypes.Email, "admin@example.com"),
+                new Claim(ClaimTypes.Name, "admin")
+            };
+            var identity = new ClaimsIdentity(claims);
+            var principal = new ClaimsPrincipal(identity);
+
+            _userController.ControllerContext = new ControllerContext()
+            {
+                HttpContext = new DefaultHttpContext()
+                {
+                    User = principal
+                }
+            };
+
+            var filter = new EventFilterCriteriaDto()
+            {
+                EndDate = new DateTime(2025, 6, 16, 10, 0, 0, DateTimeKind.Utc)
+            };
+
+            var result = await _userController.GetUserEvents(filter);
+            Assert.That(result, Is.InstanceOf<OkObjectResult>());
+            var okResult = result as OkObjectResult;
+            var userEvents = okResult.Value as IEnumerable<EventDto>;
+            Assert.That(userEvents, Is.Not.Empty);
+            Assert.That(userEvents.Count(), Is.EqualTo(1)); 
+            Assert.That(userEvents.All(e => e.CreatorId == "A1B2C3D4-E5F6-7890-1234-567890ABCDEF".ToLower()),
+                Is.True); // All events should be created by the user
+            Assert.That(userEvents.All(e => e.EndDate <= new DateTime(2025, 6, 16, 10, 0, 0, DateTimeKind.Utc)));
+        }
 
 
 
