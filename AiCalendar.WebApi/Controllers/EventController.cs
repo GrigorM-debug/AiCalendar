@@ -55,7 +55,7 @@ namespace AiCalendar.WebApi.Controllers
                 return NotFound("Event not found.");
             }
 
-            EventDto eventDto = await _eventService.GetEventByIdAsync(eventId);
+            EventDto? eventDto = await _eventService.GetEventByIdAsync(eventId);
 
             return Ok(eventDto);
         }
