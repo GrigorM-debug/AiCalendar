@@ -177,7 +177,7 @@ namespace AiCalendar.WebApi.Controllers
             if (User?.Identity == null && User?.Identity?.IsAuthenticated == null && currentUserIdString == null)
             {
                 _logger.LogWarning("Unauthorized access attempt to update user with ID {UserId}.", id);
-                return Forbid("You are not authorized to delete this account.");
+                return Unauthorized("You are not authorized to delete this account.");
             }
 
             if (!Guid.TryParse(id, out Guid userId))
@@ -192,10 +192,12 @@ namespace AiCalendar.WebApi.Controllers
                 return BadRequest("Invalid user ID format.");
             }
 
-            if (currentUserId != userId)
+            //Check if current user exists
+            bool currentUserExists = await _userService.UserExistsByIdAsync(currentUserId);
+            if (!currentUserExists)
             {
-                _logger.LogWarning("User with ID {CurrentUserId} attempted to update user with ID {UserId} without authorization.", currentUserId, userId);
-                return Forbid("You are not authorized to delete this account.");
+                _logger.LogWarning("Current user with ID {CurrentUserId} not found.", currentUserId);
+                return NotFound("Current user not found.");
             }
 
             //Check if user exists
@@ -205,6 +207,12 @@ namespace AiCalendar.WebApi.Controllers
             {
                 _logger.LogWarning("User with ID {UserId} not found.", userId);
                 return NotFound("User no found.");
+            }
+
+            if (currentUserId != userId)
+            {
+                _logger.LogWarning("User with ID {CurrentUserId} attempted to update user with ID {UserId} without authorization.", currentUserId, userId);
+                return Forbid("You are not authorized to delete this account.");
             }
 
             try

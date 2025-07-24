@@ -1,5 +1,6 @@
 ﻿using AiCalendar.WebApi.Controllers;
 using AiCalendar.WebApi.Data.Repository;
+using AiCalendar.WebApi.DTOs.Event;
 using AiCalendar.WebApi.DTOs.Users;
 using AiCalendar.WebApi.Models;
 using AiCalendar.WebApi.Services.Events;
@@ -8,6 +9,7 @@ using AiCalendar.WebApi.Services.Users;
 using AiCalendar.WebApi.Services.Users.Interfaces;
 using Grpc.Core;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
 using Microsoft.Extensions.Configuration;
@@ -19,7 +21,6 @@ using System.Linq;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
-using AiCalendar.WebApi.DTOs.Event;
 
 namespace AiCalendar.Tests
 {
@@ -820,7 +821,7 @@ namespace AiCalendar.Tests
 
             var filter = new EventFilterCriteriaDto()
             {
-               StartDate = new DateTime(2025, 6, 16, 9, 0, 0, DateTimeKind.Utc)
+                StartDate = new DateTime(2025, 6, 16, 9, 0, 0, DateTimeKind.Utc)
             };
 
             var result = await _userController.GetUserEvents(filter);
@@ -828,7 +829,7 @@ namespace AiCalendar.Tests
             var okResult = result as OkObjectResult;
             var userEvents = okResult.Value as IEnumerable<EventDto>;
             Assert.That(userEvents, Is.Not.Empty);
-            Assert.That(userEvents.Count(), Is.EqualTo(2)); 
+            Assert.That(userEvents.Count(), Is.EqualTo(2));
             Assert.That(userEvents.First().StartDate, Is.EqualTo(new DateTime(2025, 6, 16, 9, 0, 0, DateTimeKind.Utc)));
 
             Assert.That(userEvents.All(e => e.CreatorId == "A1B2C3D4-E5F6-7890-1234-567890ABCDEF".ToLower()),
@@ -899,13 +900,706 @@ namespace AiCalendar.Tests
             var okResult = result as OkObjectResult;
             var userEvents = okResult.Value as IEnumerable<EventDto>;
             Assert.That(userEvents, Is.Not.Empty);
-            Assert.That(userEvents.Count(), Is.EqualTo(1)); 
+            Assert.That(userEvents.Count(), Is.EqualTo(1));
             Assert.That(userEvents.All(e => e.CreatorId == "A1B2C3D4-E5F6-7890-1234-567890ABCDEF".ToLower()),
                 Is.True); // All events should be created by the user
             Assert.That(userEvents.All(e => e.EndDate <= new DateTime(2025, 6, 16, 10, 0, 0, DateTimeKind.Utc)));
         }
 
+        [Test]
+        public async Task GetUserEvents_ShouldReturnEmptyCollection_WhenThereAreNoEventsMatchingTheEndDateFilter()
+        {
+            var claims = new List<Claim>()
+            {
+                new Claim(ClaimTypes.NameIdentifier, "A1B2C3D4-E5F6-7890-1234-567890ABCDEF"),
+                new Claim(ClaimTypes.Email, "admin@example.com"),
+                new Claim(ClaimTypes.Name, "admin")
+            };
+            var identity = new ClaimsIdentity(claims);
+            var principal = new ClaimsPrincipal(identity);
 
+            _userController.ControllerContext = new ControllerContext()
+            {
+                HttpContext = new DefaultHttpContext()
+                {
+                    User = principal
+                }
+            };
+
+            var filter = new EventFilterCriteriaDto()
+            {
+                EndDate = new DateTime(2018, 6, 16, 10, 0, 0, DateTimeKind.Utc)
+            };
+
+            var result = await _userController.GetUserEvents(filter);
+            Assert.That(result, Is.InstanceOf<OkObjectResult>());
+            var okResult = result as OkObjectResult;
+            var userEvents = okResult.Value as IEnumerable<EventDto>;
+            Assert.That(userEvents, Is.Empty);
+            Assert.That(userEvents.Count(), Is.EqualTo(0));
+        }
+
+        [Test]
+        public async Task GetUserEvents_ShouldReturnFilteredEvents_WhenStartDateAndEndDateFilterAreApplied()
+        {
+            var claims = new List<Claim>()
+            {
+                new Claim(ClaimTypes.NameIdentifier, "A1B2C3D4-E5F6-7890-1234-567890ABCDEF"),
+                new Claim(ClaimTypes.Email, "admin@example.com"),
+                new Claim(ClaimTypes.Name, "admin")
+            };
+            var identity = new ClaimsIdentity(claims);
+            var principal = new ClaimsPrincipal(identity);
+
+            _userController.ControllerContext = new ControllerContext()
+            {
+                HttpContext = new DefaultHttpContext()
+                {
+                    User = principal
+                }
+            };
+
+            var filter = new EventFilterCriteriaDto()
+            {
+                StartDate = new DateTime(2025, 6, 16, 9, 0, 0, DateTimeKind.Utc),
+                EndDate = new DateTime(2025, 6, 16, 10, 0, 0, DateTimeKind.Utc)
+            };
+
+            var result = await _userController.GetUserEvents(filter);
+            Assert.That(result, Is.InstanceOf<OkObjectResult>());
+            var okResult = result as OkObjectResult;
+            var userEvents = okResult.Value as IEnumerable<EventDto>;
+            Assert.That(userEvents, Is.Not.Empty);
+            Assert.That(userEvents.Count(), Is.EqualTo(1)); // Only one event matches the filter
+            Assert.That(userEvents.All(e => e.CreatorId == "A1B2C3D4-E5F6-7890-1234-567890ABCDEF".ToLower()),
+                Is.True); // All events should be created by the user
+        }
+
+        [Test]
+        public async Task GetUserEvents_ShouldReturnEmptyCollection_WhenThereAreNoEventsMatchingTheStartAndEndDateFilter()
+        {
+            var claims = new List<Claim>()
+            {
+                new Claim(ClaimTypes.NameIdentifier, "A1B2C3D4-E5F6-7890-1234-567890ABCDEF"),
+                new Claim(ClaimTypes.Email, "admin@example.com"),
+                new Claim(ClaimTypes.Name, "admin")
+            };
+            var identity = new ClaimsIdentity(claims);
+            var principal = new ClaimsPrincipal(identity);
+
+            _userController.ControllerContext = new ControllerContext()
+            {
+                HttpContext = new DefaultHttpContext()
+                {
+                    User = principal
+                }
+            };
+
+            var filter = new EventFilterCriteriaDto()
+            {
+                StartDate = new DateTime(2030, 6, 16, 9, 0, 0, DateTimeKind.Utc),
+                EndDate = new DateTime(2030, 6, 16, 10, 0, 0, DateTimeKind.Utc)
+            };
+
+            var result = await _userController.GetUserEvents(filter);
+            Assert.That(result, Is.InstanceOf<OkObjectResult>());
+            var okResult = result as OkObjectResult;
+            var userEvents = okResult.Value as IEnumerable<EventDto>;
+            Assert.That(userEvents, Is.Empty);
+        }
+
+        [Test]
+        public async Task GetUserEvents_ShouldReturnAllEvents_MatchingTheIsCancelFilter()
+        {
+            var claims = new List<Claim>()
+            {
+                new Claim(ClaimTypes.NameIdentifier, "A1B2C3D4-E5F6-7890-1234-567890ABCDEF"),
+                new Claim(ClaimTypes.Email, "admin@example.com"),
+                new Claim(ClaimTypes.Name, "admin")
+            };
+            var identity = new ClaimsIdentity(claims);
+            var principal = new ClaimsPrincipal(identity);
+
+            _userController.ControllerContext = new ControllerContext()
+            {
+                HttpContext = new DefaultHttpContext()
+                {
+                    User = principal
+                }
+            };
+
+            var filter = new EventFilterCriteriaDto()
+            {
+                IsCancelled = true
+            };
+
+            await _eventService.CancelEventAsync(Guid.Parse("E1000000-0000-0000-0000-000000000001"),
+                Guid.Parse("A1B2C3D4-E5F6-7890-1234-567890ABCDEF"));
+
+            var result = await _userController.GetUserEvents(filter);
+
+            Assert.That(result, Is.InstanceOf<OkObjectResult>());
+            var okResult = result as OkObjectResult;
+            var userEvents = okResult.Value as IEnumerable<EventDto>;
+            Assert.That(userEvents, Is.Not.Empty);
+            Assert.That(userEvents.Count(), Is.EqualTo(1)); // Assuming the user has 1 cancelled event
+            Assert.That(userEvents.All(e => e.IsCancelled), Is.True); // All events should be cancelled
+        }
+
+        [Test]
+        public async Task GetUserEvents_ShouldReturnEmptyCollection_WhenThereAreNoEventsMatchingTheIsCancelFilter()
+        {
+            var claims = new List<Claim>()
+            {
+                new Claim(ClaimTypes.NameIdentifier, "A1B2C3D4-E5F6-7890-1234-567890ABCDEF"),
+                new Claim(ClaimTypes.Email, "admin@example.com"),
+                new Claim(ClaimTypes.Name, "admin")
+            };
+            var identity = new ClaimsIdentity(claims);
+            var principal = new ClaimsPrincipal(identity);
+
+            _userController.ControllerContext = new ControllerContext()
+            {
+                HttpContext = new DefaultHttpContext()
+                {
+                    User = principal
+                }
+            };
+
+            var filter = new EventFilterCriteriaDto()
+            {
+                IsCancelled = true
+            };
+
+            var result = await _userController.GetUserEvents(filter);
+            Assert.That(result, Is.InstanceOf<OkObjectResult>());
+            var okResult = result as OkObjectResult;
+            var userEvents = okResult.Value as IEnumerable<EventDto>;
+            Assert.That(userEvents, Is.Empty);
+        }
+        #endregion
+
+        #region UpdateUser
+
+        [Test]
+        public async Task UpdateUser_ShouldReturnUnAuthorized_WhenUserIsUnAuthorized()
+        {
+            _userController.ControllerContext = new ControllerContext();
+            _userController.ControllerContext.HttpContext = new DefaultHttpContext();
+            _userController.ControllerContext.HttpContext.User = new ClaimsPrincipal();
+
+            string userId = "A1B2C3D4-E5F6-7890-1234-567890ABCDEF";
+
+            var updatedUser = new UpdateUserDto()
+            {
+                Email = "maikati@example.com",
+                UserName = "maikati",
+                OldPassword = "hashedpassword123",
+                NewPassword = "newhashedpassword123"
+            };
+
+            var result = await _userController.UpdateUser(userId, updatedUser);
+            Assert.That(result, Is.InstanceOf<UnauthorizedObjectResult>());
+            var unauthorizedResult = result as UnauthorizedObjectResult;
+            Assert.That(unauthorizedResult.Value, Is.EqualTo("You are not authorized to delete this account."));
+        }
+
+        [Test]
+        public async Task UpdateUser_ShouldReturnNotFound_WhenUserDoesNotExist()
+        {
+            var claims = new List<Claim>()
+            {
+                new Claim(ClaimTypes.NameIdentifier, "A1B2C3D4-E5F6-7890-1234-567890ABCDEF"),
+                new Claim(ClaimTypes.Email, "admin@example.com"),
+                new Claim(ClaimTypes.Name, "admin")
+            };
+
+            var identity = new ClaimsIdentity(claims);
+
+            var principal = new ClaimsPrincipal(identity);
+
+            _userController.ControllerContext = new ControllerContext()
+            {
+                HttpContext = new DefaultHttpContext()
+                {
+                    User = principal
+                }
+            };
+
+            string userId = Guid.NewGuid().ToString();
+            var updatedUser = new UpdateUserDto()
+            {
+                Email = "adminEdit@example.com",
+            };
+
+            var result = await _userController.UpdateUser(userId, updatedUser);
+
+            Assert.That(result, Is.InstanceOf<NotFoundObjectResult>());
+            var notFoundResult = result as NotFoundObjectResult;
+            Assert.That(notFoundResult.Value, Is.EqualTo("User no found."));
+        }
+
+        [Test]
+        public async Task UpdateUser_ShouldReturnNotFound_WhenTheCurrentUserDoesNotExists()
+        {
+            var claims = new List<Claim>()
+            {
+                new Claim(ClaimTypes.NameIdentifier, Guid.NewGuid().ToString()),
+                new Claim(ClaimTypes.Email, "example@example.com"),
+                new Claim(ClaimTypes.Name, "example")
+            };
+
+            var identity = new ClaimsIdentity(claims);
+
+            var principal = new ClaimsPrincipal(identity);
+
+            _userController.ControllerContext = new ControllerContext()
+            {
+                HttpContext = new DefaultHttpContext()
+                {
+                    User = principal
+                }
+            };
+
+            string userId = "A1B2C3D4-E5F6-7890-1234-567890ABCDEF";
+            var updatedUser = new UpdateUserDto()
+            {
+                Email = "newemail@example.com"
+            };
+
+            var result = await _userController.UpdateUser(userId, updatedUser);
+
+            Assert.That(result, Is.InstanceOf<NotFoundObjectResult>());
+            var notFoundResult = result as NotFoundObjectResult;
+            Assert.That(notFoundResult.Value, Is.EqualTo("Current user not found."));
+        }
+
+        [Test]
+        public async Task UpdateUser_ShouldReturnBadRequest_WhenUserIdIsInvalid()
+        {
+            var claims = new List<Claim>()
+            {
+                new Claim(ClaimTypes.NameIdentifier, "A1B2C3D4-E5F6-7890-1234-567890ABCDEF"),
+                new Claim(ClaimTypes.Email, "admin@example.com"),
+                new Claim(ClaimTypes.Name, "admin")
+            };
+
+            var identity = new ClaimsIdentity(claims);
+
+            var principal = new ClaimsPrincipal(identity);
+
+            _userController.ControllerContext = new ControllerContext()
+            {
+                HttpContext = new DefaultHttpContext()
+                {
+                    User = principal
+                }
+            };
+
+            string userId = "invalid id";
+            var updatedUser = new UpdateUserDto()
+            {
+                Email = "newemail@example.com"
+            };
+
+            var result = await _userController.UpdateUser(userId, updatedUser);
+            Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
+            var badRequestResult = result as BadRequestObjectResult;
+            Assert.That(badRequestResult.Value, Is.EqualTo("Invalid user ID format."));
+        }
+
+        [Test]
+        public async Task UpdateUser_ShouldReturnForbid_WhenTheCurrentUserAndUserGettingUpdatedAreDifferent()
+        {
+            var claims = new List<Claim>()
+            {
+                new Claim(ClaimTypes.NameIdentifier, "A1B2C3D4-E5F6-7890-1234-567890ABCDEF"),
+                new Claim(ClaimTypes.Email, "admin@example.com"),
+                new Claim(ClaimTypes.Name, "admin")
+            };
+
+            var identity = new ClaimsIdentity(claims);
+
+            var principal = new ClaimsPrincipal(identity);
+
+            _userController.ControllerContext = new ControllerContext()
+            {
+                HttpContext = new DefaultHttpContext()
+                {
+                    User = principal
+                }
+            };
+
+            string userId = "F0E9D8C7-B6A5-4321-FEDC-BA9876543210";
+            var updatedUser = new UpdateUserDto()
+            {
+                Email = "newEmail@example.com"
+            };
+
+            var result = await _userController.UpdateUser(userId, updatedUser);
+
+            Assert.That(result, Is.InstanceOf<ForbidResult>());
+        }
+
+        [Test]
+        public async Task UpdateUser_ShouldUpdateUserSuccessfully_WhenTheAllDataIsProvided()
+        {
+            var claims = new List<Claim>()
+            {
+                new Claim(ClaimTypes.NameIdentifier, "A1B2C3D4-E5F6-7890-1234-567890ABCDEF"),
+                new Claim(ClaimTypes.Email, "admin@example.com"),
+                new Claim(ClaimTypes.Name, "admin")
+            };
+
+            var identity = new ClaimsIdentity(claims);
+
+            var principal = new ClaimsPrincipal(identity);
+
+            _userController.ControllerContext = new ControllerContext()
+            {
+                HttpContext = new DefaultHttpContext()
+                {
+                    User = principal
+                }
+            };
+
+            string userId = "A1B2C3D4-E5F6-7890-1234-567890ABCDEF";
+
+            var updateUser = new UpdateUserDto()
+            {
+                Email = "admin_update@example.com",
+                UserName = "admin_updated",
+                NewPassword = "hashedpassword1234",
+                OldPassword = "hashedpassword123"
+            };
+
+            var result = await _userController.UpdateUser(userId, updateUser);
+
+            Assert.That(result, Is.InstanceOf<OkObjectResult>());
+            var updatedUser = result as OkObjectResult;
+
+            Assert.That(updatedUser, Is.Not.Null);
+            Assert.That(updatedUser.Value, Is.InstanceOf<UserDto>());
+            var userDto = updatedUser.Value as UserDto;
+            Assert.That(userDto, Is.Not.Null);
+            Assert.That(userDto.Id, Is.EqualTo(userId.ToLower()));
+            Assert.That(userDto.Email, Is.EqualTo(updateUser.Email));
+            Assert.That(userDto.UserName, Is.EqualTo(updateUser.UserName));
+        }
+
+        [Test]
+        public async Task UpdateUser_ShouldUpdateOnlyTheUsername_WhenUsernameOnlyIsProvided()
+        {
+            var claims = new List<Claim>()
+            {
+                new Claim(ClaimTypes.NameIdentifier, "A1B2C3D4-E5F6-7890-1234-567890ABCDEF"),
+                new Claim(ClaimTypes.Email, "admin@example.com"),
+                new Claim(ClaimTypes.Name, "admin")
+            };
+
+            var identity = new ClaimsIdentity(claims);
+
+            var principal = new ClaimsPrincipal(identity);
+
+            _userController.ControllerContext = new ControllerContext()
+            {
+                HttpContext = new DefaultHttpContext()
+                {
+                    User = principal
+                }
+            };
+
+            string userId = "A1B2C3D4-E5F6-7890-1234-567890ABCDEF";
+
+            var updateUser = new UpdateUserDto()
+            {
+                UserName = "admin_updated",
+            };
+
+            var result = await _userController.UpdateUser(userId, updateUser);
+
+            Assert.That(result, Is.InstanceOf<OkObjectResult>());
+            var updatedUser = result as OkObjectResult;
+            Assert.That(updatedUser, Is.Not.Null);
+            Assert.That(updatedUser.Value, Is.InstanceOf<UserDto>());
+            var userDto = updatedUser.Value as UserDto;
+            Assert.That(userDto, Is.Not.Null);
+            Assert.That(userDto.Id, Is.EqualTo(userId.ToLower()));
+            Assert.That(userDto.UserName, Is.EqualTo(updateUser.UserName));
+            Assert.That(userDto.Email, Is.EqualTo("admin@example.com"));
+        }
+
+        [Test]
+        public async Task UpdateUser_ShouldUpdateOnlyTheEmail_WhenEmailOnlyIsProvided()
+        {
+            var claims = new List<Claim>()
+            {
+                new Claim(ClaimTypes.NameIdentifier, "A1B2C3D4-E5F6-7890-1234-567890ABCDEF"),
+                new Claim(ClaimTypes.Email, "admin@example.com"),
+                new Claim(ClaimTypes.Name, "admin")
+            };
+
+            var identity = new ClaimsIdentity(claims);
+
+            var principal = new ClaimsPrincipal(identity);
+
+            _userController.ControllerContext = new ControllerContext()
+            {
+                HttpContext = new DefaultHttpContext()
+                {
+                    User = principal
+                }
+            };
+
+            string userId = "A1B2C3D4-E5F6-7890-1234-567890ABCDEF";
+
+            var updateUser = new UpdateUserDto()
+            {
+                Email = "admin_updated@example.com"
+            };
+
+            var result = await _userController.UpdateUser(userId, updateUser);
+
+            Assert.That(result, Is.InstanceOf<OkObjectResult>());
+            var updatedUser = result as OkObjectResult;
+            Assert.That(updatedUser, Is.Not.Null);
+            Assert.That(updatedUser.Value, Is.InstanceOf<UserDto>());
+            var userDto = updatedUser.Value as UserDto;
+            Assert.That(userDto, Is.Not.Null);
+            Assert.That(userDto.Id, Is.EqualTo(userId.ToLower()));
+            Assert.That(userDto.Email, Is.EqualTo(updateUser.Email));
+            Assert.That(userDto.UserName, Is.EqualTo("admin"));
+        }
+
+        [Test]
+        public async Task UpdateUser_ShouldUpdateOnlyThePassword_WhenPasswordIsProvided()
+        {
+            var claims = new List<Claim>()
+            {
+                new Claim(ClaimTypes.NameIdentifier, "A1B2C3D4-E5F6-7890-1234-567890ABCDEF"),
+                new Claim(ClaimTypes.Email, "admin@example.com"),
+                new Claim(ClaimTypes.Name, "admin")
+            };
+
+            var identity = new ClaimsIdentity(claims);
+
+            var principal = new ClaimsPrincipal(identity);
+
+            _userController.ControllerContext = new ControllerContext()
+            {
+                HttpContext = new DefaultHttpContext()
+                {
+                    User = principal
+                }
+            };
+
+            string userId = "A1B2C3D4-E5F6-7890-1234-567890ABCDEF";
+
+            var updateUser = new UpdateUserDto()
+            {
+                OldPassword = "hashedpassword123",
+                NewPassword = "newhashedpassword123"
+            };
+
+            var result = await _userController.UpdateUser(userId, updateUser);
+
+            Assert.That(result, Is.InstanceOf<OkObjectResult>());
+            var updatedUser = result as OkObjectResult;
+            Assert.That(updatedUser, Is.Not.Null);
+            Assert.That(updatedUser.Value, Is.InstanceOf<UserDto>());
+            var userDto = updatedUser.Value as UserDto;
+            Assert.That(userDto, Is.Not.Null);
+            Assert.That(userDto.Id, Is.EqualTo(userId.ToLower()));
+            Assert.That(userDto.Email, Is.EqualTo("admin@example.com"));
+            Assert.That(userDto.UserName, Is.EqualTo("admin"));
+
+            // Verify that the password was updated
+            var user = await _userService.GetUserByIdAsync(Guid.Parse(userId));
+
+            Assert.That(user, Is.Not.Null);
+
+            bool isPasswordValid = _passwordHasher.VerifyPassword(user.PasswordHashed, updateUser.NewPassword);
+
+            Assert.That(isPasswordValid, Is.True);
+        }
+
+        [Test]
+        public async Task UpdateUser_ShouldUpdateUsernameAndPassword_WhenTheyAreProvided()
+        {
+            var claims = new List<Claim>()
+            {
+                new Claim(ClaimTypes.NameIdentifier, "A1B2C3D4-E5F6-7890-1234-567890ABCDEF"),
+                new Claim(ClaimTypes.Email, "admin@example.com"),
+                new Claim(ClaimTypes.Name, "admin")
+            };
+
+            var identity = new ClaimsIdentity(claims);
+
+            var principal = new ClaimsPrincipal(identity);
+
+            _userController.ControllerContext = new ControllerContext()
+            {
+                HttpContext = new DefaultHttpContext()
+                {
+                    User = principal
+                }
+            };
+
+            string userId = "A1B2C3D4-E5F6-7890-1234-567890ABCDEF";
+
+            var updateUser = new UpdateUserDto()
+            {
+               UserName = "new_username",
+               OldPassword = "hashedpassword123",
+               NewPassword = "newhashedpassword123"
+            };
+
+            var result = await _userController.UpdateUser(userId, updateUser);
+
+            Assert.That(result, Is.InstanceOf<OkObjectResult>());
+            var updatedUser = result as OkObjectResult;
+            Assert.That(updatedUser, Is.Not.Null);
+            Assert.That(updatedUser.Value, Is.InstanceOf<UserDto>());
+            var userDto = updatedUser.Value as UserDto;
+            Assert.That(userDto, Is.Not.Null);
+            Assert.That(userDto.Id, Is.EqualTo(userId.ToLower()));
+            Assert.That(userDto.Email, Is.EqualTo("admin@example.com"));
+            Assert.That(userDto.UserName, Is.EqualTo(userDto.UserName));
+
+            // Verify that the password was updated
+            var user = await _userService.GetUserByIdAsync(Guid.Parse(userId));
+
+            Assert.That(user, Is.Not.Null);
+
+            bool isPasswordValid = _passwordHasher.VerifyPassword(user.PasswordHashed, updateUser.NewPassword);
+
+            Assert.That(isPasswordValid, Is.True);
+        }
+
+        [Test]
+        public async Task UpdateUser_ShouldUpdateEmailAndPassword_WhenTheyAreProvided()
+        {
+            var claims = new List<Claim>()
+            {
+                new Claim(ClaimTypes.NameIdentifier, "A1B2C3D4-E5F6-7890-1234-567890ABCDEF"),
+                new Claim(ClaimTypes.Email, "admin@example.com"),
+                new Claim(ClaimTypes.Name, "admin")
+            };
+
+            var identity = new ClaimsIdentity(claims);
+
+            var principal = new ClaimsPrincipal(identity);
+
+            _userController.ControllerContext = new ControllerContext()
+            {
+                HttpContext = new DefaultHttpContext()
+                {
+                    User = principal
+                }
+            };
+
+            string userId = "A1B2C3D4-E5F6-7890-1234-567890ABCDEF";
+
+            var updateUser = new UpdateUserDto()
+            {
+                Email = "newEmail@example.com",
+                OldPassword = "hashedpassword123",
+                NewPassword = "newhashedpassword123"
+            };
+
+            var result = await _userController.UpdateUser(userId, updateUser);
+
+            Assert.That(result, Is.InstanceOf<OkObjectResult>());
+            var updatedUser = result as OkObjectResult;
+            Assert.That(updatedUser, Is.Not.Null);
+            Assert.That(updatedUser.Value, Is.InstanceOf<UserDto>());
+            var userDto = updatedUser.Value as UserDto;
+            Assert.That(userDto, Is.Not.Null);
+            Assert.That(userDto.Id, Is.EqualTo(userId.ToLower()));
+            Assert.That(userDto.Email, Is.EqualTo(updateUser.Email));
+            Assert.That(userDto.UserName, Is.EqualTo("admin"));
+
+            // Verify that the password was updated
+            var user = await _userService.GetUserByIdAsync(Guid.Parse(userId));
+
+            Assert.That(user, Is.Not.Null);
+
+            bool isPasswordValid = _passwordHasher.VerifyPassword(user.PasswordHashed, updateUser.NewPassword);
+
+            Assert.That(isPasswordValid, Is.True);
+        }
+
+        [Test]
+        public async Task UpdateUser_ShouldReturnBadRequest_WhenOldPasswordIsIncorrect()
+        {
+            var claims = new List<Claim>()
+            {
+                new Claim(ClaimTypes.NameIdentifier, "A1B2C3D4-E5F6-7890-1234-567890ABCDEF"),
+                new Claim(ClaimTypes.Email, "admin@example.com"),
+                new Claim(ClaimTypes.Name, "admin")
+            };
+
+            var identity = new ClaimsIdentity(claims);
+
+            var principal = new ClaimsPrincipal(identity);
+
+            _userController.ControllerContext = new ControllerContext()
+            {
+                HttpContext = new DefaultHttpContext()
+                {
+                    User = principal
+                }
+            };
+
+            string userId = "A1B2C3D4-E5F6-7890-1234-567890ABCDEF";
+
+            var updateUser = new UpdateUserDto()
+            {
+                OldPassword = "hashedpassword123dwdwdwdwd",
+                NewPassword = "newhashedpassword123"
+            };
+
+            var result = await _userController.UpdateUser(userId, updateUser);
+            Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
+            var badRequestResult = result as BadRequestObjectResult;
+            Assert.That(badRequestResult.Value.GetType().GetProperty("error").GetValue(badRequestResult.Value), Is.EqualTo("Old password is incorrect."));
+        }
+
+        [Test]
+        public async Task UpdateUser_ShouldReturnBadRequest_WhenOldPasswordAndNewPasswordAreTheSame()
+        {
+            var claims = new List<Claim>()
+            {
+                new Claim(ClaimTypes.NameIdentifier, "A1B2C3D4-E5F6-7890-1234-567890ABCDEF"),
+                new Claim(ClaimTypes.Email, "admin@example.com"),
+                new Claim(ClaimTypes.Name, "admin")
+            };
+
+            var identity = new ClaimsIdentity(claims);
+
+            var principal = new ClaimsPrincipal(identity);
+
+            _userController.ControllerContext = new ControllerContext()
+            {
+                HttpContext = new DefaultHttpContext()
+                {
+                    User = principal
+                }
+            };
+
+            string userId = "A1B2C3D4-E5F6-7890-1234-567890ABCDEF";
+
+            var updateUser = new UpdateUserDto()
+            {
+                OldPassword = "hashedpassword123",
+                NewPassword = "hashedpassword123"
+            };
+
+            var result = await _userController.UpdateUser(userId, updateUser);
+            Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
+            var badRequestResult = result as BadRequestObjectResult;
+            Assert.That(badRequestResult.Value.GetType().GetProperty("error").GetValue(badRequestResult.Value), Is.EqualTo("New password cannot be the same as the old password."));
+        }
 
         #endregion
     }
