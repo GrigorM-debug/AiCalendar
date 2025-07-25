@@ -1040,8 +1040,506 @@ namespace AiCalendar.Tests
 
         #region GetEvents
 
-        
+        [Test]
+        public async Task GetEvents_ShouldReturnAllEvents_WhenNoFilterIsApplied()
+        {
+            _eventController.ControllerContext = new ControllerContext();
+            _eventController.ControllerContext.HttpContext = new DefaultHttpContext();
+            _eventController.ControllerContext.HttpContext.User = new ClaimsPrincipal();
 
+            // Act
+            var result = await _eventController.GetEvents(null);
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result, Is.InstanceOf<OkObjectResult>());
+            var okResult = result as OkObjectResult;
+            Assert.That(okResult.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
+            Assert.That(okResult.Value, Is.Not.Null);
+            Assert.That(okResult.Value, Is.InstanceOf<List<EventDto>>());
+            var events = okResult.Value as List<EventDto>;
+            Assert.That(events.Count, Is.GreaterThan(0), "Expected at least one event to be returned.");
+
+            Assert.That(events[0].Id, Is.EqualTo("E1000000-0000-0000-0000-000000000001".ToLower()));
+            Assert.That(events[0].Title, Is.EqualTo("Team Stand-up Meeting"));
+            Assert.That(events[0].StartDate, Is.EqualTo(new DateTime(2025, 6, 16, 9, 0, 0, DateTimeKind.Utc)));
+            Assert.That(events[0].EndDate, Is.EqualTo(new DateTime(2025, 6, 16, 9, 30, 0, DateTimeKind.Utc)));
+            Assert.That(events[0].CreatorId, Is.EqualTo("A1B2C3D4-E5F6-7890-1234-567890ABCDEF".ToLower()));
+            Assert.That(events[0].Description, Is.EqualTo("Daily team synchronization meeting."));
+            Assert.That(events[0].IsCancelled, Is.False, "Expected the event to not be cancelled.");
+
+            Assert.That(events[1].Id, Is.EqualTo("E1000000-0000-0000-0000-000000000002".ToLower()));
+            Assert.That(events[1].Title, Is.EqualTo("Project X Review"));
+            Assert.That(events[1].StartDate, Is.EqualTo(new DateTime(2025, 6, 17, 14, 0, 0, DateTimeKind.Utc)));
+            Assert.That(events[1].EndDate, Is.EqualTo(new DateTime(2025, 6, 17, 15, 30, 0, DateTimeKind.Utc)));
+            Assert.That(events[1].CreatorId, Is.EqualTo("F0E9D8C7-B6A5-4321-FEDC-BA9876543210".ToLower()));
+            Assert.That(events[1].Description, Is.EqualTo("Review progress on Project X with stakeholders."));
+            Assert.That(events[1].IsCancelled, Is.False, "Expected the event to not be cancelled.");
+
+            Assert.That(events[2].Id, Is.EqualTo("E1000000-0000-0000-0000-000000000003".ToLower()));
+            Assert.That(events[2].Title, Is.EqualTo("Dentist Appointment"));
+            Assert.That(events[2].StartDate, Is.EqualTo(new DateTime(2025, 6, 20, 8, 0, 0, DateTimeKind.Utc)));
+            Assert.That(events[2].EndDate, Is.EqualTo(new DateTime(2025, 6, 20, 9, 0, 0, DateTimeKind.Utc)));
+            Assert.That(events[2].CreatorId, Is.EqualTo("11223344-5566-7788-99AA-BBCCDDEEFF00".ToLower()));
+            Assert.That(events[2].Description, Is.EqualTo("Routine check-up."));
+            Assert.That(events[2].IsCancelled, Is.False, "Expected the event to not be cancelled.");
+
+            Assert.That(events[3].Id, Is.EqualTo("E1000000-0000-0000-0000-000000000004".ToLower()));
+            Assert.That(events[3].Title, Is.EqualTo("Weekend Hike"));
+            Assert.That(events[3].StartDate, Is.EqualTo(new DateTime(2025, 6, 21, 7, 0, 0, DateTimeKind.Utc)));
+            Assert.That(events[3].EndDate, Is.EqualTo(new DateTime(2025, 6, 21, 15, 0, 0, DateTimeKind.Utc)));
+            Assert.That(events[3].CreatorId, Is.EqualTo("A1B2C3D4-E5F6-7890-1234-567890ABCDEF".ToLower()));
+            Assert.That(events[3].Description, Is.EqualTo("Exploring the Vitosha mountains."));
+            Assert.That(events[3].IsCancelled, Is.False, "Expected the event to not be cancelled.");
+        }
+
+        [Test]
+        public async Task GetEvents_ShouldReturnEmptyList_WhenNoEventsExist()
+        {
+            _eventController.ControllerContext = new ControllerContext();
+            _eventController.ControllerContext.HttpContext = new DefaultHttpContext();
+            _eventController.ControllerContext.HttpContext.User = new ClaimsPrincipal();
+
+            await _context.Database.EnsureDeletedAsync();
+
+            // Act
+            var result = await _eventController.GetEvents(null);
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result, Is.InstanceOf<OkObjectResult>());
+            var okResult = result as OkObjectResult;
+            Assert.That(okResult.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
+            Assert.That(okResult.Value, Is.Not.Null);
+            Assert.That(okResult.Value, Is.InstanceOf<List<EventDto>>());
+            var events = okResult.Value as List<EventDto>;
+            Assert.That(events.Count, Is.EqualTo(0), "Expected no events to be returned.");
+        }
+
+        [Test]
+        public async Task GetEvents_ShouldReturnFilteredEvents_WhenFilterIsApplied()
+        {
+            _eventController.ControllerContext = new ControllerContext();
+            _eventController.ControllerContext.HttpContext = new DefaultHttpContext();
+            _eventController.ControllerContext.HttpContext.User = new ClaimsPrincipal();
+
+            // Arrange
+            var filter = new EventFilterCriteriaDto()
+            {
+                StartDate = new DateTime(2025, 6, 16, 0, 0, 0, DateTimeKind.Utc),
+                EndDate = new DateTime(2025, 6, 17, 0, 0, 0, DateTimeKind.Utc),
+                IsCancelled = false
+            };
+            // Act
+            var result = await _eventController.GetEvents(filter);
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result, Is.InstanceOf<OkObjectResult>());
+            var okResult = result as OkObjectResult;
+            Assert.That(okResult.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
+            Assert.That(okResult.Value, Is.Not.Null);
+            Assert.That(okResult.Value, Is.InstanceOf<List<EventDto>>());
+
+            var events = okResult.Value as List<EventDto>;
+            Assert.That(events.Count, Is.GreaterThan(0), "Expected at least one event to match the filter criteria.");
+            Assert.That(events[0].Id, Is.EqualTo("E1000000-0000-0000-0000-000000000001".ToLower()));
+            Assert.That(events[0].Title, Is.EqualTo("Team Stand-up Meeting"));
+            Assert.That(events[0].StartDate, Is.EqualTo(new DateTime(2025, 6, 16, 9, 0, 0, DateTimeKind.Utc)));
+            Assert.That(events[0].EndDate, Is.EqualTo(new DateTime(2025, 6, 16, 9, 30, 0, DateTimeKind.Utc)));
+            Assert.That(events[0].CreatorId, Is.EqualTo("A1B2C3D4-E5F6-7890-1234-567890ABCDEF".ToLower()));
+            Assert.That(events[0].Description, Is.EqualTo("Daily team synchronization meeting."));
+            Assert.That(events[0].IsCancelled, Is.False, "Expected the event to not be marked as cancelled.");
+        }
+
+        [Test]
+        public async Task GetEvents_ShouldReturnEmptyList_WhenFilterIsAppliedButThereAreNoEvents()
+        {
+            _eventController.ControllerContext = new ControllerContext();
+            _eventController.ControllerContext.HttpContext = new DefaultHttpContext();
+            _eventController.ControllerContext.HttpContext.User = new ClaimsPrincipal();
+
+            await _context.Database.EnsureDeletedAsync();
+
+            // Arrange
+            var filter = new EventFilterCriteriaDto()
+            {
+                StartDate = new DateTime(2025, 6, 16, 0, 0, 0, DateTimeKind.Utc),
+                EndDate = new DateTime(2025, 6, 17, 0, 0, 0, DateTimeKind.Utc),
+                IsCancelled = false
+            };
+
+            // Act
+            var result = await _eventController.GetEvents(filter);
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result, Is.InstanceOf<OkObjectResult>());
+            var okResult = result as OkObjectResult;
+            Assert.That(okResult.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
+            Assert.That(okResult.Value, Is.Not.Null);
+            Assert.That(okResult.Value, Is.InstanceOf<List<EventDto>>());
+            var events = okResult.Value as List<EventDto>;
+            Assert.That(events.Count, Is.EqualTo(0), "Expected no events to match the filter criteria.");
+        }
+
+        [Test]
+        public async Task GetEvents_ShouldReturnEmptyList_WhenNoEventsMatchFilter()
+        {
+            _eventController.ControllerContext = new ControllerContext();
+            _eventController.ControllerContext.HttpContext = new DefaultHttpContext();
+            _eventController.ControllerContext.HttpContext.User = new ClaimsPrincipal();
+
+            // Arrange
+            var filter = new EventFilterCriteriaDto()
+            {
+                StartDate = new DateTime(2030, 6, 20, 0, 0, 0, DateTimeKind.Utc),
+                EndDate = new DateTime(2030,6, 21, 0, 0, 0, DateTimeKind.Utc),
+                IsCancelled = false
+            };
+            // Act
+            var result = await _eventController.GetEvents(filter);
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result, Is.InstanceOf<OkObjectResult>());
+            var okResult = result as OkObjectResult;
+            Assert.That(okResult.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
+            Assert.That(okResult.Value, Is.Not.Null);
+            Assert.That(okResult.Value, Is.InstanceOf<List<EventDto>>());
+            var events = okResult.Value as List<EventDto>;
+            Assert.That(events.Count, Is.EqualTo(0), "Expected no events to match the filter criteria.");
+        }
+
+        [Test]
+        public async Task GetEvents_ShouldReturnFilteredEvents_WhenStartDateFilterIsApplied()
+        {
+            _eventController.ControllerContext = new ControllerContext();
+            _eventController.ControllerContext.HttpContext = new DefaultHttpContext();
+            _eventController.ControllerContext.HttpContext.User = new ClaimsPrincipal();
+
+            // Arrange
+            var filter = new EventFilterCriteriaDto()
+            {
+                StartDate = new DateTime(2025, 6, 16, 0, 0, 0, DateTimeKind.Utc),
+                IsCancelled = false
+            };
+            // Act
+            var result = await _eventController.GetEvents(filter);
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result, Is.InstanceOf<OkObjectResult>());
+            var okResult = result as OkObjectResult;
+            Assert.That(okResult.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
+            Assert.That(okResult.Value, Is.Not.Null);
+            Assert.That(okResult.Value, Is.InstanceOf<List<EventDto>>());
+            var events = okResult.Value as List<EventDto>;
+            Assert.That(events.Count, Is.GreaterThan(0), "Expected at least one event to match the start date filter.");
+            Assert.That(events[0].Id, Is.EqualTo("E1000000-0000-0000-0000-000000000001".ToLower()));
+            Assert.That(events[0].Title, Is.EqualTo("Team Stand-up Meeting"));
+            Assert.That(events[0].StartDate, Is.EqualTo(new DateTime(2025, 6, 16, 9, 0, 0, DateTimeKind.Utc)));
+            Assert.That(events[0].EndDate, Is.EqualTo(new DateTime(2025, 6, 16, 9, 30, 0, DateTimeKind.Utc)));
+            Assert.That(events[0].CreatorId, Is.EqualTo("A1B2C3D4-E5F6-7890-1234-567890ABCDEF".ToLower()));
+            Assert.That(events[0].Description, Is.EqualTo("Daily team synchronization meeting."));
+            Assert.That(events[0].IsCancelled, Is.False, "Expected the event to not be marked as cancelled.");
+            Assert.That(events[1].Id, Is.EqualTo("E1000000-0000-0000-0000-000000000002".ToLower()));
+            Assert.That(events[1].Title, Is.EqualTo("Project X Review"));
+            Assert.That(events[1].StartDate, Is.EqualTo(new DateTime(2025, 6, 17, 14, 0, 0, DateTimeKind.Utc)));
+            Assert.That(events[1].EndDate, Is.EqualTo(new DateTime(2025, 6, 17, 15, 30, 0, DateTimeKind.Utc)));
+            Assert.That(events[1].CreatorId, Is.EqualTo("F0E9D8C7-B6A5-4321-FEDC-BA9876543210".ToLower()));
+            Assert.That(events[1].Description, Is.EqualTo("Review progress on Project X with stakeholders."));
+            Assert.That(events[1].IsCancelled, Is.False, "Expected the event to not be cancelled.");
+
+            Assert.That(events[2].Id, Is.EqualTo("E1000000-0000-0000-0000-000000000003".ToLower()));
+            Assert.That(events[2].Title, Is.EqualTo("Dentist Appointment"));
+            Assert.That(events[2].StartDate, Is.EqualTo(new DateTime(2025, 6, 20, 8, 0, 0, DateTimeKind.Utc)));
+            Assert.That(events[2].EndDate, Is.EqualTo(new DateTime(2025, 6, 20, 9, 0, 0, DateTimeKind.Utc)));
+            Assert.That(events[2].CreatorId, Is.EqualTo("11223344-5566-7788-99AA-BBCCDDEEFF00".ToLower()));
+            Assert.That(events[2].Description, Is.EqualTo("Routine check-up."));
+            Assert.That(events[2].IsCancelled, Is.False, "Expected the event to not be cancelled.");
+
+            Assert.That(events[3].Id, Is.EqualTo("E1000000-0000-0000-0000-000000000004".ToLower()));
+            Assert.That(events[3].Title, Is.EqualTo("Weekend Hike"));
+            Assert.That(events[3].StartDate, Is.EqualTo(new DateTime(2025, 6, 21, 7, 0, 0, DateTimeKind.Utc)));
+            Assert.That(events[3].EndDate, Is.EqualTo(new DateTime(2025, 6, 21, 15, 0, 0, DateTimeKind.Utc)));
+            Assert.That(events[3].CreatorId, Is.EqualTo("A1B2C3D4-E5F6-7890-1234-567890ABCDEF".ToLower()));
+            Assert.That(events[3].Description, Is.EqualTo("Exploring the Vitosha mountains."));
+            Assert.That(events[3].IsCancelled, Is.False, "Expected the event to not be cancelled.");
+        }
+
+        [Test]
+        public async Task GetEvents_ShouldReturnFilteredEvents_WhenEndDateFilterIsApplied()
+        {
+            _eventController.ControllerContext = new ControllerContext();
+            _eventController.ControllerContext.HttpContext = new DefaultHttpContext();
+            _eventController.ControllerContext.HttpContext.User = new ClaimsPrincipal();
+            // Arrange
+            var filter = new EventFilterCriteriaDto()
+            {
+                EndDate = new DateTime(2025, 6, 17, 15, 30, 0, DateTimeKind.Utc),
+                IsCancelled = false
+            };
+            // Act
+            var result = await _eventController.GetEvents(filter);
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result, Is.InstanceOf<OkObjectResult>());
+            var okResult = result as OkObjectResult;
+            Assert.That(okResult.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
+            Assert.That(okResult.Value, Is.Not.Null);
+            Assert.That(okResult.Value, Is.InstanceOf<List<EventDto>>());
+            var events = okResult.Value as List<EventDto>;
+            Assert.That(events.Count, Is.GreaterThan(0), "Expected at least one event to match the end date filter.");
+            Assert.That(events[0].Id, Is.EqualTo("E1000000-0000-0000-0000-000000000001".ToLower()));
+            Assert.That(events[0].Title, Is.EqualTo("Team Stand-up Meeting"));
+            Assert.That(events[0].StartDate, Is.EqualTo(new DateTime(2025, 6, 16, 9, 0, 0, DateTimeKind.Utc)));
+            Assert.That(events[0].EndDate, Is.EqualTo(new DateTime(2025, 6, 16, 9, 30, 0, DateTimeKind.Utc)));
+            Assert.That(events[0].CreatorId, Is.EqualTo("A1B2C3D4-E5F6-7890-1234-567890ABCDEF".ToLower()));
+            Assert.That(events[0].Description, Is.EqualTo("Daily team synchronization meeting."));
+            Assert.That(events[0].IsCancelled, Is.False, "Expected the event to not be marked as cancelled.");
+
+            Assert.That(events[1].Id, Is.EqualTo("E1000000-0000-0000-0000-000000000002".ToLower()));
+            Assert.That(events[1].Title, Is.EqualTo("Project X Review"));
+            Assert.That(events[1].StartDate, Is.EqualTo(new DateTime(2025, 6, 17, 14, 0, 0, DateTimeKind.Utc)));
+            Assert.That(events[1].EndDate, Is.EqualTo(new DateTime(2025, 6, 17, 15, 30, 0, DateTimeKind.Utc)));
+            Assert.That(events[1].CreatorId, Is.EqualTo("F0E9D8C7-B6A5-4321-FEDC-BA9876543210".ToLower()));
+            Assert.That(events[1].Description, Is.EqualTo("Review progress on Project X with stakeholders."));
+            Assert.That(events[1].IsCancelled, Is.False, "Expected the event to not be cancelled.");
+        }
+
+        [Test]
+        public async Task GetEvents_ShouldReturnEmpty_WhenIsCancelledFilterIsAppliedButThereAreNoEvents()
+        {
+            _eventController.ControllerContext = new ControllerContext();
+            _eventController.ControllerContext.HttpContext = new DefaultHttpContext();
+            _eventController.ControllerContext.HttpContext.User = new ClaimsPrincipal();
+            // Arrange
+            var filter = new EventFilterCriteriaDto()
+            {
+                IsCancelled = true
+            };
+            // Act
+            var result = await _eventController.GetEvents(filter);
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result, Is.InstanceOf<OkObjectResult>());
+            var okResult = result as OkObjectResult;
+            Assert.That(okResult.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
+            Assert.That(okResult.Value, Is.Not.Null);
+            Assert.That(okResult.Value, Is.InstanceOf<List<EventDto>>());
+            var events = okResult.Value as List<EventDto>;
+            Assert.That(events.Count, Is.EqualTo(0), "Expected no events to be returned when filtering by cancelled events.");
+        }
+
+        [Test]
+        public async Task GetEvents_ShouldReturnCancelledEvents_WhenIsCancelledFilterIsTrue()
+        {
+            _eventController.ControllerContext = new ControllerContext();
+            _eventController.ControllerContext.HttpContext = new DefaultHttpContext();
+            _eventController.ControllerContext.HttpContext.User = new ClaimsPrincipal();
+
+            Guid eventId = Guid.Parse("E1000000-0000-0000-0000-000000000001");
+            Guid userId = Guid.Parse("A1B2C3D4-E5F6-7890-1234-567890ABCDEF");
+            await _eventService.CancelEventAsync(eventId, userId);
+            // Arrange
+            var filter = new EventFilterCriteriaDto()
+            {
+                IsCancelled = true
+            };
+            // Act
+            var result = await _eventController.GetEvents(filter);
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result, Is.InstanceOf<OkObjectResult>());
+            var okResult = result as OkObjectResult;
+            Assert.That(okResult.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
+            Assert.That(okResult.Value, Is.Not.Null);
+            Assert.That(okResult.Value, Is.InstanceOf<List<EventDto>>());
+            var events = okResult.Value as List<EventDto>;
+            Assert.That(events.Count, Is.EqualTo(1), "Expected at least one cancelled event to be returned.");
+
+            Assert.That(events[0].Id, Is.EqualTo("E1000000-0000-0000-0000-000000000001".ToLower()));
+            Assert.That(events[0].Title, Is.EqualTo("Team Stand-up Meeting"));
+            Assert.That(events[0].StartDate, Is.EqualTo(new DateTime(2025, 6, 16, 9, 0, 0, DateTimeKind.Utc)));
+            Assert.That(events[0].EndDate, Is.EqualTo(new DateTime(2025, 6, 16, 9, 30, 0, DateTimeKind.Utc)));
+            Assert.That(events[0].CreatorId, Is.EqualTo("A1B2C3D4-E5F6-7890-1234-567890ABCDEF".ToLower()));
+            Assert.That(events[0].Description, Is.EqualTo("Daily team synchronization meeting."));
+            Assert.That(events[0].IsCancelled, Is.True, "Expected the event to be marked as cancelled.");
+        }
+
+        [Test]
+        public async Task GetEvents_ShouldReturnEmpty_WhenIsCancelledFilterIsFalseAndThereAreNoNonCancelledEvents()
+        {
+            _eventController.ControllerContext = new ControllerContext();
+            _eventController.ControllerContext.HttpContext = new DefaultHttpContext();
+            _eventController.ControllerContext.HttpContext.User = new ClaimsPrincipal();
+            await _context.Database.EnsureDeletedAsync();
+            // Arrange
+            var filter = new EventFilterCriteriaDto()
+            {
+                IsCancelled = false
+            };
+            // Act
+            var result = await _eventController.GetEvents(filter);
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result, Is.InstanceOf<OkObjectResult>());
+            var okResult = result as OkObjectResult;
+            Assert.That(okResult.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
+            Assert.That(okResult.Value, Is.Not.Null);
+            Assert.That(okResult.Value, Is.InstanceOf<List<EventDto>>());
+            var events = okResult.Value as List<EventDto>;
+            Assert.That(events.Count, Is.EqualTo(0), "Expected no non-cancelled events to be returned.");
+        }
+
+        [Test]
+        public async Task GetEvents_ShouldReturnEmptyCollection_WhenStartDateFilterIsAppliedButThereNoEvents()
+        {
+            _eventController.ControllerContext = new ControllerContext();
+            _eventController.ControllerContext.HttpContext = new DefaultHttpContext();
+            _eventController.ControllerContext.HttpContext.User = new ClaimsPrincipal();
+            await _context.Database.EnsureDeletedAsync();
+
+            // Arrange
+            var filter = new EventFilterCriteriaDto()
+            {
+                StartDate = new DateTime(2025, 6, 16, 0, 0, 0, DateTimeKind.Utc),
+                IsCancelled = false
+            };
+            // Act
+            var result = await _eventController.GetEvents(filter);
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result, Is.InstanceOf<OkObjectResult>());
+            var okResult = result as OkObjectResult;
+            Assert.That(okResult.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
+            Assert.That(okResult.Value, Is.Not.Null);
+            Assert.That(okResult.Value, Is.InstanceOf<List<EventDto>>());
+            var events = okResult.Value as List<EventDto>;
+            Assert.That(events.Count, Is.EqualTo(0), "Expected no events to be returned when filtering by start date with no events in the database.");
+        }
+
+        [Test]
+        public async Task GetEvents_ShouldReturnEmptyCollection_WhenEndDateFilterIsAppliedButThereNoEvents()
+        {
+            _eventController.ControllerContext = new ControllerContext();
+            _eventController.ControllerContext.HttpContext = new DefaultHttpContext();
+            _eventController.ControllerContext.HttpContext.User = new ClaimsPrincipal();
+            await _context.Database.EnsureDeletedAsync();
+            // Arrange
+            var filter = new EventFilterCriteriaDto()
+            {
+                EndDate = new DateTime(2025, 6, 17, 15, 30, 0, DateTimeKind.Utc),
+                IsCancelled = false
+            };
+            // Act
+            var result = await _eventController.GetEvents(filter);
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result, Is.InstanceOf<OkObjectResult>());
+            var okResult = result as OkObjectResult;
+            Assert.That(okResult.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
+            Assert.That(okResult.Value, Is.Not.Null);
+            Assert.That(okResult.Value, Is.InstanceOf<List<EventDto>>());
+            var events = okResult.Value as List<EventDto>;
+            Assert.That(events.Count, Is.EqualTo(0), "Expected no events to be returned when filtering by end date with no events in the database.");
+        }
+
+        [Test]
+        public async Task GetEvents_ShouldReturnEmptyCollection_WhenStartDateFilterIsAppliedButThereareNoEventsMatchingIt()
+        {
+            _eventController.ControllerContext = new ControllerContext();
+            _eventController.ControllerContext.HttpContext = new DefaultHttpContext();
+            _eventController.ControllerContext.HttpContext.User = new ClaimsPrincipal();
+
+            // Arrange
+            var filter = new EventFilterCriteriaDto()
+            {
+                StartDate = new DateTime(2030, 6, 16, 0, 0, 0, DateTimeKind.Utc),
+                IsCancelled = false
+            };
+            // Act
+            var result = await _eventController.GetEvents(filter);
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result, Is.InstanceOf<OkObjectResult>());
+            var okResult = result as OkObjectResult;
+            Assert.That(okResult.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
+            Assert.That(okResult.Value, Is.Not.Null);
+            Assert.That(okResult.Value, Is.InstanceOf<List<EventDto>>());
+            var events = okResult.Value as List<EventDto>;
+            Assert.That(events.Count, Is.EqualTo(0), "Expected no events to be returned when filtering by start date with no matching events.");
+        }
+
+        [Test]
+        public async Task GetEvents_ShouldReturnEmptyCollection_WhenEndDateFilterIsAppliedButThereareNoEventsMatchingIt()
+        {
+            _eventController.ControllerContext = new ControllerContext();
+            _eventController.ControllerContext.HttpContext = new DefaultHttpContext();
+            _eventController.ControllerContext.HttpContext.User = new ClaimsPrincipal();
+            // Arrange
+            var filter = new EventFilterCriteriaDto()
+            {
+                EndDate = new DateTime(2020, 6, 17, 15, 30, 0, DateTimeKind.Utc),
+                IsCancelled = false
+            };
+            // Act
+            var result = await _eventController.GetEvents(filter);
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result, Is.InstanceOf<OkObjectResult>());
+            var okResult = result as OkObjectResult;
+            Assert.That(okResult.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
+            Assert.That(okResult.Value, Is.Not.Null);
+            Assert.That(okResult.Value, Is.InstanceOf<List<EventDto>>());
+            var events = okResult.Value as List<EventDto>;
+            Assert.That(events.Count, Is.EqualTo(0), "Expected no events to be returned when filtering by end date with no matching events.");
+        }
+
+        [Test]
+        public async Task GetEvents_ShouldReturnEmptyCollection_WhenIsCancelledFilterIsFalseAndThereAreNoNonCancelledEvents()
+        {
+            _eventController.ControllerContext = new ControllerContext();
+            _eventController.ControllerContext.HttpContext = new DefaultHttpContext();
+            _eventController.ControllerContext.HttpContext.User = new ClaimsPrincipal();
+            await _context.Database.EnsureDeletedAsync();
+            // Arrange
+            var filter = new EventFilterCriteriaDto()
+            {
+                IsCancelled = false
+            };
+            // Act
+            var result = await _eventController.GetEvents(filter);
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result, Is.InstanceOf<OkObjectResult>());
+            var okResult = result as OkObjectResult;
+            Assert.That(okResult.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
+            Assert.That(okResult.Value, Is.Not.Null);
+            Assert.That(okResult.Value, Is.InstanceOf<List<EventDto>>());
+            var events = okResult.Value as List<EventDto>;
+            Assert.That(events.Count, Is.EqualTo(0), "Expected no non-cancelled events to be returned when there are no non-cancelled events in the database.");
+        }
+
+        [Test]
+        public async Task GetEvents_ShouldReturnEmptyCollection_WhenIsCancelledFilterIsTrueAndThereAreNoCancelledEvents()
+        {
+            _eventController.ControllerContext = new ControllerContext();
+            _eventController.ControllerContext.HttpContext = new DefaultHttpContext();
+            _eventController.ControllerContext.HttpContext.User = new ClaimsPrincipal();
+            await _context.Database.EnsureDeletedAsync();
+            // Arrange
+            var filter = new EventFilterCriteriaDto()
+            {
+                IsCancelled = true
+            };
+            // Act
+            var result = await _eventController.GetEvents(filter);
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result, Is.InstanceOf<OkObjectResult>());
+            var okResult = result as OkObjectResult;
+            Assert.That(okResult.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
+            Assert.That(okResult.Value, Is.Not.Null);
+            Assert.That(okResult.Value, Is.InstanceOf<List<EventDto>>());
+            var events = okResult.Value as List<EventDto>;
+            Assert.That(events.Count, Is.EqualTo(0), "Expected no cancelled events to be returned when there are no cancelled events in the database.");
+        }
         #endregion
     }
 }
