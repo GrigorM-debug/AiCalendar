@@ -2,6 +2,7 @@
 using AiCalendar.WebApi.Extensions;
 using AiCalendar.WebApi.Models;
 using AiCalendar.WebApi.Services.Events.Interfaces;
+using AiCalendar.WebApi.Services.Users.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -19,11 +20,13 @@ namespace AiCalendar.WebApi.Controllers
     {
         private readonly ILogger<EventController> _logger;
         private readonly IEventService _eventService;
+        private readonly IUserService _userService;
 
-        public EventController(ILogger<EventController> logger, IEventService eventService)
+        public EventController(ILogger<EventController> logger, IEventService eventService, IUserService userService)
         {
             _logger = logger;
             _eventService = eventService;
+            _userService = userService;
         }
 
         /// <summary>
@@ -79,7 +82,7 @@ namespace AiCalendar.WebApi.Controllers
         {
             string? userIdString = User.GetUserId();
 
-            if (User.Identity == null && !User.Identity.IsAuthenticated && userIdString == null)
+            if (User?.Identity == null && User?.Identity?.IsAuthenticated == null && userIdString == null)
             {
                 _logger.LogWarning("Unauthorized attempt to create an event without authentication.");
                 return Unauthorized("You must be logged in to create an event.");
@@ -89,6 +92,13 @@ namespace AiCalendar.WebApi.Controllers
             {
                 _logger.LogWarning("Invalid user ID format: {UserId}", userIdString);
                 return BadRequest("Invalid user ID.");
+            }
+
+            bool isUserExists = await _userService.UserExistsByIdAsync(userId);
+            if (!isUserExists)
+            {
+                _logger.LogWarning("User not found for ID: {UserId}", userId);
+                return NotFound("User not found.");
             }
 
             bool hasOverlappingEvents = await _eventService.HasOverlappingEvents(userId, createEventDto.StartTime, createEventDto.EndTime);
@@ -124,10 +134,10 @@ namespace AiCalendar.WebApi.Controllers
         {
             string? userIdString = User.GetUserId();
 
-            if (User.Identity == null && !User.Identity.IsAuthenticated && userIdString == null)
+            if (User?.Identity == null && User?.Identity?.IsAuthenticated == null && userIdString == null)
             {
                 _logger.LogWarning("Unauthorized attempt to delete an event without authentication.");
-                return Unauthorized("You must be logged in to create an event.");
+                return Unauthorized("You must be logged in to delete an event.");
             }
 
             if (!Guid.TryParse(userIdString, out Guid userId))
@@ -139,7 +149,14 @@ namespace AiCalendar.WebApi.Controllers
             if (!Guid.TryParse(id, out Guid eventId))
             {
                 _logger.LogWarning("Invalid event ID format: {EventId}", id);
-                return BadRequest("Invalid user ID format.");
+                return BadRequest("Invalid event ID format.");
+            }
+
+            bool isUserExists = await _userService.UserExistsByIdAsync(userId);
+            if (!isUserExists)
+            {
+                _logger.LogWarning("User not found for ID: {UserId}", userId);
+                return NotFound("User not found.");
             }
 
             bool isEventExists = await _eventService.EventExistsByIdAsync(eventId);
@@ -256,7 +273,7 @@ namespace AiCalendar.WebApi.Controllers
         {
             string? userIdString = User.GetUserId();
 
-            if (User.Identity == null && !User.Identity.IsAuthenticated && userIdString == null)
+            if (User?.Identity == null && User?.Identity?.IsAuthenticated == null && userIdString == null)
             {
                 _logger.LogWarning("Unauthorized attempt to cancel an event without authentication.");
                 return Unauthorized("You must be logged in to cancel an event.");
@@ -272,6 +289,13 @@ namespace AiCalendar.WebApi.Controllers
             {
                 _logger.LogWarning("Invalid event ID format: {EventId}", id);
                 return BadRequest("Invalid event ID format.");
+            }
+
+            bool isUserExists = await _userService.UserExistsByIdAsync(userId);
+            if (!isUserExists) 
+            {
+                _logger.LogWarning("User not found for ID: {UserId}", userId);
+                return NotFound("User not found.");
             }
 
             bool isEventExists = await _eventService.EventExistsByIdAsync(eventId);
