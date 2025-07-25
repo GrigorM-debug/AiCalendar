@@ -545,5 +545,503 @@ namespace AiCalendar.Tests
         }
 
         #endregion
+
+        #region UpdateEventAsync
+
+        [Test]
+        public async Task UpdateEventAsync_ShouldReturnUnAuthorized_WhenUserIsUnAuthorized()
+        {
+            _eventController.ControllerContext = new ControllerContext();
+            _eventController.ControllerContext.HttpContext = new DefaultHttpContext();
+            _eventController.ControllerContext.HttpContext.User = new ClaimsPrincipal();
+            // Arrange
+            var eventId = "E1000000-0000-0000-0000-000000000001"; // Existing event ID
+            var updateEventDto = new UpdateEventDto
+            {
+                Title = "Updated Event",
+                Description = "This is an updated event.",
+                StartTime = new DateTime(2025, 6, 17, 10, 0, 0, DateTimeKind.Utc),
+                EndTime = new DateTime(2025, 6, 17, 11, 0, 0, DateTimeKind.Utc),
+            };
+            // Act
+            var result = await _eventController.UpdateEventAsync(eventId, updateEventDto);
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result, Is.InstanceOf<UnauthorizedObjectResult>());
+            var unauthorizedResult = result as UnauthorizedObjectResult;
+            Assert.That(unauthorizedResult.Value, Is.EqualTo("You must be logged in to update an event."));
+        }
+
+        [Test]
+        public async Task UpdateEventAsync_ShouldReturnBadRequest_WhenEventIdIsInvalidGuid()
+        {
+            // Arrange
+            var eventId = "InvalidEventId"; // Invalid event ID
+            var updateEventDto = new UpdateEventDto
+            {
+                Title = "Updated Event",
+                Description = "This is an updated event.",
+                StartTime = new DateTime(2025, 6, 17, 10, 0, 0, DateTimeKind.Utc),
+                EndTime = new DateTime(2025, 6, 17, 11, 0, 0, DateTimeKind.Utc),
+            };
+            // Act
+            var result = await _eventController.UpdateEventAsync(eventId, updateEventDto);
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
+            var badRequestResult = result as BadRequestObjectResult;
+            Assert.That(badRequestResult.Value, Is.EqualTo("Invalid event ID format."));
+        }
+
+        [Test]
+        public async Task UpdateEventAsync_ShouldReturnNotFound_WhenUserDoesNotExist()
+        {
+            var userId = Guid.NewGuid().ToString();
+            var claim = new List<Claim>()
+            {
+                new Claim(ClaimTypes.Name, "nonexisting"),
+                new Claim(ClaimTypes.Email, "nonexisting@example.com"),
+                new Claim(ClaimTypes.NameIdentifier, userId)
+            };
+            var identity = new ClaimsIdentity(claim, "TestAuth");
+            var user = new ClaimsPrincipal(identity);
+
+            _eventController.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext { User = user }
+            };
+
+            // Arrange
+            var eventId = "E1000000-0000-0000-0000-000000000001"; // Existing event ID
+
+            var updateEventDto = new UpdateEventDto
+            {
+                Title = "Updated Event",
+                Description = "This is an updated event.",
+                StartTime = new DateTime(2025, 6, 17, 10, 0, 0, DateTimeKind.Utc),
+                EndTime = new DateTime(2025, 6, 17, 11, 0, 0, DateTimeKind.Utc),
+            };
+
+            // Act
+            var result = await _eventController.UpdateEventAsync(eventId, updateEventDto);
+
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result, Is.InstanceOf<NotFoundObjectResult>());
+            var notFoundResult = result as NotFoundObjectResult;
+            Assert.That(notFoundResult.Value, Is.EqualTo("User not found."));
+        }
+
+        [Test]
+        public async Task UpdateEventAsync_ShouldReturnNotFound_WhenEventDoesNotExist()
+        {
+            // Arrange
+            var eventId = "E1000000-0000-0000-0000-000000000999"; // Non-existent event ID
+            var updateEventDto = new UpdateEventDto
+            {
+                Title = "Updated Event",
+                Description = "This is an updated event.",
+                StartTime = new DateTime(2025, 6, 17, 10, 0, 0, DateTimeKind.Utc),
+                EndTime = new DateTime(2025, 6, 17, 11, 0, 0, DateTimeKind.Utc),
+            };
+            // Act
+            var result = await _eventController.UpdateEventAsync(eventId, updateEventDto);
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result, Is.InstanceOf<NotFoundObjectResult>());
+            var notFoundResult = result as NotFoundObjectResult;
+            Assert.That(notFoundResult.Value, Is.EqualTo("Event not found."));
+        }
+
+        [Test]
+        public async Task UpdateEventAsync_ShouldReturnForbidden_WhenUserIsNotEventCreator()
+        {
+            var userId = "F0E9D8C7-B6A5-4321-FEDC-BA9876543210"; // Heisenberg user
+            var claim = new List<Claim>()
+            {
+                new Claim(ClaimTypes.Name, "Heisenberg"),
+                new Claim(ClaimTypes.Email, "heisenberg@example.com"),
+                new Claim(ClaimTypes.NameIdentifier, userId)
+            };
+            var identity = new ClaimsIdentity(claim, "TestAuth");
+            var user = new ClaimsPrincipal(identity);
+            _eventController.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext { User = user }
+            };
+
+            // Arrange
+            var eventId = "E1000000-0000-0000-0000-000000000001"; // Event created by another user
+            var updateEventDto = new UpdateEventDto
+            {
+                Title = "Updated Event",
+                Description = "This is an updated event.",
+                StartTime = new DateTime(2025, 6, 17, 10, 0, 0, DateTimeKind.Utc),
+                EndTime = new DateTime(2025, 6, 17, 11, 0, 0, DateTimeKind.Utc),
+            };
+            // Act
+            var result = await _eventController.UpdateEventAsync(eventId, updateEventDto);
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result, Is.InstanceOf<ForbidResult>());
+            var forbidResult = result as ForbidResult;
+            Assert.That(forbidResult, Is.Not.Null);
+        }
+
+        [Test]
+        public async Task UpdateEventAsync_ShouldReturnConflict_WhenUserHasOverlappingEvents()
+        {
+            var eventId = "E1000000-0000-0000-0000-000000000001"; 
+            var updateEventDto = new UpdateEventDto
+            {
+                Title = "Updated Event",
+                Description = "This is an updated event.",
+                StartTime = new DateTime(2025, 6, 21, 7, 0, 0, DateTimeKind.Utc),
+                EndTime = new DateTime(2025, 6, 21, 15, 0, 0, DateTimeKind.Utc),
+            };
+
+            var result = await _eventController.UpdateEventAsync(eventId, updateEventDto);
+
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result, Is.InstanceOf<ConflictObjectResult>());
+            var conflictResult = result as ConflictObjectResult;
+            Assert.That(conflictResult.Value, Is.EqualTo("You already have an event scheduled for this time period"));
+        }
+
+        [Test]
+        public async Task UpdateEventAsync_ShouldReturnOk_WhenEventIsUpdatedSuccessfully()
+        {
+            // Arrange
+            var eventId = "E1000000-0000-0000-0000-000000000001"; // Existing event ID
+            var updateEventDto = new UpdateEventDto
+            {
+                Title = "Updated Event",
+                Description = "This is an updated event.",
+                StartTime = new DateTime(2025, 6, 17, 10, 0, 0, DateTimeKind.Utc),
+                EndTime = new DateTime(2025, 6, 17, 11, 0, 0, DateTimeKind.Utc),
+            };
+            // Act
+            var result = await _eventController.UpdateEventAsync(eventId, updateEventDto);
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result, Is.InstanceOf<OkObjectResult>());
+            var okResult = result as OkObjectResult;
+            Assert.That(okResult.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
+            Assert.That(okResult.Value, Is.Not.Null);
+            Assert.That(okResult.Value, Is.InstanceOf<EventDto>());
+            var e = okResult.Value as EventDto;
+            Assert.That(e.Id, Is.EqualTo(eventId.ToLower()));
+            Assert.That(e.Title, Is.EqualTo(updateEventDto.Title));
+            Assert.That(e.StartDate, Is.EqualTo(updateEventDto.StartTime));
+            Assert.That(e.EndDate, Is.EqualTo(updateEventDto.EndTime));
+            Assert.That(e.CreatorId, Is.EqualTo("A1B2C3D4-E5F6-7890-1234-567890ABCDEF".ToLower()));
+            Assert.That(e.Description, Is.EqualTo(updateEventDto.Description));
+        }
+
+        [Test]
+        public async Task UpdateEventAsync_ShouldUpdateOnlyTheTitle_WhenOnlyTheTitleIsProvided()
+        {
+            // Arrange
+            var eventId = "E1000000-0000-0000-0000-000000000001"; // Existing event ID
+            var updateEventDto = new UpdateEventDto
+            {
+                Title = "Updated Event",
+            };
+
+            // Act
+            var result = await _eventController.UpdateEventAsync(eventId, updateEventDto);
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result, Is.InstanceOf<OkObjectResult>());
+            var okResult = result as OkObjectResult;
+            Assert.That(okResult.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
+            Assert.That(okResult.Value, Is.Not.Null);
+            Assert.That(okResult.Value, Is.InstanceOf<EventDto>());
+            var e = okResult.Value as EventDto;
+
+            Assert.That(e.Id, Is.EqualTo(eventId.ToLower()));
+            Assert.That(e.Title, Is.EqualTo(updateEventDto.Title));
+            Assert.That(e.StartDate, Is.EqualTo(new DateTime(2025, 6, 16, 9, 0, 0, DateTimeKind.Utc)));
+            Assert.That(e.EndDate, Is.EqualTo(new DateTime(2025, 6, 16, 9, 30, 0, DateTimeKind.Utc)));
+            Assert.That(e.CreatorId, Is.EqualTo("A1B2C3D4-E5F6-7890-1234-567890ABCDEF".ToLower()));
+            Assert.That(e.Description, Is.EqualTo("Daily team synchronization meeting."));
+        }
+
+        [Test]
+        public async Task UpdateEventAsync_ShouldUpdateOnlyTheDescription_WhenOnlyTheDescriptionIsProvided()
+        {
+            // Arrange
+            var eventId = "E1000000-0000-0000-0000-000000000001"; // Existing event ID
+            var updateEventDto = new UpdateEventDto
+            {
+                Description = "Updated description for the event.",
+            };
+            // Act
+            var result = await _eventController.UpdateEventAsync(eventId, updateEventDto);
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result, Is.InstanceOf<OkObjectResult>());
+            var okResult = result as OkObjectResult;
+            Assert.That(okResult.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
+            Assert.That(okResult.Value, Is.Not.Null);
+            Assert.That(okResult.Value, Is.InstanceOf<EventDto>());
+            var e = okResult.Value as EventDto;
+            Assert.That(e.Id, Is.EqualTo(eventId.ToLower()));
+            Assert.That(e.Title, Is.EqualTo("Team Stand-up Meeting"));
+            Assert.That(e.StartDate, Is.EqualTo(new DateTime(2025, 6, 16, 9, 0, 0, DateTimeKind.Utc)));
+            Assert.That(e.EndDate, Is.EqualTo(new DateTime(2025, 6, 16, 9, 30, 0, DateTimeKind.Utc)));
+            Assert.That(e.CreatorId, Is.EqualTo("A1B2C3D4-E5F6-7890-1234-567890ABCDEF".ToLower()));
+            Assert.That(e.Description, Is.EqualTo(updateEventDto.Description));
+        }
+
+        [Test]
+        public async Task UpdateEventAsync_ShouldUpdateOnlyTheStartAndEndTime_WhenOnlyTheTimesAreProvided()
+        {
+            // Arrange
+            var eventId = "E1000000-0000-0000-0000-000000000001"; // Existing event ID
+            var updateEventDto = new UpdateEventDto
+            {
+                StartTime = new DateTime(2025, 6, 17, 10, 0, 0, DateTimeKind.Utc),
+                EndTime = new DateTime(2025, 6, 17, 11, 0, 0, DateTimeKind.Utc),
+            };
+            // Act
+            var result = await _eventController.UpdateEventAsync(eventId, updateEventDto);
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result, Is.InstanceOf<OkObjectResult>());
+            var okResult = result as OkObjectResult;
+            Assert.That(okResult.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
+            Assert.That(okResult.Value, Is.Not.Null);
+            Assert.That(okResult.Value, Is.InstanceOf<EventDto>());
+            var e = okResult.Value as EventDto;
+            Assert.That(e.Id, Is.EqualTo(eventId.ToLower()));
+            Assert.That(e.Title, Is.EqualTo("Team Stand-up Meeting"));
+            Assert.That(e.StartDate, Is.EqualTo(updateEventDto.StartTime));
+            Assert.That(e.EndDate, Is.EqualTo(updateEventDto.EndTime));
+            Assert.That(e.CreatorId, Is.EqualTo("A1B2C3D4-E5F6-7890-1234-567890ABCDEF".ToLower()));
+            Assert.That(e.Description, Is.EqualTo("Daily team synchronization meeting."));
+        }
+
+        [Test]
+        public async Task UpdateEventAsync_ShouldUpdateOnlyStartDate_WhenStartDateIsProvided()
+        {
+            // Arrange
+            var eventId = "E1000000-0000-0000-0000-000000000001"; // Existing event ID
+            var updateEventDto = new UpdateEventDto
+            {
+                StartTime = new DateTime(2025, 6, 17, 10, 0, 0, DateTimeKind.Utc),
+            };
+            // Act
+            var result = await _eventController.UpdateEventAsync(eventId, updateEventDto);
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result, Is.InstanceOf<OkObjectResult>());
+            var okResult = result as OkObjectResult;
+            Assert.That(okResult.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
+            Assert.That(okResult.Value, Is.Not.Null);
+            Assert.That(okResult.Value, Is.InstanceOf<EventDto>());
+            var e = okResult.Value as EventDto;
+            Assert.That(e.Id, Is.EqualTo(eventId.ToLower()));
+            Assert.That(e.Title, Is.EqualTo("Team Stand-up Meeting"));
+            Assert.That(e.StartDate, Is.EqualTo(updateEventDto.StartTime));
+            Assert.That(e.EndDate, Is.EqualTo(new DateTime(2025, 6, 16, 9, 30, 0, DateTimeKind.Utc)));
+            Assert.That(e.CreatorId, Is.EqualTo("A1B2C3D4-E5F6-7890-1234-567890ABCDEF".ToLower()));
+            Assert.That(e.Description, Is.EqualTo("Daily team synchronization meeting."));
+        }
+
+        [Test]
+        public async Task UpdateEventAsync_ShouldUpdateOnlyEndDate_WhenEndDateIsProvided()
+        {
+            // Arrange
+            var eventId = "E1000000-0000-0000-0000-000000000001"; // Existing event ID
+            var updateEventDto = new UpdateEventDto
+            {
+                EndTime = new DateTime(2025, 6, 16, 10, 0, 0, DateTimeKind.Utc),
+            };
+            // Act
+            var result = await _eventController.UpdateEventAsync(eventId, updateEventDto);
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result, Is.InstanceOf<OkObjectResult>());
+            var okResult = result as OkObjectResult;
+            Assert.That(okResult.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
+            Assert.That(okResult.Value, Is.Not.Null);
+            Assert.That(okResult.Value, Is.InstanceOf<EventDto>());
+            var e = okResult.Value as EventDto;
+            Assert.That(e.Id, Is.EqualTo(eventId.ToLower()));
+            Assert.That(e.Title, Is.EqualTo("Team Stand-up Meeting"));
+            Assert.That(e.StartDate, Is.EqualTo(new DateTime(2025, 6, 16, 9, 0, 0, DateTimeKind.Utc)));
+            Assert.That(e.EndDate, Is.EqualTo(updateEventDto.EndTime));
+            Assert.That(e.CreatorId, Is.EqualTo("A1B2C3D4-E5F6-7890-1234-567890ABCDEF".ToLower()));
+            Assert.That(e.Description, Is.EqualTo("Daily team synchronization meeting."));
+        }
+
+        [Test]
+        public async Task UpdateEventAsync_ShouldUpdateOnlyTitleAndDescription_WhenTheyAreProvided()
+        {
+            // Arrange
+            var eventId = "E1000000-0000-0000-0000-000000000001"; // Existing event ID
+            var updateEventDto = new UpdateEventDto
+            {
+                Title = "Updated Event",
+                Description = "This is an updated event.",
+            };
+            // Act
+            var result = await _eventController.UpdateEventAsync(eventId, updateEventDto);
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result, Is.InstanceOf<OkObjectResult>());
+            var okResult = result as OkObjectResult;
+            Assert.That(okResult.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
+            Assert.That(okResult.Value, Is.Not.Null);
+            Assert.That(okResult.Value, Is.InstanceOf<EventDto>());
+            var e = okResult.Value as EventDto;
+            Assert.That(e.Id, Is.EqualTo(eventId.ToLower()));
+            Assert.That(e.Title, Is.EqualTo(updateEventDto.Title));
+            Assert.That(e.StartDate, Is.EqualTo(new DateTime(2025, 6, 16, 9, 0, 0, DateTimeKind.Utc)));
+            Assert.That(e.EndDate, Is.EqualTo(new DateTime(2025, 6, 16, 9, 30, 0, DateTimeKind.Utc)));
+            Assert.That(e.CreatorId, Is.EqualTo("A1B2C3D4-E5F6-7890-1234-567890ABCDEF".ToLower()));
+            Assert.That(e.Description, Is.EqualTo(updateEventDto.Description));
+        }
+
+        [Test]
+        public async Task UpdateEventAsync_ShouldUpdateOnlyTitleAndStartDate_WhenTheyAreProvided()
+        {
+            // Arrange
+            var eventId = "E1000000-0000-0000-0000-000000000001"; // Existing event ID
+            var updateEventDto = new UpdateEventDto
+            {
+                Title = "Updated Event",
+                StartTime = new DateTime(2025, 6, 17, 10, 0, 0, DateTimeKind.Utc),
+            };
+            // Act
+            var result = await _eventController.UpdateEventAsync(eventId, updateEventDto);
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result, Is.InstanceOf<OkObjectResult>());
+            var okResult = result as OkObjectResult;
+            Assert.That(okResult.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
+            Assert.That(okResult.Value, Is.Not.Null);
+            Assert.That(okResult.Value, Is.InstanceOf<EventDto>());
+            var e = okResult.Value as EventDto;
+            Assert.That(e.Id, Is.EqualTo(eventId.ToLower()));
+            Assert.That(e.Title, Is.EqualTo(updateEventDto.Title));
+            Assert.That(e.StartDate, Is.EqualTo(updateEventDto.StartTime));
+            Assert.That(e.EndDate, Is.EqualTo(new DateTime(2025, 6, 16, 9, 30, 0, DateTimeKind.Utc)));
+            Assert.That(e.CreatorId, Is.EqualTo("A1B2C3D4-E5F6-7890-1234-567890ABCDEF".ToLower()));
+            Assert.That(e.Description, Is.EqualTo("Daily team synchronization meeting."));
+        }
+
+        [Test]
+        public async Task UpdateEventAsync_ShouldUpdateOnlyTitleAndEndDate_WhenTheyAreProvided()
+        {
+            // Arrange
+            var eventId = "E1000000-0000-0000-0000-000000000001"; // Existing event ID
+            var updateEventDto = new UpdateEventDto
+            {
+                Title = "Updated Event",
+                EndTime = new DateTime(2025, 6, 17, 11, 0, 0, DateTimeKind.Utc),
+            };
+            // Act
+            var result = await _eventController.UpdateEventAsync(eventId, updateEventDto);
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result, Is.InstanceOf<OkObjectResult>());
+            var okResult = result as OkObjectResult;
+            Assert.That(okResult.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
+            Assert.That(okResult.Value, Is.Not.Null);
+            Assert.That(okResult.Value, Is.InstanceOf<EventDto>());
+            var e = okResult.Value as EventDto;
+            Assert.That(e.Id, Is.EqualTo(eventId.ToLower()));
+            Assert.That(e.Title, Is.EqualTo(updateEventDto.Title));
+            Assert.That(e.StartDate, Is.EqualTo(new DateTime(2025, 6, 16, 9, 0, 0, DateTimeKind.Utc)));
+            Assert.That(e.EndDate, Is.EqualTo(updateEventDto.EndTime));
+            Assert.That(e.CreatorId, Is.EqualTo("A1B2C3D4-E5F6-7890-1234-567890ABCDEF".ToLower()));
+            Assert.That(e.Description, Is.EqualTo("Daily team synchronization meeting."));
+        }
+
+        [Test]
+        public async Task UpdateEventAsync_ShouldUpdateOnlyDescriptionAndStartDate_WhenTheyAreProvided()
+        {
+            // Arrange
+            var eventId = "E1000000-0000-0000-0000-000000000001"; // Existing event ID
+            var updateEventDto = new UpdateEventDto
+            {
+                Description = "This is an updated event.",
+                StartTime = new DateTime(2025, 6, 17, 10, 0, 0, DateTimeKind.Utc),
+            };
+            // Act
+            var result = await _eventController.UpdateEventAsync(eventId, updateEventDto);
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result, Is.InstanceOf<OkObjectResult>());
+            var okResult = result as OkObjectResult;
+            Assert.That(okResult.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
+            Assert.That(okResult.Value, Is.Not.Null);
+            Assert.That(okResult.Value, Is.InstanceOf<EventDto>());
+            var e = okResult.Value as EventDto;
+            Assert.That(e.Id, Is.EqualTo(eventId.ToLower()));
+            Assert.That(e.Title, Is.EqualTo("Team Stand-up Meeting"));
+            Assert.That(e.StartDate, Is.EqualTo(updateEventDto.StartTime));
+            Assert.That(e.EndDate, Is.EqualTo(new DateTime(2025, 6, 16, 9, 30, 0, DateTimeKind.Utc)));
+            Assert.That(e.CreatorId, Is.EqualTo("A1B2C3D4-E5F6-7890-1234-567890ABCDEF".ToLower()));
+            Assert.That(e.Description, Is.EqualTo(updateEventDto.Description));
+        }
+
+        [Test]
+        public async Task UpdateEventAsync_ShouldUpdateOnlyDescriptionAndEndDate_WhenTheyAreProvided()
+        {
+            // Arrange
+            var eventId = "E1000000-0000-0000-0000-000000000001"; // Existing event ID
+            var updateEventDto = new UpdateEventDto
+            {
+                Description = "This is an updated event.",
+                EndTime = new DateTime(2025, 6, 17, 11, 0, 0, DateTimeKind.Utc),
+            };
+            // Act
+            var result = await _eventController.UpdateEventAsync(eventId, updateEventDto);
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result, Is.InstanceOf<OkObjectResult>());
+            var okResult = result as OkObjectResult;
+            Assert.That(okResult.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
+            Assert.That(okResult.Value, Is.Not.Null);
+            Assert.That(okResult.Value, Is.InstanceOf<EventDto>());
+            var e = okResult.Value as EventDto;
+            Assert.That(e.Id, Is.EqualTo(eventId.ToLower()));
+            Assert.That(e.Title, Is.EqualTo("Team Stand-up Meeting"));
+            Assert.That(e.StartDate, Is.EqualTo(new DateTime(2025, 6, 16, 9, 0, 0, DateTimeKind.Utc)));
+            Assert.That(e.EndDate, Is.EqualTo(updateEventDto.EndTime));
+            Assert.That(e.CreatorId, Is.EqualTo("A1B2C3D4-E5F6-7890-1234-567890ABCDEF".ToLower()));
+            Assert.That(e.Description, Is.EqualTo(updateEventDto.Description));
+        }
+
+        [Test]
+        public async Task UpdateEventAsync_ShouldReturnConflict_WhenTheyAreOverlappingEvents_WhenOnlyStartDateAndEndDateAreProvided()
+        {
+            var eventId = "E1000000-0000-0000-0000-000000000001";
+            var updateEventDto = new UpdateEventDto
+            {
+                StartTime = new DateTime(2025, 6, 21, 7, 0, 0, DateTimeKind.Utc),
+                EndTime = new DateTime(2025, 6, 21, 15, 0, 0, DateTimeKind.Utc),
+            };
+
+            var result = await _eventController.UpdateEventAsync(eventId, updateEventDto);
+
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result, Is.InstanceOf<ConflictObjectResult>());
+            var conflictResult = result as ConflictObjectResult;
+            Assert.That(conflictResult.Value, Is.EqualTo("You already have an event scheduled for this time period"));
+        }
+
+        #endregion
+
+        #region GetEvents
+
+        
+
+        #endregion
     }
 }
