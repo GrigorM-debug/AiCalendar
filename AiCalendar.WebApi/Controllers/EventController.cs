@@ -203,7 +203,7 @@ namespace AiCalendar.WebApi.Controllers
         {
             string? userIdString = User.GetUserId();
 
-            if (User.Identity == null && !User.Identity.IsAuthenticated && userIdString == null)
+            if (User?.Identity == null && User?.Identity?.IsAuthenticated == null && userIdString == null)
             {
                 _logger.LogWarning("Unauthorized attempt to update an event without authentication.");
                 return Unauthorized("You must be logged in to update an event.");
@@ -219,6 +219,13 @@ namespace AiCalendar.WebApi.Controllers
             {
                 _logger.LogWarning("Invalid event ID format: {EventId}", id);
                 return BadRequest("Invalid event ID format.");
+            }
+
+            bool isUserExists = await _userService.UserExistsByIdAsync(userId);
+            if (!isUserExists)
+            {
+                _logger.LogWarning("User not found for ID: {UserId}", userId);
+                return NotFound("User not found.");
             }
 
             bool isEventExists = await _eventService.EventExistsByIdAsync(eventId);
