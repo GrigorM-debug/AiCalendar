@@ -1,5 +1,4 @@
-﻿using System.Reflection;
-using AiCalendar.WebApi.Data;
+﻿using AiCalendar.WebApi.Data;
 using AiCalendar.WebApi.Data.Repository;
 using AiCalendar.WebApi.Services.EventParticipants;
 using AiCalendar.WebApi.Services.EventParticipants.Interfaces;
@@ -9,8 +8,12 @@ using AiCalendar.WebApi.Services.FindingAvailableSlots;
 using AiCalendar.WebApi.Services.Users;
 using AiCalendar.WebApi.Services.Users.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
+using System.Reflection;
+using System.Threading.RateLimiting;
 
 namespace AiCalendar.WebApi.Extensions
 {
@@ -91,6 +94,35 @@ namespace AiCalendar.WebApi.Extensions
                 };
 
                 options.AddSecurityRequirement(securityRequirement);
+            });
+            return services;
+        }
+
+        //Extension method for adding Rate Limiting
+        public static IServiceCollection AddRateLimiting(this IServiceCollection services)
+        {
+            services.AddRateLimiter(options =>
+            {
+                options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
+                    RateLimitPartition.GetFixedWindowLimiter(
+                        partitionKey: httpContext.User.Identity?.Name ?? httpContext.Request.Headers.Host.ToString(),
+                        factory: partition => new FixedWindowRateLimiterOptions
+                        {
+                            AutoReplenishment = true,
+                            PermitLimit = 10,
+                            QueueLimit = 5,
+                            QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                            Window = TimeSpan.FromMinutes(1)
+                        }));
+
+                options.OnRejected = async (context, cancellationToken) =>
+                {
+                    // Custom rejection handling logic
+                    context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+                    context.HttpContext.Response.Headers["Retry-After"] = "60";
+
+                    await context.HttpContext.Response.WriteAsync("Rate limit exceeded. Please try again later.", cancellationToken);
+                };
             });
             return services;
         }

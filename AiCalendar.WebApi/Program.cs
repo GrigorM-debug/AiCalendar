@@ -23,7 +23,8 @@ builder.Services
     .AddDatabase(builder.Configuration)
     .AddRepositories()
     .AddServices()
-    .AddSwaggerDocumentation();
+    .AddSwaggerDocumentation()
+    .AddRateLimiting();
 
 // -- Configure JWT Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -77,6 +78,8 @@ using (var scope = app.Services.CreateScope())
 
     dbContext.Database.Migrate();
 }
+
+app.UseRateLimiter();
 
 app.UseHttpsRedirection();
 
