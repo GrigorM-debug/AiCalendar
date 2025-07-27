@@ -47,6 +47,14 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 builder.Services.AddAuthorization();
 
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(
+        builder => builder.AllowAnyOrigin()//WithOrigins("")
+            .AllowAnyMethod()
+            .AllowAnyHeader());
+});
+
 
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
@@ -80,6 +88,8 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.UseRateLimiter();
+
+app.UseCors();
 
 app.UseHttpsRedirection();
 
