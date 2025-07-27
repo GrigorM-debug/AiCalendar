@@ -5,14 +5,6 @@ using Aspire.Hosting;
 
 var builder = DistributedApplication.CreateBuilder(args);
 
-//var sqlServer = builder.AddSqlServer("sqlserver")
-//    .WithImage("mcr.microsoft.com/mssql/server:2022-latest")
-//    .WithEnvironment("ACCEPT_EULA", "Y")
-//    .WithEnvironment("SA_PASSWORD", "YourPassword123!")
-//    .WithPassword("YourPassword123!") // for Aspire to inject into connection strings
-//    .WithPersistentStorage()
-//    .WithVolume("sql-volume");
-
 var sqlServer = builder
     .AddSqlServer("sql")
     .WithLifetime(ContainerLifetime.Persistent)
@@ -20,8 +12,12 @@ var sqlServer = builder
 
 var db = sqlServer.AddDatabase("DefaultConnection", "AiCalendarDb");
 
-builder.AddProject<AiCalendar_WebApi>("aicalendar-webapi")
+var web_api = builder.AddProject<AiCalendar_WebApi>("aicalendar-webapi")
     .WithReference(db)
     .WaitFor(db);
+
+builder.AddProject<Projects.AiCalendar_MCPServer>("aicalendar-mcpserver")
+    .WithReference(web_api)
+    .WaitFor(web_api);
 
 builder.Build().Run();
