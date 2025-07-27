@@ -50,9 +50,11 @@ builder.Services.AddAuthorization();
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(
-        builder => builder.AllowAnyOrigin()//WithOrigins("")
-            .AllowAnyMethod()
-            .AllowAnyHeader());
+        builder => 
+            builder
+                .AllowAnyOrigin()//WithOrigins("") Specify front end and mcp server origins
+                .AllowAnyMethod()
+                .AllowAnyHeader());
 });
 
 
