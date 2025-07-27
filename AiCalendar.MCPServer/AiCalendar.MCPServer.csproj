@@ -15,6 +15,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\AiCalendar.ServiceDefaults\AiCalendar.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\AiCalendar.WebApi\AiCalendar.WebApi.csproj" />
   </ItemGroup>
 
 </Project>
