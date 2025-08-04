@@ -2,6 +2,7 @@ using AiCalendar.MCPServer;
 using Microsoft.Extensions.Logging;
 using System.Buffers.Text;
 using System.Threading.RateLimiting;
+using ModelContextProtocol.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -62,6 +63,8 @@ builder.Services
 var app = builder.Build();
 
 app.MapDefaultEndpoints();
+
+app.MapMcp("/mcp");
 
 app.UseCors("AllowApiClient");
 
