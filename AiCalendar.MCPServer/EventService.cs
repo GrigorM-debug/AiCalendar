@@ -16,6 +16,21 @@ namespace AiCalendar.MCPServer
         {
             var response = await _httpClient.GetAsync($"api/v1/Event/{eventId}");
 
+            if(response.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                throw new KeyNotFoundException($"Event with ID {eventId} not found.");
+            }
+
+            if(response.StatusCode == System.Net.HttpStatusCode.BadRequest)
+            {
+                throw new ArgumentException("Invalid event ID format.");
+            }
+
+            if(response.StatusCode == System.Net.HttpStatusCode.InternalServerError)
+            {
+                throw new Exception("An error occurred while processing your request.");
+            }
+
             var eventDto = default(EventDto);
             if (response.IsSuccessStatusCode)
             {

@@ -11,6 +11,11 @@ namespace AiCalendar.MCPServer
         [McpServerTool, Description("Get an event by its ID")]
         public static async Task<string> GetEventByIdAsync(EventService eventService, [Description("The id of the event")] string eventId)
         {
+            if (string.IsNullOrEmpty(eventId))
+            {
+                return "EventId can't be null or empty!";
+            }
+
             try
             {
                 var response = await eventService.GetEventByIdAsync(eventId);
