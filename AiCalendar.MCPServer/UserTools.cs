@@ -119,5 +119,48 @@ namespace AiCalendar.MCPServer
                 return $"Error deleting user: {ex.Message}";
             }
         }
+
+        [McpServerTool, Description("Update user")]
+        public static async Task<string> UpdateUser(
+            UserService userService,
+            [Description("The id of the user to update")]
+            string userId,
+            [Description("The JWT token for authentication")]
+            string jwtToken,
+            [Description("The new user data")] string userDataJson)
+        {
+            if (string.IsNullOrEmpty(userId))
+            {
+                return "UserId can't be null or empty!";
+            }
+
+            if (string.IsNullOrEmpty(jwtToken))
+            {
+                return "JWT token can't be null or empty!";
+            }
+
+            if (string.IsNullOrEmpty(userDataJson))
+            {
+                return "User data can't be null or empty!";
+            }
+
+            try
+            {
+                var userData = JsonSerializer.Deserialize<UpdateUserDto>(userDataJson);
+
+                if (userData == null)
+                {
+                    return "Invalid user data format.";
+                }
+
+                var response = await userService.UpdateUser(userId, userData, jwtToken);
+                
+                return JsonSerializer.Serialize(response);
+            }
+            catch (Exception ex)
+            {
+                return $"Error updating user: {ex.Message}";
+            }
+        }
     }
 }

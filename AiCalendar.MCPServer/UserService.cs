@@ -9,6 +9,7 @@ namespace AiCalendar.MCPServer
     public class UserService
     {
         private readonly HttpClient _httpClient;
+
         public UserService(IHttpClientFactory httpClientFactory)
         {
             _httpClient = httpClientFactory.CreateClient("ApiClient");
@@ -88,7 +89,7 @@ namespace AiCalendar.MCPServer
 
             if (!string.IsNullOrEmpty(filter?.Email))
                 query.Add($"Email={Uri.EscapeDataString(filter.Email)}");
-            
+
             if (filter?.HasActiveEvents != null)
                 query.Add($"HasActiveEvents={filter.HasActiveEvents.Value}");
 
@@ -135,6 +136,47 @@ namespace AiCalendar.MCPServer
             }
 
             return "User successfully deleted.";
+        }
+
+        public async Task<UserDto> UpdateUser(
+            string userId,
+            UpdateUserDto userData,
+            string jwtToken)
+        {
+            if (string.IsNullOrEmpty(userId))
+            {
+                throw new ArgumentNullException(nameof(userId), "UserId cannot be null or empty.");
+            }
+
+            if (userData == null)
+            {
+                throw new ArgumentNullException(nameof(userData), "User data cannot be null.");
+            }
+
+            if (string.IsNullOrEmpty(jwtToken))
+            {
+                throw new UnauthorizedAccessException("JWT token cannot be null.");
+            }
+
+            _httpClient.DefaultRequestHeaders.Authorization = null;
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+
+            var response = await _httpClient.PutAsJsonAsync($"api/v1/User/{userId}", userData);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new Exception(
+                    $"Unexpected status code: {response.StatusCode}. Expected 200. Response message: ${response.Content}");
+            }
+
+            var updatedUser = await response.Content.ReadFromJsonAsync<UserDto>();
+
+            if (updatedUser == null)
+            {
+                throw new Exception("Failed to update user. Response content is null.");
+            }
+
+            return updatedUser;
         }
     }
 }
