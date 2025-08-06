@@ -56,10 +56,10 @@ namespace AiCalendar.WebApi.Controllers
         [ProducesResponseType(StatusCodes.Status409Conflict)]
         public async Task<IActionResult> Register([FromBody] LoginAndRegisterInputDto input)
         {
-            if (User?.Identity != null && User?.Identity?.IsAuthenticated != null)
+            if (User.Identity != null && User.Identity.IsAuthenticated == true)
             {
                 _logger.LogWarning("User is already authenticated. Cannot register a new account.");
-                return Forbid("User is already authenticated. Please log out before registering a new account.");
+                return Forbid();
             }
 
             bool userExists = await _userService.UserExistsByUsernameAsync(input.UserName);
@@ -104,7 +104,7 @@ namespace AiCalendar.WebApi.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> Login([FromBody] LoginAndRegisterInputDto input)
         {
-            if (User?.Identity != null && User?.Identity?.IsAuthenticated != null)
+            if (User.Identity != null && User.Identity.IsAuthenticated == true)
             {
                 _logger.LogWarning("User is already authenticated. Cannot log in again.");
                 return Forbid();

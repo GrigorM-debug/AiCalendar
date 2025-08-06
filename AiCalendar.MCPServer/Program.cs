@@ -43,6 +43,7 @@ builder.Services.AddRateLimiter(options =>
 });
 
 builder.Services.AddScoped<EventService>();
+builder.Services.AddScoped<UserService>();
 
 builder.Services.AddCors(options =>
 {

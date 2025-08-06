@@ -1,0 +1,95 @@
+﻿using System.ComponentModel;
+using System.Text.Json;
+using AiCalendar.WebApi.DTOs.Users;
+using ModelContextProtocol.Server;
+
+namespace AiCalendar.MCPServer
+{
+    [McpServerToolType]
+    public static class UserTools
+    {
+        [McpServerTool, Description("Register a new user")]
+        public static async Task<string> RegisterUserAsync(
+            UserService userService,
+            [Description("The user data in JSON format")]
+            string userJson)
+        {
+            if (string.IsNullOrEmpty(userJson))
+            {
+                return "User data can't be null or empty!";
+            }
+
+            try
+            {
+                var userData = JsonSerializer.Deserialize<LoginAndRegisterInputDto>(userJson);
+
+                if (userData == null)
+                {
+                    return "Invalid user data format.";
+                }
+
+                var response = await userService.Register(userData);
+
+                return JsonSerializer.Serialize(response);
+            }
+            catch (Exception ex)
+            {
+                return $"Error registering user: {ex.Message}";
+            }
+        }
+
+        [McpServerTool, Description("Login a user")]
+        public static async Task<string> LoginUserAsync(
+            UserService userService,
+            [Description("The user data in JSON format")]
+            string userJson)
+        {
+            if (string.IsNullOrEmpty(userJson))
+            {
+                return "User data can't be null or empty!";
+            }
+
+            try
+            {
+                var userData = JsonSerializer.Deserialize<LoginAndRegisterInputDto>(userJson);
+
+                if (userData == null)
+                {
+                    return "Invalid user data format.";
+                }
+
+                var response = await userService.Login(userData);
+
+                return JsonSerializer.Serialize(response);
+            }
+            catch (Exception ex)
+            {
+                return $"Error logging in user: {ex.Message}";
+            }
+        }
+
+        [McpServerTool, Description("Get users")]
+        public static async Task<string> GetUsersAsync(
+            UserService userService,
+            [Description("Filter options")] string? filterDataJson)
+        {
+            try
+            {
+                var filterObj = default(UserFilterCriteriaDto);
+
+                if(!string.IsNullOrEmpty(filterDataJson))
+                {
+                    filterObj = JsonSerializer.Deserialize<UserFilterCriteriaDto>(filterDataJson);
+                }
+
+                var response = await userService.GetUsers(filterObj);
+
+                return JsonSerializer.Serialize(response);
+            }
+            catch (Exception ex)
+            {
+                return $"Error retrieving users: {ex.Message}";
+            }
+        }
+    }
+}

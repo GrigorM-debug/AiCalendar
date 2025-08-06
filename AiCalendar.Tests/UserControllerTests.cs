@@ -94,12 +94,13 @@ namespace AiCalendar.Tests
             {
                 new Claim(ClaimTypes.NameIdentifier, "A1B2C3D4-E5F6-7890-1234-567890ABCDEF"),
                 new Claim(ClaimTypes.Name, "admin"),
-                new Claim(ClaimTypes.Email, "admin@example.com")
+                new Claim(ClaimTypes.Email, "admin@example.com"),
             };
 
             var identity = new ClaimsIdentity(claims);
 
             var claimPrincipal = new ClaimsPrincipal(identity);
+
 
             _userController.ControllerContext = new ControllerContext()
             {
