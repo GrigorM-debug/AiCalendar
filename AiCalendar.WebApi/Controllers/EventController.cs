@@ -82,7 +82,7 @@ namespace AiCalendar.WebApi.Controllers
         {
             string? userIdString = User.GetUserId();
 
-            if (User?.Identity == null && User?.Identity?.IsAuthenticated == null && userIdString == null)
+            if (User?.Identity == null && User?.Identity?.IsAuthenticated == false && userIdString == null)
             {
                 _logger.LogWarning("Unauthorized attempt to create an event without authentication.");
                 return Unauthorized("You must be logged in to create an event.");
@@ -134,7 +134,7 @@ namespace AiCalendar.WebApi.Controllers
         {
             string? userIdString = User.GetUserId();
 
-            if (User?.Identity == null && User?.Identity?.IsAuthenticated == null && userIdString == null)
+            if (User?.Identity == null && User?.Identity?.IsAuthenticated == false && userIdString == null)
             {
                 _logger.LogWarning("Unauthorized attempt to delete an event without authentication.");
                 return Unauthorized("You must be logged in to delete an event.");
@@ -203,7 +203,7 @@ namespace AiCalendar.WebApi.Controllers
         {
             string? userIdString = User.GetUserId();
 
-            if (User?.Identity == null && User?.Identity?.IsAuthenticated == null && userIdString == null)
+            if (User?.Identity == null && User?.Identity?.IsAuthenticated == false && userIdString == null)
             {
                 _logger.LogWarning("Unauthorized attempt to update an event without authentication.");
                 return Unauthorized("You must be logged in to update an event.");
@@ -280,7 +280,7 @@ namespace AiCalendar.WebApi.Controllers
         {
             string? userIdString = User.GetUserId();
 
-            if (User?.Identity == null && User?.Identity?.IsAuthenticated == null && userIdString == null)
+            if (User?.Identity == null && User?.Identity?.IsAuthenticated == false && userIdString == null)
             {
                 _logger.LogWarning("Unauthorized attempt to cancel an event without authentication.");
                 return Unauthorized("You must be logged in to cancel an event.");

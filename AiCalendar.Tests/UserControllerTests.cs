@@ -441,7 +441,7 @@ namespace AiCalendar.Tests
                 new Claim(ClaimTypes.Email, "someemail@example.com"),
                 new Claim(ClaimTypes.Name, "someusername")
             };
-            var identity = new ClaimsIdentity(claims);
+            var identity = new ClaimsIdentity(claims, "TestAuthType");
             var principal = new ClaimsPrincipal(identity);
             _userController.ControllerContext = new ControllerContext()
             {
@@ -466,7 +466,7 @@ namespace AiCalendar.Tests
                 new Claim(ClaimTypes.Email, "someemail@example.com"),
                 new Claim(ClaimTypes.Name, "someusername")
             };
-            var identity = new ClaimsIdentity(claims);
+            var identity = new ClaimsIdentity(claims, "TestAuthType");
             var principal = new ClaimsPrincipal(identity);
             _userController.ControllerContext = new ControllerContext()
             {
@@ -501,7 +501,7 @@ namespace AiCalendar.Tests
                 new Claim(ClaimTypes.Name, newUserData.UserName)
             };
 
-            var identity = new ClaimsIdentity(claims);
+            var identity = new ClaimsIdentity(claims, "TestAuthType");
             var principal = new ClaimsPrincipal(identity);
 
             _userController.ControllerContext = new ControllerContext()
@@ -528,7 +528,7 @@ namespace AiCalendar.Tests
                 new Claim(ClaimTypes.Name, "admin")
             };
 
-            var identity = new ClaimsIdentity(claims);
+            var identity = new ClaimsIdentity(claims, "TestAuthType");
             var principal = new ClaimsPrincipal(identity);
 
             _userController.ControllerContext = new ControllerContext()
@@ -577,7 +577,7 @@ namespace AiCalendar.Tests
                 new Claim(ClaimTypes.Email, "nonexisting@example.com"),
                 new Claim(ClaimTypes.Name, "Non existing")
             };
-            var identity = new ClaimsIdentity(claims);
+            var identity = new ClaimsIdentity(claims, "TestAuthType");
             var principal = new ClaimsPrincipal(identity);
             _userController.ControllerContext = new ControllerContext()
             {
@@ -601,7 +601,7 @@ namespace AiCalendar.Tests
                 new Claim(ClaimTypes.Email, "invalid@example.com"),
                 new Claim(ClaimTypes.Name, "Invalid User")
             };
-            var identity = new ClaimsIdentity(claims);
+            var identity = new ClaimsIdentity(claims, "TestAuthType");
             var principal = new ClaimsPrincipal(identity);
 
             _userController.ControllerContext = new ControllerContext()
@@ -627,7 +627,7 @@ namespace AiCalendar.Tests
                 new Claim(ClaimTypes.Email, "admin@example.com"),
                 new Claim(ClaimTypes.Name, "admin")
             };
-            var identity = new ClaimsIdentity(claims);
+            var identity = new ClaimsIdentity(claims, "TestAuthType");
             var principal = new ClaimsPrincipal(identity);
 
             _userController.ControllerContext = new ControllerContext()
@@ -654,7 +654,7 @@ namespace AiCalendar.Tests
                 new Claim(ClaimTypes.Email, "admin@example.com"),
                 new Claim(ClaimTypes.Name, "admin")
             };
-            var identity = new ClaimsIdentity(claims);
+            var identity = new ClaimsIdentity(claims, "TestAuthType");
             var principal = new ClaimsPrincipal(identity);
 
             _userController.ControllerContext = new ControllerContext()
@@ -691,7 +691,7 @@ namespace AiCalendar.Tests
                 new Claim(ClaimTypes.Name, newUserData.UserName)
             };
 
-            var identity = new ClaimsIdentity(claims);
+            var identity = new ClaimsIdentity(claims, "TestAuthType");
             var principal = new ClaimsPrincipal(identity);
 
             _userController.ControllerContext = new ControllerContext()
@@ -731,7 +731,7 @@ namespace AiCalendar.Tests
                 new Claim(ClaimTypes.Email, "ivan@example.com"),
                 new Claim(ClaimTypes.Name, "ivan76")
             };
-            var identity = new ClaimsIdentity(claims);
+            var identity = new ClaimsIdentity(claims, "TestAuthType");
             var principal = new ClaimsPrincipal(identity);
 
             _userController.ControllerContext = new ControllerContext()
@@ -765,7 +765,7 @@ namespace AiCalendar.Tests
                 new Claim(ClaimTypes.Email, newUserData.Email),
                 new Claim(ClaimTypes.Name, newUserData.UserName)
             };
-            var identity = new ClaimsIdentity(claims);
+            var identity = new ClaimsIdentity(claims, "TestAuthType");
             var principal = new ClaimsPrincipal(identity);
 
             _userController.ControllerContext = new ControllerContext()
@@ -792,7 +792,7 @@ namespace AiCalendar.Tests
                 new Claim(ClaimTypes.Email, "admin@example.com"),
                 new Claim(ClaimTypes.Name, "admin")
             };
-            var identity = new ClaimsIdentity(claims);
+            var identity = new ClaimsIdentity(claims, "TestAuthType");
             var principal = new ClaimsPrincipal(identity);
 
             _userController.ControllerContext = new ControllerContext()
@@ -822,7 +822,7 @@ namespace AiCalendar.Tests
                 new Claim(ClaimTypes.Email, "admin@example.com"),
                 new Claim(ClaimTypes.Name, "admin")
             };
-            var identity = new ClaimsIdentity(claims);
+            var identity = new ClaimsIdentity(claims, "TestAuthType");
             var principal = new ClaimsPrincipal(identity);
 
             _userController.ControllerContext = new ControllerContext()
@@ -860,7 +860,7 @@ namespace AiCalendar.Tests
                 new Claim(ClaimTypes.Email, "admin@example.com"),
                 new Claim(ClaimTypes.Name, "admin")
             };
-            var identity = new ClaimsIdentity(claims);
+            var identity = new ClaimsIdentity(claims, "TestAuthType");
             var principal = new ClaimsPrincipal(identity);
 
             _userController.ControllerContext = new ControllerContext()
@@ -893,7 +893,7 @@ namespace AiCalendar.Tests
                 new Claim(ClaimTypes.Email, "admin@example.com"),
                 new Claim(ClaimTypes.Name, "admin")
             };
-            var identity = new ClaimsIdentity(claims);
+            var identity = new ClaimsIdentity(claims, "TestAuthType");
             var principal = new ClaimsPrincipal(identity);
 
             _userController.ControllerContext = new ControllerContext()
@@ -929,7 +929,7 @@ namespace AiCalendar.Tests
                 new Claim(ClaimTypes.Email, "admin@example.com"),
                 new Claim(ClaimTypes.Name, "admin")
             };
-            var identity = new ClaimsIdentity(claims);
+            var identity = new ClaimsIdentity(claims, "TestAuthType");
             var principal = new ClaimsPrincipal(identity);
 
             _userController.ControllerContext = new ControllerContext()
@@ -962,7 +962,7 @@ namespace AiCalendar.Tests
                 new Claim(ClaimTypes.Email, "admin@example.com"),
                 new Claim(ClaimTypes.Name, "admin")
             };
-            var identity = new ClaimsIdentity(claims);
+            var identity = new ClaimsIdentity(claims, "TestAuthType");
             var principal = new ClaimsPrincipal(identity);
 
             _userController.ControllerContext = new ControllerContext()
@@ -998,7 +998,7 @@ namespace AiCalendar.Tests
                 new Claim(ClaimTypes.Email, "admin@example.com"),
                 new Claim(ClaimTypes.Name, "admin")
             };
-            var identity = new ClaimsIdentity(claims);
+            var identity = new ClaimsIdentity(claims, "TestAuthType");
             var principal = new ClaimsPrincipal(identity);
 
             _userController.ControllerContext = new ControllerContext()
@@ -1031,7 +1031,7 @@ namespace AiCalendar.Tests
                 new Claim(ClaimTypes.Email, "admin@example.com"),
                 new Claim(ClaimTypes.Name, "admin")
             };
-            var identity = new ClaimsIdentity(claims);
+            var identity = new ClaimsIdentity(claims, "TestAuthType");
             var principal = new ClaimsPrincipal(identity);
 
             _userController.ControllerContext = new ControllerContext()
@@ -1069,7 +1069,7 @@ namespace AiCalendar.Tests
                 new Claim(ClaimTypes.Email, "admin@example.com"),
                 new Claim(ClaimTypes.Name, "admin")
             };
-            var identity = new ClaimsIdentity(claims);
+            var identity = new ClaimsIdentity(claims, "TestAuthType");
             var principal = new ClaimsPrincipal(identity);
 
             _userController.ControllerContext = new ControllerContext()
@@ -1128,7 +1128,7 @@ namespace AiCalendar.Tests
                 new Claim(ClaimTypes.Name, "admin")
             };
 
-            var identity = new ClaimsIdentity(claims);
+            var identity = new ClaimsIdentity(claims, "TestAuthType");
 
             var principal = new ClaimsPrincipal(identity);
 
@@ -1163,7 +1163,7 @@ namespace AiCalendar.Tests
                 new Claim(ClaimTypes.Name, "example")
             };
 
-            var identity = new ClaimsIdentity(claims);
+            var identity = new ClaimsIdentity(claims, "TestAuthType");
 
             var principal = new ClaimsPrincipal(identity);
 
@@ -1198,7 +1198,7 @@ namespace AiCalendar.Tests
                 new Claim(ClaimTypes.Name, "admin")
             };
 
-            var identity = new ClaimsIdentity(claims);
+            var identity = new ClaimsIdentity(claims, "TestAuthType");
 
             var principal = new ClaimsPrincipal(identity);
 
@@ -1232,7 +1232,7 @@ namespace AiCalendar.Tests
                 new Claim(ClaimTypes.Name, "admin")
             };
 
-            var identity = new ClaimsIdentity(claims);
+            var identity = new ClaimsIdentity(claims, "TestAuthType");
 
             var principal = new ClaimsPrincipal(identity);
 
@@ -1265,7 +1265,7 @@ namespace AiCalendar.Tests
                 new Claim(ClaimTypes.Name, "admin")
             };
 
-            var identity = new ClaimsIdentity(claims);
+            var identity = new ClaimsIdentity(claims, "TestAuthType");
 
             var principal = new ClaimsPrincipal(identity);
 
@@ -1311,7 +1311,7 @@ namespace AiCalendar.Tests
                 new Claim(ClaimTypes.Name, "admin")
             };
 
-            var identity = new ClaimsIdentity(claims);
+            var identity = new ClaimsIdentity(claims, "TestAuthType");
 
             var principal = new ClaimsPrincipal(identity);
 
@@ -1353,7 +1353,7 @@ namespace AiCalendar.Tests
                 new Claim(ClaimTypes.Name, "admin")
             };
 
-            var identity = new ClaimsIdentity(claims);
+            var identity = new ClaimsIdentity(claims, "TestAuthType");
 
             var principal = new ClaimsPrincipal(identity);
 
@@ -1395,7 +1395,7 @@ namespace AiCalendar.Tests
                 new Claim(ClaimTypes.Name, "admin")
             };
 
-            var identity = new ClaimsIdentity(claims);
+            var identity = new ClaimsIdentity(claims, "TestAuthType");
 
             var principal = new ClaimsPrincipal(identity);
 
@@ -1447,7 +1447,7 @@ namespace AiCalendar.Tests
                 new Claim(ClaimTypes.Name, "admin")
             };
 
-            var identity = new ClaimsIdentity(claims);
+            var identity = new ClaimsIdentity(claims, "TestAuthType");
 
             var principal = new ClaimsPrincipal(identity);
 
@@ -1500,7 +1500,7 @@ namespace AiCalendar.Tests
                 new Claim(ClaimTypes.Name, "admin")
             };
 
-            var identity = new ClaimsIdentity(claims);
+            var identity = new ClaimsIdentity(claims, "TestAuthType");
 
             var principal = new ClaimsPrincipal(identity);
 
@@ -1543,7 +1543,7 @@ namespace AiCalendar.Tests
             Assert.That(isPasswordValid, Is.True);
         }
 
-        [Test]
+        [Test]  
         public async Task UpdateUser_ShouldReturnBadRequest_WhenOldPasswordIsIncorrect()
         {
             var claims = new List<Claim>()
@@ -1553,7 +1553,7 @@ namespace AiCalendar.Tests
                 new Claim(ClaimTypes.Name, "admin")
             };
 
-            var identity = new ClaimsIdentity(claims);
+            var identity = new ClaimsIdentity(claims, "TestAuthType");
 
             var principal = new ClaimsPrincipal(identity);
 
@@ -1589,7 +1589,7 @@ namespace AiCalendar.Tests
                 new Claim(ClaimTypes.Name, "admin")
             };
 
-            var identity = new ClaimsIdentity(claims);
+            var identity = new ClaimsIdentity(claims, "TestAuthType");
 
             var principal = new ClaimsPrincipal(identity);
 

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using AiCalendar.WebApi.DTOs.Users;
@@ -109,6 +110,31 @@ namespace AiCalendar.MCPServer
             }
 
             return users;
+        }
+
+        public async Task<string> DeleteUser(string userId, string jwtToken)
+        {
+            if (string.IsNullOrEmpty(userId))
+            {
+                throw new ArgumentNullException(nameof(userId), "UserId cannot be null or empty.");
+            }
+
+            if (string.IsNullOrEmpty(jwtToken))
+            {
+                throw new UnauthorizedAccessException("JWT token cannot be null.");
+            }
+
+            _httpClient.DefaultRequestHeaders.Authorization = null;
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+
+            var response = await _httpClient.DeleteAsync($"api/v1/User/{userId}");
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new Exception(
+                    $"Unexpected status code: {response.StatusCode}. Expected 200. Response message: ${response.Content}");
+            }
+
+            return "User successfully deleted.";
         }
     }
 }

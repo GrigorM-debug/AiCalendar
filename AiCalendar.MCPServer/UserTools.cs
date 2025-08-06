@@ -91,5 +91,33 @@ namespace AiCalendar.MCPServer
                 return $"Error retrieving users: {ex.Message}";
             }
         }
+
+        [McpServerTool, Description("Delete user")]
+        public static async Task<string> DeleteUserAsync(
+            UserService userService,
+            [Description("The id of the user to delete")] string userId,
+            [Description("User JWT token")] string jwtToken)
+        {
+            if (string.IsNullOrEmpty(userId))
+            {
+                return "UserId can't be null or empty!";
+            }
+
+            if (string.IsNullOrEmpty(jwtToken))
+            {
+                return "JWT token can't be null or empty!";
+            }
+            
+            try
+            {
+                var response = await userService.DeleteUser(userId, jwtToken);
+
+                return JsonSerializer.Serialize(response);
+            }
+            catch (Exception ex)
+            {
+                return $"Error deleting user: {ex.Message}";
+            }
+        }
     }
 }
