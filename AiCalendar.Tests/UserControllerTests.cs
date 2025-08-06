@@ -21,6 +21,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
 
 namespace AiCalendar.Tests
 {
@@ -34,7 +35,6 @@ namespace AiCalendar.Tests
         private IRepository<User> _userRepository;
         private IRepository<Participant> _participantRepository;
         private IEventService _eventService;
-        private IConfiguration _configuration;
 
         [SetUp]
         public async Task Setup()
@@ -45,8 +45,21 @@ namespace AiCalendar.Tests
             _participantRepository = new Repository<Participant>(_context);
             _logger = new LoggerFactory().CreateLogger<UserController>();
             _userService = new UserService(_userRepository, _passwordHasher, _eventRepository, _participantRepository);
-            _configuration = new ConfigurationManager();
-            _tokenProvider = new TokenProvider(_configuration);
+
+            var configurationValues = new Dictionary<string, string>
+            {
+                {"Jwt:Secret", "YourTestSecretKeyHereItShouldBeAtLeast32BytesLong"},
+                {"Jwt:Issuer", "TestIssuer"},
+                {"Jwt:Audience", "TestAudience"},
+                {"Jwt:ExpirationInDays", "1"}
+            };
+
+            var configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(configurationValues)
+                .Build();
+
+            _tokenProvider = new TokenProvider(configuration);
+
             _userController = new UserController(_logger, _userService, _passwordHasher, _tokenProvider);
             _eventService = new EventService(_eventRepository);
         }
@@ -97,7 +110,7 @@ namespace AiCalendar.Tests
                 new Claim(ClaimTypes.Email, "admin@example.com"),
             };
 
-            var identity = new ClaimsIdentity(claims);
+            var identity = new ClaimsIdentity(claims, "TestAuthType");
 
             var claimPrincipal = new ClaimsPrincipal(identity);
 
@@ -157,7 +170,7 @@ namespace AiCalendar.Tests
                 new Claim(ClaimTypes.Email, "admin@example.com")
             };
 
-            var identity = new ClaimsIdentity(claims);
+            var identity = new ClaimsIdentity(claims, "TestAuthType");
 
             var claimPrincipal = new ClaimsPrincipal(identity);
 
