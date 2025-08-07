@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel;
 using System.Text.Json;
+using AiCalendar.WebApi.DTOs.Event;
 using AiCalendar.WebApi.DTOs.Users;
 using ModelContextProtocol.Server;
 
@@ -77,7 +78,7 @@ namespace AiCalendar.MCPServer
             {
                 var filterObj = default(UserFilterCriteriaDto);
 
-                if(!string.IsNullOrEmpty(filterDataJson))
+                if (!string.IsNullOrEmpty(filterDataJson))
                 {
                     filterObj = JsonSerializer.Deserialize<UserFilterCriteriaDto>(filterDataJson);
                 }
@@ -95,7 +96,8 @@ namespace AiCalendar.MCPServer
         [McpServerTool, Description("Delete user")]
         public static async Task<string> DeleteUserAsync(
             UserService userService,
-            [Description("The id of the user to delete")] string userId,
+            [Description("The id of the user to delete")]
+            string userId,
             [Description("User JWT token")] string jwtToken)
         {
             if (string.IsNullOrEmpty(userId))
@@ -107,7 +109,7 @@ namespace AiCalendar.MCPServer
             {
                 return "JWT token can't be null or empty!";
             }
-            
+
             try
             {
                 var response = await userService.DeleteUser(userId, jwtToken);
@@ -154,12 +156,41 @@ namespace AiCalendar.MCPServer
                 }
 
                 var response = await userService.UpdateUser(userId, userData, jwtToken);
-                
+
                 return JsonSerializer.Serialize(response);
             }
             catch (Exception ex)
             {
                 return $"Error updating user: {ex.Message}";
+            }
+        }
+
+        [McpServerTool, Description("Get user created events")]
+        public static async Task<string> GetUserEvents(
+            UserService userService,
+            [Description("User JWT token")] string jwtToken,
+            [Description("Event filter criteria in JSON format")] string? filterString
+            )
+        {
+            if (string.IsNullOrEmpty(jwtToken))
+            {
+                return "JWT token can't be null or empty!";
+            }
+
+            try
+            {
+                var filterObj = default(EventFilterCriteriaDto);
+                if (!string.IsNullOrEmpty(filterString))
+                {
+                    filterObj = JsonSerializer.Deserialize<EventFilterCriteriaDto>(filterString);
+                }
+
+                var response = await userService.GetUserEvents(jwtToken, filterObj);
+                return JsonSerializer.Serialize(response);
+            }
+            catch (Exception ex)
+            {
+                return $"Error retrieving user events: {ex.Message}";
             }
         }
     }

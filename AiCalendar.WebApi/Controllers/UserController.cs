@@ -216,7 +216,7 @@ namespace AiCalendar.WebApi.Controllers
             if (currentUserId != userId)
             {
                 _logger.LogWarning("User with ID {CurrentUserId} attempted to update user with ID {UserId} without authorization.", currentUserId, userId);
-                return Forbid("You are not authorized to delete this account.");
+                return Forbid();
             }
 
             try
@@ -361,7 +361,7 @@ namespace AiCalendar.WebApi.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> GetUserEvents([FromBody] EventFilterCriteriaDto? filter)
+        public async Task<IActionResult> GetUserEvents([FromQuery] EventFilterCriteriaDto? filter)
         {
             string? id = User.GetUserId();
 

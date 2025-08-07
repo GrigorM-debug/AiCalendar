@@ -26,7 +26,7 @@ namespace AiCalendar.MCPServer
             if (!response.IsSuccessStatusCode)
             {
                 throw new Exception(
-                    $"Unexpected status code: {response.StatusCode}. Expected 200. Response message: ${response.Content}");
+                    $"Unexpected status code: {response.StatusCode}. Expected 200. Response message: ${response}");
             }
 
             var eventDto = default(EventDto);
@@ -38,7 +38,7 @@ namespace AiCalendar.MCPServer
             return eventDto;
         }
 
-        public async Task<EventDto> CreateEventAsync(EventDto eventDto, string jwtToken)
+        public async Task<EventDto> CreateEventAsync(CreateEventDto eventDto, string jwtToken)
         {
             if (eventDto == null)
             {
@@ -58,7 +58,7 @@ namespace AiCalendar.MCPServer
             if (response.StatusCode != HttpStatusCode.Created)
             {
                 throw new Exception(
-                    $"Unexpected status code: {response.StatusCode}. Expected 201 Created. Response message: ${response.Content}");
+                    $"Unexpected status code: {response.StatusCode}. Expected 201 Created. Response message: ${response}");
             }
 
             return await response.Content.ReadFromJsonAsync<EventDto>();
@@ -84,7 +84,7 @@ namespace AiCalendar.MCPServer
             if (response.StatusCode != HttpStatusCode.NoContent)
             {
                 throw new Exception(
-                    $"Unexpected status code: {response.StatusCode}. Expected 204 No Content. Response message: ${response.Content}");
+                    $"Unexpected status code: {response.StatusCode}. Expected 204 No Content. Response message: ${response}");
             }
 
             return "Event successfully deleted.";
@@ -110,7 +110,7 @@ namespace AiCalendar.MCPServer
             if (response.StatusCode != HttpStatusCode.OK)
             {
                 throw new Exception(
-                    $"Unexpected status code: {response.StatusCode}. Expected 200 OK. Response message: ${response.Content}");
+                    $"Unexpected status code: {response.StatusCode}. Expected 200 OK. Response message: ${response}");
             }
 
             var eventDto = await response.Content.ReadFromJsonAsync<EventDto>();
@@ -130,7 +130,7 @@ namespace AiCalendar.MCPServer
             if (!response.IsSuccessStatusCode)
             {
                 throw new Exception(
-                    $"Unexpected status code: {response.StatusCode}. Expected 200. Response message: ${response.Content}");
+                    $"Unexpected status code: {response.StatusCode}. Expected 200. Response message: ${response}");
             }
 
             var events = await response.Content.ReadFromJsonAsync<IEnumerable<EventDto>>();
@@ -168,7 +168,7 @@ namespace AiCalendar.MCPServer
             if (!response.IsSuccessStatusCode)
             {
                 throw new Exception(
-                    $"Unexpected status code: {response.StatusCode}. Expected 200. Response message: ${response.Content}");
+                    $"Unexpected status code: {response.StatusCode}. Expected 200. Response message: ${response}");
             }
 
             return await response.Content.ReadFromJsonAsync<EventDto>();

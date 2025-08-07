@@ -2,6 +2,7 @@
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using AiCalendar.WebApi.DTOs.Event;
 using AiCalendar.WebApi.DTOs.Users;
 
 namespace AiCalendar.MCPServer
@@ -33,7 +34,7 @@ namespace AiCalendar.MCPServer
             if (!response.IsSuccessStatusCode)
             {
                 throw new Exception(
-                    $"Unexpected status code: {response.StatusCode}. Expected 200. Response message: ${response.Content}");
+                    $"Unexpected status code: {response.StatusCode}. Expected 200. Response message: ${response}");
             }
 
             var userDto = default(UserDto);
@@ -63,7 +64,7 @@ namespace AiCalendar.MCPServer
             if (!response.IsSuccessStatusCode)
             {
                 throw new Exception(
-                    $"Unexpected status code: {response.StatusCode}. Expected 200. Response message: ${response.Content}");
+                    $"Unexpected status code: {response.StatusCode}. Expected 200. Response message: ${response}");
             }
 
             var loginResponse = default(LoginResponseDto);
@@ -100,7 +101,7 @@ namespace AiCalendar.MCPServer
             if (!response.IsSuccessStatusCode)
             {
                 throw new Exception(
-                    $"Unexpected status code: {response.StatusCode}. Expected 200. Response message: ${response.Content}");
+                    $"Unexpected status code: {response.StatusCode}. Expected 200. Response message: ${response}");
             }
 
             var users = await response.Content.ReadFromJsonAsync<IEnumerable<UserDtoExtended>>();
@@ -132,7 +133,7 @@ namespace AiCalendar.MCPServer
             if (!response.IsSuccessStatusCode)
             {
                 throw new Exception(
-                    $"Unexpected status code: {response.StatusCode}. Expected 200. Response message: ${response.Content}");
+                    $"Unexpected status code: {response.StatusCode}. Expected 200. Response message: ${response}");
             }
 
             return "User successfully deleted.";
@@ -166,7 +167,7 @@ namespace AiCalendar.MCPServer
             if (!response.IsSuccessStatusCode)
             {
                 throw new Exception(
-                    $"Unexpected status code: {response.StatusCode}. Expected 200. Response message: ${response.Content}");
+                    $"Unexpected status code: {response.StatusCode}. Expected 200. Response message: ${response}");
             }
 
             var updatedUser = await response.Content.ReadFromJsonAsync<UserDto>();
@@ -177,6 +178,47 @@ namespace AiCalendar.MCPServer
             }
 
             return updatedUser;
+        }
+
+        public async Task<IEnumerable<EventDto>> GetUserEvents(string jwtToken, EventFilterCriteriaDto? filter)
+        {
+            if (string.IsNullOrEmpty(jwtToken))
+            {
+                throw new UnauthorizedAccessException("JWT token cannot be null.");
+            }
+
+            _httpClient.DefaultRequestHeaders.Authorization = null;
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+
+            var query = new List<string>();
+
+            if (filter?.StartDate != null)
+                query.Add($"StartDate={Uri.EscapeDataString(filter.StartDate.Value.ToString("o"))}");
+
+            if (filter?.EndDate != null)
+                query.Add($"EndDate={Uri.EscapeDataString(filter.EndDate.Value.ToString("o"))}");
+
+            if (filter?.IsCancelled != null)
+                query.Add($"IsCancelled={filter.IsCancelled.Value}");
+
+            var queryString = query.Count > 0 ? "?" + string.Join("&", query) : string.Empty;
+
+            var response = await _httpClient.GetAsync($"api/v1/User/events/{queryString}");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new Exception(
+                    $"Unexpected status code: {response.StatusCode}. Expected 200. Response message: ${response}");
+            }
+
+            var events = await response.Content.ReadFromJsonAsync<IEnumerable<EventDto>>();
+
+            if (events == null)
+            {
+                throw new Exception("Failed to retrieve user events. Response content is null.");
+            }
+
+            return events;
         }
     }
 }

@@ -52,7 +52,7 @@ namespace AiCalendar.MCPServer
 
             try
             {
-                var eventDto = JsonSerializer.Deserialize<EventDto>(eventJson);
+                var eventDto = JsonSerializer.Deserialize<CreateEventDto>(eventJson);
 
                 if (eventDto == null)
                 {
