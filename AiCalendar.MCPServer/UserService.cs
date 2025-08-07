@@ -20,7 +20,7 @@ namespace AiCalendar.MCPServer
         {
             if (userData == null)
             {
-                throw new ArgumentNullException(nameof(userData), "User data cannot be null.");
+                throw new Exception("User data cannot be null.");
             }
 
             var contentJson = JsonSerializer.Serialize(userData);
@@ -56,7 +56,7 @@ namespace AiCalendar.MCPServer
         {
             if (userData == null)
             {
-                throw new ArgumentNullException(nameof(userData), "User data cannot be null.");
+                throw new Exception("User data cannot be null.");
             }
 
             var response = await _httpClient.PostAsJsonAsync("api/v1/User/login", userData);
@@ -146,17 +146,17 @@ namespace AiCalendar.MCPServer
         {
             if (string.IsNullOrEmpty(userId))
             {
-                throw new ArgumentNullException(nameof(userId), "UserId cannot be null or empty.");
+                throw new Exception("UserId cannot be null or empty.");
             }
 
             if (userData == null)
             {
-                throw new ArgumentNullException(nameof(userData), "User data cannot be null.");
+                throw new Exception("User data cannot be null.");
             }
 
             if (string.IsNullOrEmpty(jwtToken))
             {
-                throw new UnauthorizedAccessException("JWT token cannot be null.");
+                throw new Exception("JWT token cannot be null.");
             }
 
             _httpClient.DefaultRequestHeaders.Authorization = null;
@@ -184,7 +184,7 @@ namespace AiCalendar.MCPServer
         {
             if (string.IsNullOrEmpty(jwtToken))
             {
-                throw new UnauthorizedAccessException("JWT token cannot be null.");
+                throw new Exception("JWT token cannot be null.");
             }
 
             _httpClient.DefaultRequestHeaders.Authorization = null;

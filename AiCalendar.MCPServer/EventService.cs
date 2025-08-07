@@ -18,7 +18,7 @@ namespace AiCalendar.MCPServer
         {
             if (string.IsNullOrEmpty(eventId))
             {
-                throw new ArgumentNullException(nameof(eventId), "EventId cannot be null or empty.");
+                throw new Exception("EventId cannot be null or empty.");
             }
 
             var response = await _httpClient.GetAsync($"api/v1/Event/{eventId}");
@@ -42,12 +42,12 @@ namespace AiCalendar.MCPServer
         {
             if (eventDto == null)
             {
-                throw new ArgumentNullException(nameof(eventDto), "Event data cannot be null.");
+                throw new Exception("Event data cannot be null.");
             }
 
             if (string.IsNullOrEmpty(jwtToken))
             {
-                throw new UnauthorizedAccessException("JWT token cannot be null.");
+                throw new Exception("JWT token cannot be null.");
             }
 
             _httpClient.DefaultRequestHeaders.Authorization = null;
@@ -68,12 +68,12 @@ namespace AiCalendar.MCPServer
         {
             if (string.IsNullOrEmpty(eventId))
             {
-                throw new ArgumentNullException(nameof(eventId), "EventId cannot be null.");
+                throw new Exception("EventId cannot be null.");
             }
 
             if (string.IsNullOrEmpty(jwtToken))
             {
-                throw new UnauthorizedAccessException("JWT token cannot be null.");
+                throw new Exception("JWT token cannot be null.");
             }
 
             _httpClient.DefaultRequestHeaders.Authorization = null;
@@ -94,12 +94,12 @@ namespace AiCalendar.MCPServer
         {
             if (string.IsNullOrEmpty(eventId))
             {
-                throw new ArgumentNullException(nameof(eventId), "EventId can not be null!");
+                throw new Exception("EventId can not be null!");
             }
 
             if (string.IsNullOrEmpty(jwtToken))
             {
-                throw new UnauthorizedAccessException("JWT token can not be null!");
+                throw new Exception("JWT token can not be null!");
             }
 
             _httpClient.DefaultRequestHeaders.Authorization = null;
@@ -164,17 +164,17 @@ namespace AiCalendar.MCPServer
         {
             if (string.IsNullOrEmpty(eventId))
             {
-                throw new ArgumentNullException(nameof(eventId), "EventId cannot be null or empty.");
+                throw new Exception("EventId cannot be null or empty.");
             }
 
             if (eventDto == null)
             {
-                throw new ArgumentNullException(nameof(eventDto), "Event data cannot be null.");
+                throw new Exception("Event data cannot be null.");
             }
 
             if (string.IsNullOrEmpty(jwtToken))
             {
-                throw new UnauthorizedAccessException("JWT token cannot be null.");
+                throw new Exception("JWT token cannot be null.");
             }
 
             _httpClient.DefaultRequestHeaders.Authorization = null;
