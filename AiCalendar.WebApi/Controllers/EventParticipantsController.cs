@@ -55,7 +55,7 @@ namespace AiCalendar.WebApi.Controllers
         {
             string? userIdString = User?.GetUserId();
 
-            if (User?.Identity?.IsAuthenticated ==null && userIdString == null)
+            if (User?.Identity == null && User?.Identity?.IsAuthenticated == false && userIdString == null)
             {
                 _logger.LogWarning("Unauthorized access attempt to get event participants without authentication.");
                 return Unauthorized("You must be logged in to create an event.");
@@ -129,7 +129,9 @@ namespace AiCalendar.WebApi.Controllers
         {
             string? userIdString = User?.GetUserId();
 
-            if (User?.Identity?.IsAuthenticated == null && userIdString == null)
+            if (User?.Identity == null &&
+                User?.Identity?.IsAuthenticated == false 
+                && userIdString == null)
             {
                 _logger.LogWarning("Unauthorized access attempt to add participant without authentication.");
                 return Unauthorized("You must be logged in to add a participant.");
@@ -185,6 +187,14 @@ namespace AiCalendar.WebApi.Controllers
                 return NotFound($"Participant with ID {parsedParticipantId} not found.");
             }
 
+            //Check if event is cancelled
+            bool isEventCancelled = await _eventService.CheckIfEventIsAlreadyCancelled(parsedEventId);
+            if (isEventCancelled)
+            {
+                _logger.LogError("Event {EventId} is cancelled", parsedEventId);
+                return BadRequest("Cannot add participants to a cancelled event.");
+            }
+
             // Check if the participant is already a participant in the event
             bool isParticipantAlready = await _eventParticipantsService.IsUserEventParticipant(parsedParticipantId, parsedEventId);
             if (isParticipantAlready)
@@ -222,7 +232,9 @@ namespace AiCalendar.WebApi.Controllers
         {
             string? userIdString = User.GetUserId();
 
-            if (User?.Identity?.IsAuthenticated == null && userIdString == null)
+            if (User?.Identity == null 
+                && User?.Identity?.IsAuthenticated == false 
+                && userIdString == null)
             {
                 _logger.LogWarning("Unauthorized access attempt to remove participant without authentication.");
                 return Unauthorized("You must be logged in to remove a participant.");
@@ -283,6 +295,14 @@ namespace AiCalendar.WebApi.Controllers
             {
                 _logger.LogError("User {ParticipantId} is not a participant in event {EventId}", parsedParticipantId, parsedEventId);
                 return BadRequest("User is not a participant in this event.");
+            }
+
+            //Check if event is cancelled
+            bool isEventCancelled = await _eventService.CheckIfEventIsAlreadyCancelled(parsedEventId);
+            if (isEventCancelled)
+            {
+                _logger.LogError("Event {EventId} is cancelled", parsedEventId);
+                return BadRequest("Cannot add participants to a cancelled event.");
             }
 
             await _eventParticipantsService.RemoveParticipantAsync(parsedParticipantId, parsedEventId);

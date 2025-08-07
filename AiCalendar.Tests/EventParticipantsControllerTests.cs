@@ -436,6 +436,21 @@ namespace AiCalendar.Tests
             var result = await _controller.AddEventParticipant(eventId, userId);
             Assert.That(result, Is.InstanceOf<ForbidResult>());
         }
+
+        [Test]
+        public async Task AddEventParticipantAsync_ShouldReturnBadRequest_WhenEventIsCancelled()
+        {
+            Guid eventId = Guid.Parse("E1000000-0000-0000-0000-000000000001");
+            Guid userId = Guid.Parse("A1B2C3D4-E5F6-7890-1234-567890ABCDEF"); 
+
+            await _eventService.CancelEventAsync(eventId, userId);
+
+            var result = await _controller.AddEventParticipant(eventId.ToString(), userId.ToString());
+
+            Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
+            var badRequestResult = result as BadRequestObjectResult;
+            Assert.That(badRequestResult?.Value, Is.EqualTo("Cannot add participants to a cancelled event."));
+        }
         #endregion
 
         #region RemoveParticipantAsync
@@ -593,6 +608,20 @@ namespace AiCalendar.Tests
             Assert.That(badRequestResult?.Value, Is.EqualTo("User is not a participant in this event."));
         }
 
+        [Test]
+        public async Task RemoveParticipantAsync_ShouldReturnBadRequest_WhenEventIsCancelled()
+        {
+            string eventId = "E1000000-0000-0000-0000-000000000001".ToLower();
+            string participantId = "11223344-5566-7788-99AA-BBCCDDEEFF00".ToLower(); 
+
+            await _eventService.CancelEventAsync(Guid.Parse(eventId), Guid.Parse("A1B2C3D4-E5F6-7890-1234-567890ABCDEF"));
+
+            var result = await _controller.RemoveParticipantAsync(eventId, participantId);
+
+            Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
+            var badRequestResult = result as BadRequestObjectResult;
+            Assert.That(badRequestResult?.Value, Is.EqualTo("Cannot add participants to a cancelled event."));
+        }
         #endregion
     }
 }
