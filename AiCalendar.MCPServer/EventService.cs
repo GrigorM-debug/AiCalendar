@@ -125,7 +125,24 @@ namespace AiCalendar.MCPServer
 
         public async Task<IEnumerable<EventDto>> GetAllEventsAsync(EventFilterCriteriaDto? filter = null)
         {
-            var response = await _httpClient.GetAsync($"api/v1/Event/{filter}");
+            var query = new List<string>();
+
+            if (filter?.StartDate != null)
+            {
+                query.Add($"StartDate={WebUtility.UrlEncode(filter.StartDate.Value.ToString("o"))}");
+            }
+            if (filter?.EndDate != null)
+            {
+                query.Add($"EndDate={WebUtility.UrlEncode(filter.EndDate.Value.ToString("o"))}");
+            }
+            if (filter?.IsCancelled != null)
+            {
+                query.Add($"IsCancelled={filter.IsCancelled.Value}");
+            }
+
+            var queryString = query.Any() ? "?" + string.Join("&", query) : "";
+
+            var response = await _httpClient.GetAsync($"api/v1/Event{queryString}");
 
             if (!response.IsSuccessStatusCode)
             {
@@ -143,7 +160,7 @@ namespace AiCalendar.MCPServer
             return events;
         }
 
-        public async Task<EventDto> UpdateEventAsync(string eventId, EventDto eventDto, string jwtToken)
+        public async Task<EventDto> UpdateEventAsync(string eventId, UpdateEventDto eventDto, string jwtToken)
         {
             if (string.IsNullOrEmpty(eventId))
             {

@@ -183,7 +183,7 @@ namespace AiCalendar.MCPServer
 
             try
             {
-                var eventDto = JsonSerializer.Deserialize<EventDto>(eventJson);
+                var eventDto = JsonSerializer.Deserialize<UpdateEventDto>(eventJson);
 
                 if (eventDto == null)
                 {
