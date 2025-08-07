@@ -3,6 +3,7 @@ using AiCalendar.WebApi.DTOs.Event;
 using AiCalendar.WebApi.DTOs.Users;
 using AiCalendar.WebApi.Models;
 using AiCalendar.WebApi.Services.Events.Interfaces;
+using Microsoft.AspNetCore.Components.Web;
 using Microsoft.EntityFrameworkCore;
 
 namespace AiCalendar.WebApi.Services.Events
@@ -336,5 +337,17 @@ namespace AiCalendar.WebApi.Services.Events
             return events;
         }
 
+        /// <summary>
+        /// Checks if an event with the specified unique identifier is already cancelled.
+        /// <param name="eventId">The id of the event</param>
+        /// <returns>Boolean depending on event cancelling condition</returns>
+        /// </summary>
+        public async Task<bool> CheckIfEventIsAlreadyCancelled(Guid eventId)
+        {
+            bool isCancelled = await _eventRepository
+                .ExistsByExpressionAsync(e => e.Id == eventId && e.IsCancelled);
+
+            return isCancelled;
+        }
     }
 }

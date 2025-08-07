@@ -319,6 +319,13 @@ namespace AiCalendar.WebApi.Controllers
                 return Forbid("You are not the creator of this event.");
             }
 
+            bool isEventCancelled = await _eventService.CheckIfEventIsAlreadyCancelled(eventId);
+            if (isEventCancelled)
+            {
+                _logger.LogWarning("Event with ID: {EventId} is already cancelled.", eventId);
+                return BadRequest("Event is already cancelled.");
+            }
+
             EventDto cancelledEvent = await _eventService.CancelEventAsync(eventId, userId);
 
             return Ok(cancelledEvent);

@@ -544,6 +544,22 @@ namespace AiCalendar.Tests
             Assert.That(e.IsCancelled, Is.True, "Event should be marked as cancelled.");
         }
 
+        [Test]
+        public async Task CancelEventAsync_ShouldReturnBadRequest_WhenEventIsAlreadyCancelled()
+        {
+            Guid user1Id = Guid.Parse("A1B2C3D4-E5F6-7890-1234-567890ABCDEF");
+            Guid event4Id = Guid.Parse("E1000000-0000-0000-0000-000000000004");
+
+            await _eventService.CancelEventAsync(event4Id, user1Id);
+
+            var result = await _eventController.CancelEventAsync(event4Id.ToString());
+
+            Assert.That(result, Is.Not.Null);
+
+            Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
+            var badRequestResult = result as BadRequestObjectResult;
+            Assert.That(badRequestResult.Value, Is.EqualTo("Event is already cancelled."));
+        }
         #endregion
 
         #region UpdateEventAsync

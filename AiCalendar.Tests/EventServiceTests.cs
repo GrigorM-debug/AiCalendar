@@ -580,5 +580,26 @@ namespace AiCalendar.Tests
             Assert.That(hasOverlapping, Is.False);
         }
         #endregion
+
+        #region CheckIfEventIsAlreadyCancelled
+        [Test]
+        public async Task CheckIfEventIsAlreadyCancelled_ShouldReturnTrue_WhenEventIsCancelled()
+        {
+            await _eventService.CancelEventAsync(Guid.Parse("E1000000-0000-0000-0000-000000000001"),
+                Guid.Parse("A1B2C3D4-E5F6-7890-1234-567890ABCDEF"));
+
+            Guid eventId = Guid.Parse("E1000000-0000-0000-0000-000000000001");
+            bool isCancelled = await _eventService.CheckIfEventIsAlreadyCancelled(eventId);
+            Assert.That(isCancelled, Is.True);
+        }
+
+        [Test]
+        public async Task CheckIfEventIsAlreadyCancelled_ShouldReturnFalse_WhenEventIsNotCancelled()
+        {
+            Guid eventId = Guid.Parse("E1000000-0000-0000-0000-000000000001");
+            bool isCancelled = await _eventService.CheckIfEventIsAlreadyCancelled(eventId);
+            Assert.That(isCancelled, Is.False);
+        }
+        #endregion
     }
 }

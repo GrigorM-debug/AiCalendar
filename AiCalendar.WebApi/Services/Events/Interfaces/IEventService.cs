@@ -85,5 +85,12 @@ namespace AiCalendar.WebApi.Services.Events.Interfaces
         /// <returns>A collection of filtered events</returns>
         Task<IEnumerable<EventDto>> GetEventsAsync(EventFilterCriteriaDto? filter = null);
 
+
+        /// <summary>
+        /// Checks if an event with the specified unique identifier is already cancelled.
+        /// <param name="eventId">The id of the event</param>
+        /// <returns>Boolean depending on event cancelling condition</returns>
+        /// </summary>
+        Task<bool> CheckIfEventIsAlreadyCancelled(Guid eventId);
     }
 }
