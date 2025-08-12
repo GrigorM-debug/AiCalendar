@@ -2,6 +2,7 @@ using AiCalendar.MCPServer;
 using Microsoft.Extensions.Logging;
 using System.Buffers.Text;
 using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
 using ModelContextProtocol.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -34,11 +35,27 @@ builder.Services.AddRateLimiter(options =>
 
     options.OnRejected = async (context, cancellationToken) =>
     {
-        // Custom rejection handling logic
-        context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
-        context.HttpContext.Response.Headers["Retry-After"] = "60";
+        if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out TimeSpan retryAfter))
+        {
+            context.HttpContext.Response.Headers.RetryAfter = retryAfter.TotalSeconds.ToString();
 
-        await context.HttpContext.Response.WriteAsync("Rate limit exceeded. Please try again later.", cancellationToken);
+            ProblemDetailsFactory problemDetailsFactory = context.HttpContext.RequestServices.GetRequiredService<ProblemDetailsFactory>();
+
+            Microsoft.AspNetCore.Mvc.ProblemDetails problemDetails =
+                problemDetailsFactory.CreateProblemDetails(
+                    context.HttpContext,
+                    StatusCodes.Status429TooManyRequests,
+                    "Too many requests",
+                    detail: $"Too many requests. Please retry after ${retryAfter.TotalSeconds} seconds"
+                );
+
+            await context.HttpContext.Response.WriteAsJsonAsync(problemDetails, cancellationToken);
+        }
+        //// Custom rejection handling logic
+        //context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+        //context.HttpContext.Response.Headers["Retry-After"] = "60";
+
+        //await context.HttpContext.Response.WriteAsync("Rate limit exceeded. Please try again later.", cancellationToken);
     };
 });
 
