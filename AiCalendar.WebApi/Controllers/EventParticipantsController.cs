@@ -15,7 +15,7 @@ namespace AiCalendar.WebApi.Controllers
     /// </summary>
     [Authorize]
     [ApiExplorerSettings(GroupName = "v1")]
-    [Route("api/[controller]")]
+    [Route("api/v1/[controller]")]
     [ApiController]
     public class EventParticipantsController : ControllerBase
     {
@@ -45,7 +45,7 @@ namespace AiCalendar.WebApi.Controllers
         /// <response code="401">User is not authenticated.</response>
         /// <response code="403">User is not authorized to view participants for this event.</response>
         /// <response code="404">Event not found.</response>
-        [HttpGet("/events/{eventId}/participants")]
+        [HttpGet("events/{eventId}/participants")]
         [ProducesResponseType(typeof(IEnumerable<UserDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -119,7 +119,7 @@ namespace AiCalendar.WebApi.Controllers
         /// <response code="401">User is not authenticated.</response>
         /// <response code="403">User is not authorized to add this participant.</response>
         /// <response code="404">Event not found.</response>
-        [HttpPost("/events/{eventId}/participants/{participantId}")]
+        [HttpPost("events/{eventId}/participants/{participantId}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -222,7 +222,7 @@ namespace AiCalendar.WebApi.Controllers
         /// <response code="401">User is not authenticated.</response>
         /// <response code="403">User is not authorized to remove this participant.</response>
         /// <response code="404">Event not found.</response>
-        [HttpDelete("/events/{eventId}/participants/{participantId}")]
+        [HttpDelete("events/{eventId}/participants/{participantId}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]

@@ -63,10 +63,10 @@ namespace AiCalendar.MCPServer
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
 
             //This need to be fixed
-            var response = await _httpClient.PostAsync(
-                $"api/v1/EventParticipants/events/{eventId}/participants/{participantId}",
-                new StringContent(string.Empty, Encoding.UTF8, "application/json")
-            );
+           var response = await _httpClient.PostAsync(
+                    $"api/v1/EventParticipants/events/{eventId}/participants/{participantId}",
+                    new StringContent(string.Empty, Encoding.UTF8, "application/json")
+                );
 
             if (!response.IsSuccessStatusCode)
             {
@@ -75,6 +75,42 @@ namespace AiCalendar.MCPServer
             }
 
             return "Participant added successfully.";
+        }
+
+        public async Task<string> RemoveEventParticipant(
+            string jwtToken, 
+            string eventId, 
+            string participantId)
+        {
+            if (string.IsNullOrEmpty(jwtToken))
+            {
+                throw new Exception("JWT token cannot be null!");
+            }
+
+            if (string.IsNullOrEmpty(eventId))
+            {
+                throw new Exception("EventId can not be null or empty!");
+            }
+
+            if (string.IsNullOrEmpty(participantId))
+            {
+                throw new Exception("ParticipantId cannot be null or empty!");
+            }
+
+            _httpClient.DefaultRequestHeaders.Authorization = null;
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+
+            var response = await _httpClient.DeleteAsync(
+                $"api/v1/EventParticipants/events/{eventId}/participants/{participantId}"
+            );
+
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new Exception(
+                    $"Unexpected status code: {response.StatusCode}. Expected 200. Response message: ${response}");
+            }
+
+            return "Participant removed successfully.";
         }
     }
 }

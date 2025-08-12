@@ -63,11 +63,47 @@ namespace AiCalendar.MCPServer
             try
             {
                 var response = await eventParticipantsService.AddEventParticipant(jwtToken, eventId, participantId);
+
                 return response;
             }
             catch (Exception ex)
             {
                 return $"Error adding event participant: {ex.Message}";
+            }
+        }
+
+        [McpServerTool, Description("Remove event participant")]
+        public async Task<string> RemoveEventParticipantAsync(
+            EventParticipantsService eventParticipantsService,
+            [Description("The user JWT token")] string jwtToken,
+            [Description("The id of the event")] string eventId,
+            [Description("The id of the participant to remove")]
+            string participantId)
+        {
+            if (string.IsNullOrEmpty(jwtToken))
+            {
+                return "JWT token can not be null or empty!";
+            }
+
+            if (string.IsNullOrEmpty(eventId))
+            {
+                return "EventId can not be null or empty!";
+            }
+
+            if (string.IsNullOrEmpty(participantId))
+            {
+                return "ParticipantId can not be null or empty!";
+            }
+
+            try
+            {
+                var response = await eventParticipantsService.RemoveEventParticipant(jwtToken, eventId, participantId);
+
+                return response;
+            }
+            catch (Exception ex)
+            {
+                return $"Error removing event participant: {ex.Message}";
             }
         }
     }
