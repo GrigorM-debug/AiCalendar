@@ -40,16 +40,68 @@ The API endpoints are documented and accessible via Swagger UI.
 
 Below is a snapshot of the available API endpoints from Swagger UI:
 
-![Swagger UI Endpoints](![alt text](image-1.png))
+![Swagger UI Endpoints](![alt text](images/image-1.png))
 
 ## .NET Aspire Orchestration
 
 This project utilizes .NET Aspire for orchestration and local development. The Aspire dashboard provides a centralized view of all running resources.
 
-![.NET Aspire Dashboard](![alt text](image.png))
+![.NET Aspire Dashboard](![alt text](images/image.png))
 
-## TODOs
+## Model Context Protocol (MCP) Implementation
 
-- Fix some things
-- Unit Tests
-- Mcp server
+The AICalendar API implements a Model Context Protocol (MCP) server that provides a flexible and efficient way to interact with the calendar system's core functionality.
+
+### What is MCP?
+
+Model Context Protocol (MCP) is a communication protocol that enables seamless interaction between clients and servers through well-defined tools and contexts. It provides a structured way to expose server-side functionality as tools that clients like Copilot, Claude or custom one can discover and invoke.
+
+### MCP Server
+
+The AICalendar MCP server (`AiCalendar.MCPServer`) exposes several tool sets for managing calendar operations:
+
+- **Event Participants Tools:**
+  - Get event participants
+  - Add participants to events
+  - Remove participants from events
+
+- **User Management Tools:**
+  - User registration
+  - User authentication
+  - User listing and filtering
+  - User deletion
+
+- **Event Management Tools:**
+  - Create events
+  - Retrieve events by ID
+  - Retrieve all events with filtering options
+  - Update and delete events (creator only)
+  - Cancel events (creator only)
+
+### MCP Endpoint
+
+The MCP server is accessible at the `/mcp` endpoint and supports HTTP transport. The server implements rate limiting and CORS policies for security and resource management.
+
+### Using MCP Clients
+
+Clients can connect to the MCP server using any MCP-compatible client implementation. The server provides tool discovery capabilities, allowing clients to:
+
+1. Discover available tools and their descriptions
+2. Execute tools with proper parameters
+3. Handle responses in a structured format (JSON)
+
+Some MCP operations require proper authentication using JWT tokens for secure access to the system's functionality.
+
+### Example MCP Server Usage
+
+#### MCP Inspector
+
+![MCP Inspector](![alt text](images/mcp-inspector.png))
+
+#### Postman
+
+![Postman](![alt text](images/postman.png))
+
+#### Github Copilot Chat
+
+![Github Copilot Chat](![alt text](images/copilot.png))
