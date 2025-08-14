@@ -1,0 +1,15 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: "ai-calendar-API"
+    static_configs:
+     - targets: ['host.docker.internal:5029']
+    metrics_path: /metrics
+    tls_config:
+      insecure_skip_verify: true
+
+  - job_name: "ai-calendar-MCPServer"
+    static_configs:
+     - targets: ['host.docker.internal:5242']
+    metrics_path: /metrics 
