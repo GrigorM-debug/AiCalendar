@@ -55,7 +55,7 @@ namespace AiCalendar.WebApi.Controllers
         {
             string? userIdString = User?.GetUserId();
 
-            if (User?.Identity == null && User?.Identity?.IsAuthenticated == false && userIdString == null)
+            if (User?.Identity == null || User?.Identity?.IsAuthenticated == false || userIdString == null)
             {
                 _logger.LogWarning("Unauthorized access attempt to get event participants without authentication.");
                 return Unauthorized("You must be logged in to create an event.");
@@ -129,9 +129,7 @@ namespace AiCalendar.WebApi.Controllers
         {
             string? userIdString = User?.GetUserId();
 
-            if (User?.Identity == null &&
-                User?.Identity?.IsAuthenticated == false 
-                && userIdString == null)
+            if (User?.Identity == null || User?.Identity?.IsAuthenticated == false || userIdString == null)
             {
                 _logger.LogWarning("Unauthorized access attempt to add participant without authentication.");
                 return Unauthorized("You must be logged in to add a participant.");
@@ -232,9 +230,7 @@ namespace AiCalendar.WebApi.Controllers
         {
             string? userIdString = User.GetUserId();
 
-            if (User?.Identity == null 
-                && User?.Identity?.IsAuthenticated == false 
-                && userIdString == null)
+            if (User?.Identity == null || User?.Identity?.IsAuthenticated == false || userIdString == null)
             {
                 _logger.LogWarning("Unauthorized access attempt to remove participant without authentication.");
                 return Unauthorized("You must be logged in to remove a participant.");

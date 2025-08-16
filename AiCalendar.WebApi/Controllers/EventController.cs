@@ -82,7 +82,7 @@ namespace AiCalendar.WebApi.Controllers
         {
             string? userIdString = User.GetUserId();
 
-            if (User?.Identity == null && User?.Identity?.IsAuthenticated == false && userIdString == null)
+            if (User?.Identity == null || User?.Identity?.IsAuthenticated == false || userIdString == null)
             {
                 _logger.LogWarning("Unauthorized attempt to create an event without authentication.");
                 return Unauthorized("You must be logged in to create an event.");
@@ -134,7 +134,7 @@ namespace AiCalendar.WebApi.Controllers
         {
             string? userIdString = User.GetUserId();
 
-            if (User?.Identity == null && User?.Identity?.IsAuthenticated == false && userIdString == null)
+            if (User?.Identity == null || User?.Identity?.IsAuthenticated == false || userIdString == null)
             {
                 _logger.LogWarning("Unauthorized attempt to delete an event without authentication.");
                 return Unauthorized("You must be logged in to delete an event.");
@@ -203,7 +203,7 @@ namespace AiCalendar.WebApi.Controllers
         {
             string? userIdString = User.GetUserId();
 
-            if (User?.Identity == null && User?.Identity?.IsAuthenticated == false && userIdString == null)
+            if (User?.Identity == null || User?.Identity?.IsAuthenticated == false || userIdString == null)
             {
                 _logger.LogWarning("Unauthorized attempt to update an event without authentication.");
                 return Unauthorized("You must be logged in to update an event.");
@@ -240,6 +240,18 @@ namespace AiCalendar.WebApi.Controllers
             {
                 _logger.LogWarning("User {UserId} is not the creator of the event with ID: {EventId}", userId, eventId);
                 return Forbid("You are not the creator of this event.");
+            }
+
+            bool isEventWithDataAlreadyExists = await _eventService
+                .CheckIfEventExistsByTitleAndDescription(
+                    updateEventDto.Title, 
+                    updateEventDto.Description,
+                    userId);
+
+            if (isEventWithDataAlreadyExists)
+            {
+                _logger.LogWarning("An event with the same title and description already exists.");
+                return Conflict("An event with the same title and description already exists.");
             }
 
             if (updateEventDto.StartTime.HasValue && updateEventDto.EndTime.HasValue)
@@ -280,7 +292,7 @@ namespace AiCalendar.WebApi.Controllers
         {
             string? userIdString = User.GetUserId();
 
-            if (User?.Identity == null && User?.Identity?.IsAuthenticated == false && userIdString == null)
+            if (User?.Identity == null || User?.Identity?.IsAuthenticated == false || userIdString == null)
             {
                 _logger.LogWarning("Unauthorized attempt to cancel an event without authentication.");
                 return Unauthorized("You must be logged in to cancel an event.");

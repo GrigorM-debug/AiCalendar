@@ -601,5 +601,83 @@ namespace AiCalendar.Tests
             Assert.That(isCancelled, Is.False);
         }
         #endregion
+
+        #region CheckIfEventExistsByTitleAndDescription
+
+        [Test]
+        public async Task CheckIfEventExistsByTitleAndDescription_ShouldReturnTrue_IfEventWithTitleAlreadyExists()
+        {
+            string title = "Dentist Appointment";
+            Guid user3Id = Guid.Parse("11223344-5566-7788-99AA-BBCCDDEEFF00");
+
+
+            bool result = await _eventService.CheckIfEventExistsByTitleAndDescription(title, null, user3Id);
+
+            Assert.That(result, Is.True);
+        }
+
+        [Test]
+        public async Task CheckIfEventExistsByTitleAndDescription_ShouldReturnFalse_IfEventWithTitleDoesNotExists()
+        {
+            string title = "Random Title Event";
+            Guid user3Id = Guid.Parse("11223344-5566-7788-99AA-BBCCDDEEFF00");
+
+            bool result = await _eventService.CheckIfEventExistsByTitleAndDescription(title, null, user3Id);
+
+            Assert.That(result, Is.False);
+        }
+
+        [Test]
+        public async Task CheckIfEventExistsByTitleAndDescription_ShouldReturnTrue_IfEventWithDescriptionExists()
+        {
+            string description = "Routine check-up.";
+            Guid user3Id = Guid.Parse("11223344-5566-7788-99AA-BBCCDDEEFF00");
+
+
+            bool result = await _eventService.CheckIfEventExistsByTitleAndDescription(null, description, user3Id);
+
+            Assert.That(result, Is.True);
+        }
+
+        [Test]
+        public async Task CheckIfEventExistsByTitleAndDescription_ShouldReturnFalse_IfEventWithDescriptionDoesNotExists()
+        {
+            string description = "Random Description Event";
+            Guid user3Id = Guid.Parse("11223344-5566-7788-99AA-BBCCDDEEFF00");
+
+            bool result = await _eventService.CheckIfEventExistsByTitleAndDescription(null, description, user3Id);
+
+            Assert.That(result, Is.False);
+        }
+
+        [Test]
+        public async Task CheckIfEventExistsByTitleAndDescription_ShouldReturnTrue_IfEventWithTitleAndDescriptionExists()
+        {
+            string title = "Dentist Appointment";
+
+            string description = "Routine check-up.";
+
+            Guid user3Id = Guid.Parse("11223344-5566-7788-99AA-BBCCDDEEFF00");
+
+            bool result = await _eventService.CheckIfEventExistsByTitleAndDescription(title, description, user3Id);
+            
+            Assert.That(result, Is.True);
+        }
+
+        [Test]
+        public async Task CheckIfEventExistsByTitleAndDescription_ShouldReturnFalse_IfEventWithTitleAndDescriptionDoesNotExists()
+        {
+            string title = "Random Title Event";
+            
+            string description = "Random Description Event";
+
+            Guid user3Id = Guid.Parse("11223344-5566-7788-99AA-BBCCDDEEFF00");
+
+            bool result = await _eventService.CheckIfEventExistsByTitleAndDescription(title, description, user3Id);
+            
+            Assert.That(result, Is.False);
+        }
+
+        #endregion
     }
 }

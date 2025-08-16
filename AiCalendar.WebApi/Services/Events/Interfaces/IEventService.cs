@@ -92,5 +92,14 @@ namespace AiCalendar.WebApi.Services.Events.Interfaces
         /// <returns>Boolean depending on event cancelling condition</returns>
         /// </summary>
         Task<bool> CheckIfEventIsAlreadyCancelled(Guid eventId);
+
+        /// <summary>
+        /// Determines whether an event exists with the specified title and description.
+        /// </summary>
+        /// <param name="userId">The id of the user</param>
+        /// <param name="title">The title of the event to check.</param>
+        /// <param name="description">The description of the event to check.</param>
+        /// <returns><c>true</c> if an event exists with the given title and description; otherwise, <c>false</c>.</returns>
+        Task<bool> CheckIfEventExistsByTitleAndDescription(string? title, string? description, Guid userId);
     }
 }

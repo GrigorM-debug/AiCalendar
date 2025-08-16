@@ -349,5 +349,48 @@ namespace AiCalendar.WebApi.Services.Events
 
             return isCancelled;
         }
+
+        /// <summary>
+        /// Determines whether an event exists with the specified title and description.
+        /// </summary>
+        /// <param name="title">The title of the event to check.</param>
+        /// <param name="description">The description of the event to check.</param>
+        /// <returns><c>true</c> if an event exists with the given title and description; otherwise, <c>false</c>.</returns>
+        public async Task<bool> CheckIfEventExistsByTitleAndDescription(
+            string? title, 
+            string? description,
+            Guid userGuid)
+        {
+            bool isExisting = default;
+
+            if (!string.IsNullOrWhiteSpace(title) && !string.IsNullOrWhiteSpace(description))
+            {
+                isExisting = await _eventRepository
+                    .ExistsByExpressionAsync(e =>
+                        e.CreatorId == userGuid 
+                        && e.IsCancelled == false
+                        && e.Title.ToLower() == title.ToLower() 
+                        && e.Description.ToLower() == description.ToLower()
+                    );
+            }
+            else if (!string.IsNullOrWhiteSpace(title) && string.IsNullOrWhiteSpace(description))
+            {
+                isExisting = await _eventRepository
+                    .ExistsByExpressionAsync(e => 
+                        e.CreatorId == userGuid
+                        && e.Title.ToLower() == title.ToLower()
+                        && e.IsCancelled == false);
+            }
+            else if (string.IsNullOrWhiteSpace(title) && !string.IsNullOrWhiteSpace(description))
+            {
+                isExisting = await _eventRepository
+                    .ExistsByExpressionAsync(e =>
+                        e.CreatorId == userGuid
+                        && e.Description.ToLower() == description.ToLower()
+                        && e.IsCancelled == false);
+            }
+
+            return isExisting;
+        }
     }
 }

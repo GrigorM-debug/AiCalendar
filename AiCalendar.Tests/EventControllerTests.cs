@@ -570,6 +570,7 @@ namespace AiCalendar.Tests
             _eventController.ControllerContext = new ControllerContext();
             _eventController.ControllerContext.HttpContext = new DefaultHttpContext();
             _eventController.ControllerContext.HttpContext.User = new ClaimsPrincipal();
+
             // Arrange
             var eventId = "E1000000-0000-0000-0000-000000000001"; // Existing event ID
             var updateEventDto = new UpdateEventDto
@@ -579,8 +580,10 @@ namespace AiCalendar.Tests
                 StartTime = new DateTime(2025, 6, 17, 10, 0, 0, DateTimeKind.Utc),
                 EndTime = new DateTime(2025, 6, 17, 11, 0, 0, DateTimeKind.Utc),
             };
+
             // Act
             var result = await _eventController.UpdateEventAsync(eventId, updateEventDto);
+
             // Assert
             Assert.That(result, Is.Not.Null);
             Assert.That(result, Is.InstanceOf<UnauthorizedObjectResult>());
@@ -1050,6 +1053,64 @@ namespace AiCalendar.Tests
             Assert.That(result, Is.InstanceOf<ConflictObjectResult>());
             var conflictResult = result as ConflictObjectResult;
             Assert.That(conflictResult.Value, Is.EqualTo("You already have an event scheduled for this time period"));
+        }
+
+        [Test]
+        public async Task UpdateEventAsync_ShouldReturnConflict_WhenEventWithTitleAlreadyExists()
+        {
+            var eventId = "E1000000-0000-0000-0000-000000000001";
+            var updateEventDto = new UpdateEventDto
+            {
+                Title = "Weekend Hike"
+            };
+
+            var result = await _eventController.UpdateEventAsync(eventId, updateEventDto);
+
+            // Assert
+
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result, Is.InstanceOf<ConflictObjectResult>());
+
+            var conflictResult = result as ConflictObjectResult;
+            Assert.That(conflictResult.Value, Is.EqualTo("An event with the same title and description already exists."));
+        }
+
+        [Test]
+        public async Task UpdateEventAsync_ShouldReturnConflict_WhenEventWithDescriptionAlreadyExists()
+        {
+            var eventId = "E1000000-0000-0000-0000-000000000001";
+            var updateEventDto = new UpdateEventDto
+            {
+                Description = "Exploring the Vitosha mountains."
+            };
+
+            var result = await _eventController.UpdateEventAsync(eventId, updateEventDto);
+            
+            // Assert
+            
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result, Is.InstanceOf<ConflictObjectResult>());
+            var conflictResult = result as ConflictObjectResult;
+            Assert.That(conflictResult.Value, Is.EqualTo("An event with the same title and description already exists."));
+        }
+
+        [Test]
+        public async Task UpdateEventAsync_ShouldReturnConflict_WhenEventWithTitleAndDescriptionAlreadyExists()
+        {
+            var eventId = "E1000000-0000-0000-0000-000000000001";
+            var updateEventDto = new UpdateEventDto
+            {
+                Title = "Weekend Hike",
+                Description = "Exploring the Vitosha mountains."
+            };
+
+            var result = await _eventController.UpdateEventAsync(eventId, updateEventDto);
+            
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result, Is.InstanceOf<ConflictObjectResult>());
+            var conflictResult = result as ConflictObjectResult;
+            Assert.That(conflictResult.Value, Is.EqualTo("An event with the same title and description already exists."));
         }
 
         #endregion
