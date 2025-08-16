@@ -623,5 +623,70 @@ namespace AiCalendar.Tests
             Assert.That(events.All(e => e.IsCancelled), "All returned events should be cancelled.");
         }
         #endregion
+
+        #region UserExistsByUsernameAndEmailAsync
+        
+        [Test]
+        [TestCase("JessiePinkman", "jessie@example.com")]
+        [TestCase("Heisenberg", "heisenberg@example.com")]
+        [TestCase("admin", "admin@example.com")]
+        public async Task UserExistsByUsernameAndEmailAsyncShouldReturnTrueIfUserExists(string username, string email)
+        {
+            bool exists = await _userService.UserExistsByUsernameAndEmailAsync(username, email);
+            Assert.That(exists, Is.True, $"User with username {username} and email {email} should exist.");
+        }
+
+        [Test]
+        [TestCase("JessiePinkman")]
+        [TestCase("Heisenberg")]
+        [TestCase("admin")]
+        public async Task UserExistsByUsernameAndEmailAsync_ShouldReturnTrue_WhenUserExistsByUsername(string username)
+        {
+            bool exists = await _userService.UserExistsByUsernameAndEmailAsync(username, null);
+            Assert.That(exists, Is.True, $"User with username {username} should exist.");
+        }
+
+        [Test]
+        public async Task UserExistsByUsernameAndEmailAsync_ShouldReturnFalse_WhenUserWithUserNameDoesNotExists()
+        {
+            string username = "NonExistingUser";
+
+            bool exists = await _userService.UserExistsByUsernameAndEmailAsync(username, null);
+
+            Assert.That(exists, Is.False, $"User with username {username} should not exist.");
+        }
+
+        [Test]
+        public async Task UserExistsByUsernameAndEmailAsync_ShouldReturnFalse_WhenUserWithEmailDoesNotExists()
+        {
+            string email = "nonexisting@example.com";
+
+            bool exists = await _userService.UserExistsByUsernameAndEmailAsync(null, email);
+
+            Assert.That(exists, Is.False, $"User with email {email} should not exist.");
+        }
+
+        [Test]
+        [TestCase("jessie@example.com")]
+        [TestCase("heisenberg@example.com")]
+        [TestCase("admin@example.com")]
+        public async Task UserExistsByUsernameAndEmailAsync_ShouldReturnTrue_WhenUserExistsByEmail(string email)
+        {
+            bool exists = await _userService.UserExistsByUsernameAndEmailAsync(null, email);
+            Assert.That(exists, Is.True, $"User with email {email} should exist.");
+        }
+
+        [Test]
+        public async Task UserExistsByUsernameAndEmailAsyncShouldReturnFalseIfUserDoesNotExist()
+        {
+            string username = "NonExistingUser";
+            string email = "nonexisting@example.com";
+
+            bool exists = await _userService.UserExistsByUsernameAndEmailAsync(username, email);
+
+            Assert.That(exists, Is.False, $"User with username {username} and email {email} should not exist.");
+        }
+
+        #endregion
     }
 }

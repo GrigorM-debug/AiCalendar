@@ -97,5 +97,12 @@ namespace AiCalendar.WebApi.Services.Users.Interfaces
         /// <returns>A collection of filtered users</returns>
         Task<IEnumerable<UserDtoExtended>> GetUsersAsync(UserFilterCriteriaDto? filter = null);
 
+        /// <summary>
+        /// Checks if a user exists by username and email.
+        /// </summary>
+        /// <param name="username">The username to search for.</param>
+        /// <param name="email">The email to search for.</param>
+        /// <returns>A task representing the asynchronous operation, with a boolean indicating existence.</returns>
+        Task<bool> UserExistsByUsernameAndEmailAsync(string? username, string? email);
     }
 }

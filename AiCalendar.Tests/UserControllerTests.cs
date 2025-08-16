@@ -136,15 +136,15 @@ namespace AiCalendar.Tests
         }
 
         [Test]
-        [TestCase("admin")]
-        [TestCase("Heisenberg")]
-        [TestCase("JessiePinkman")]
-        public async Task Register_ShouldReturnConflict_IfUserWithUsernameAlreadyExists(string username)
+        [TestCase("JessiePinkman", "jessie@example.com")]
+        [TestCase("Heisenberg", "heisenberg@example.com")]
+        [TestCase("admin", "admin@example.com")]
+        public async Task Register_ShouldReturnConflict_IfUserWithDataAlreadyExists(string username, string email)
         {
             var newUser = new LoginAndRegisterInputDto()
             {
                 UserName = username,
-                Email = "admin@example.com",
+                Email = email,
                 Password = "password123"
             };
 
@@ -153,7 +153,7 @@ namespace AiCalendar.Tests
             Assert.That(result, Is.InstanceOf<ConflictObjectResult>());
             var conflictResult = result as ConflictObjectResult;
             Assert.That(conflictResult.StatusCode, Is.EqualTo(409)); // Or (int)System.Net.HttpStatusCode.Conflict
-            Assert.That(conflictResult.Value, Is.EqualTo($"User with this username '{username}' already exists."));
+            Assert.That(conflictResult.Value, Is.EqualTo($"User with this data '{username}' and '{email}' already exists."));
         }
 
         #endregion
@@ -1613,6 +1613,124 @@ namespace AiCalendar.Tests
             Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
             var badRequestResult = result as BadRequestObjectResult;
             Assert.That(badRequestResult.Value.GetType().GetProperty("error").GetValue(badRequestResult.Value), Is.EqualTo("New password cannot be the same as the old password."));
+        }
+
+        [Test]
+        [TestCase("JessiePinkman", "jessie@example.com")]
+        [TestCase("Heisenberg", "heisenberg@example.com")]
+        public async Task UpdateUser_ShouldReturnConflict_IfUserWithDataAlreadyExists(string username, string email)
+        {
+            var claims = new List<Claim>()
+            {
+                new Claim(ClaimTypes.NameIdentifier, "A1B2C3D4-E5F6-7890-1234-567890ABCDEF"),
+                new Claim(ClaimTypes.Email, "admin@example.com"),
+                new Claim(ClaimTypes.Name, "admin")
+            };
+
+            var identity = new ClaimsIdentity(claims, "TestAuthType");
+
+            var principal = new ClaimsPrincipal(identity);
+
+            _userController.ControllerContext = new ControllerContext()
+            {
+                HttpContext = new DefaultHttpContext()
+                {
+                    User = principal
+                }
+            };
+
+            string userId = "A1B2C3D4-E5F6-7890-1234-567890ABCDEF";
+
+            var updateUser = new UpdateUserDto()
+            {
+                UserName = username,
+                Email = email,
+            };
+
+            var result = await _userController.UpdateUser(userId, updateUser);
+
+            Assert.That(result, Is.InstanceOf<ConflictObjectResult>());
+            var conflictResult = result as ConflictObjectResult;
+            Assert.That(conflictResult.StatusCode, Is.EqualTo(409)); // Or (int)System.Net.HttpStatusCode.Conflict
+            Assert.That(conflictResult.Value, Is.EqualTo("User with this data already exists."));
+        }
+
+        [Test]
+        [TestCase("JessiePinkman")]
+        [TestCase("Heisenberg")]
+        public async Task UpdateUser_ShouldReturnConflict_WhenUserWithUserNameExists(string username)
+        {
+            var claims = new List<Claim>()
+            {
+                new Claim(ClaimTypes.NameIdentifier, "A1B2C3D4-E5F6-7890-1234-567890ABCDEF"),
+                new Claim(ClaimTypes.Email, "admin@example.com"),
+                new Claim(ClaimTypes.Name, "admin")
+            };
+
+            var identity = new ClaimsIdentity(claims, "TestAuthType");
+
+            var principal = new ClaimsPrincipal(identity);
+
+            _userController.ControllerContext = new ControllerContext()
+            {
+                HttpContext = new DefaultHttpContext()
+                {
+                    User = principal
+                }
+            };
+
+            string userId = "A1B2C3D4-E5F6-7890-1234-567890ABCDEF";
+
+            var updateUser = new UpdateUserDto()
+            {
+                UserName = username,
+            };
+
+            var result = await _userController.UpdateUser(userId, updateUser);
+
+            Assert.That(result, Is.InstanceOf<ConflictObjectResult>());
+            var conflictResult = result as ConflictObjectResult;
+            Assert.That(conflictResult.StatusCode, Is.EqualTo(409)); // Or (int)System.Net.HttpStatusCode.Conflict
+            Assert.That(conflictResult.Value, Is.EqualTo("User with this data already exists."));
+        }
+
+        [Test]
+        [TestCase("jessie@example.com")]
+        [TestCase("heisenberg@example.com")]
+        public async Task UpdateUser_ShouldReturnConflict_WhenUserWithEmailExists(string email)
+        {
+            var claims = new List<Claim>()
+            {
+                new Claim(ClaimTypes.NameIdentifier, "A1B2C3D4-E5F6-7890-1234-567890ABCDEF"),
+                new Claim(ClaimTypes.Email, "admin@example.com"),
+                new Claim(ClaimTypes.Name, "admin")
+            };
+
+            var identity = new ClaimsIdentity(claims, "TestAuthType");
+
+            var principal = new ClaimsPrincipal(identity);
+
+            _userController.ControllerContext = new ControllerContext()
+            {
+                HttpContext = new DefaultHttpContext()
+                {
+                    User = principal
+                }
+            };
+
+            string userId = "A1B2C3D4-E5F6-7890-1234-567890ABCDEF";
+
+            var updateUser = new UpdateUserDto()
+            {
+                Email = email,
+            };
+
+            var result = await _userController.UpdateUser(userId, updateUser);
+
+            Assert.That(result, Is.InstanceOf<ConflictObjectResult>());
+            var conflictResult = result as ConflictObjectResult;
+            Assert.That(conflictResult.StatusCode, Is.EqualTo(409)); // Or (int)System.Net.HttpStatusCode.Conflict
+            Assert.That(conflictResult.Value, Is.EqualTo("User with this data already exists."));
         }
 
         #endregion

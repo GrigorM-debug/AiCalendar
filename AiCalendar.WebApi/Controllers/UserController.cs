@@ -64,12 +64,12 @@ namespace AiCalendar.WebApi.Controllers
                 return Forbid();
             }
 
-            bool userExists = await _userService.UserExistsByUsernameAsync(input.UserName);
+            bool userExists = await _userService.UserExistsByUsernameAndEmailAsync(input.UserName, input.Email);
 
             if (userExists)
             {
                 _logger.LogWarning("User with username {UserName} already exists.", input.UserName);
-                return Conflict($"User with this username '{input.UserName}' already exists.");
+                return Conflict($"User with this data '{input.UserName}' and '{input.Email}' already exists.");
             }
 
             UserDto user = await _userService.RegisterAsync(input);
@@ -217,6 +217,14 @@ namespace AiCalendar.WebApi.Controllers
             {
                 _logger.LogWarning("User with ID {CurrentUserId} attempted to update user with ID {UserId} without authorization.", currentUserId, userId);
                 return Forbid();
+            }
+
+            bool isUserWithDataAlreadyExists = await _userService.UserExistsByUsernameAndEmailAsync(updateUserDto.UserName, updateUserDto.Email);
+
+            if (isUserWithDataAlreadyExists)
+            {
+                _logger.LogWarning("User with username {UserName} and email {Email} already exists.", updateUserDto.UserName, updateUserDto.Email);
+                return Conflict("User with this data already exists.");
             }
 
             try
