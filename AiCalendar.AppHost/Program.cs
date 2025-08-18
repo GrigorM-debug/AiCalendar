@@ -21,6 +21,23 @@ var mcp_server = builder.AddProject<Projects.AiCalendar_MCPServer>("aicalendar-m
     .WithReference(web_api)
     .WaitFor(web_api);
 
+var node_exporter = builder
+    .AddContainer("node_exporter", "prom/node-exporter")
+    .WithLifetime(ContainerLifetime.Persistent)
+    .WithHttpEndpoint(port: 9100, targetPort: 9100)
+    .WithBindMount("/proc", "/host/proc")
+    .WithBindMount("/sys", "/host/sys")
+    .WithBindMount("/", "/rootfs")
+    .WithEnvironment("HOST_PROC", "/host/proc")
+    .WithEnvironment("HOST_SYS", "/host/sys")
+    .WithEnvironment("HOST_ROOT", "/rootfs")
+    .WithArgs("--path.procfs=/host/proc", 
+             "--path.sysfs=/host/sys",
+             "--path.rootfs=/rootfs",
+             "--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($|/)")
+    .WaitFor(web_api)
+    .WaitFor(mcp_server);
+
 var prometheus = builder
     .AddContainer("prometheus", "prom/prometheus")
     .WithLifetime(ContainerLifetime.Persistent)
@@ -28,7 +45,17 @@ var prometheus = builder
     .WithArgs("--config.file=/etc/prometheus/prometheus.yml")
     .WithHttpEndpoint(port: 9090, targetPort: 9090)
     .WaitFor(web_api)
-    .WaitFor(mcp_server);
+    .WaitFor(mcp_server)
+    .WaitFor(node_exporter);
+
+var alertmanager = builder
+    .AddContainer("alertmanager", "prom/alertmanager")
+    .WithLifetime(ContainerLifetime.Persistent)
+    .WithBindMount(source: Path.GetFullPath("alertmanager.yml"), target: "/config/alertmanager.yml")
+    .WithVolume("alertmanager-data", "/data")
+    .WithHttpEndpoint(port: 9093, targetPort: 9093)
+    .WithArgs("--config.file=/config/alertmanager.yml")
+    .WaitFor(prometheus);
 
 var grafana = builder
     .AddContainer("grafana", "grafana/grafana")
@@ -37,6 +64,7 @@ var grafana = builder
     .WithHttpEndpoint(port: 3001, targetPort: 3000)
     .WithEnvironment("GF_SECURITY_ADMIN_USER", "admin")
     .WithEnvironment("GF_SECURITY_ADMIN_PASSWORD", "admin")
-    .WaitFor(prometheus);
+    .WaitFor(prometheus)
+    .WaitFor(alertmanager);
 
 builder.Build().Run();
