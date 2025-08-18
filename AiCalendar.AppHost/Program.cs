@@ -31,10 +31,10 @@ var node_exporter = builder
     .WithEnvironment("HOST_PROC", "/host/proc")
     .WithEnvironment("HOST_SYS", "/host/sys")
     .WithEnvironment("HOST_ROOT", "/rootfs")
-    .WithArgs("--path.procfs=/host/proc", 
-             "--path.sysfs=/host/sys",
+    .WithArgs("--path.procfs=/host/proc",
              "--path.rootfs=/rootfs",
-             "--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($|/)")
+             "--path.sysfs=/host/sys",
+             "--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)s")
     .WaitFor(web_api)
     .WaitFor(mcp_server);
 
