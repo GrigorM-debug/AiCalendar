@@ -22,7 +22,7 @@ var mcp_server = builder.AddProject<Projects.AiCalendar_MCPServer>("aicalendar-m
     .WaitFor(web_api);
 
 var node_exporter = builder
-    .AddContainer("node_exporter", "prom/node-exporter")
+    .AddContainer("nodeexporter", "prom/node-exporter")
     .WithLifetime(ContainerLifetime.Persistent)
     .WithHttpEndpoint(port: 9100, targetPort: 9100)
     .WithBindMount("/proc", "/host/proc")
@@ -42,6 +42,7 @@ var prometheus = builder
     .AddContainer("prometheus", "prom/prometheus")
     .WithLifetime(ContainerLifetime.Persistent)
     .WithBindMount(source: Path.GetFullPath("prometheus.yml"), target: "/etc/prometheus/prometheus.yml")
+    .WithBindMount(source: Path.GetFullPath("rules_files"), target: "/etc/prometheus/rules_files")
     .WithArgs("--config.file=/etc/prometheus/prometheus.yml")
     .WithHttpEndpoint(port: 9090, targetPort: 9090)
     .WaitFor(web_api)

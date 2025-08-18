@@ -8,8 +8,8 @@ alerting:
     - targets: ['alertmanager:9093']
   
 rule_files:
-  - "rules_files/node_exporter_rules.yml"
-  - "rules_files/prometheus_alert_rules.yml"
+  - "/etc/prometheus/rules_files/node_exporter_rules.yml"
+  - "/etc/prometheus/rules_files/prometheus_alert_rules.yml"
 
 scrape_configs:
   - job_name: "ai-calendar-API"
@@ -23,3 +23,12 @@ scrape_configs:
     static_configs:
      - targets: ['host.docker.internal:5242']
     metrics_path: /metrics 
+
+  - job_name: "node-exporter"
+    static_configs:
+     - targets: ['host.docker.internal:9100']
+    scheme: https
+    metrics_path: /metrics
+    tls_config:
+      insecure_skip_verify: true
+   
