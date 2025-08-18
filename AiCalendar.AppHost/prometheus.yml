@@ -1,5 +1,15 @@
 global:
   scrape_interval: 15s
+  evaluation_interval: 15s
+
+alerting:
+  alertmanagers:
+  - static_configs:
+    - targets: ['alertmanager:9093']
+  
+rule_files:
+  - "rules_files/node_exporter_rules.yml"
+  - "rules_files/prometheus_alert_rules.yml"
 
 scrape_configs:
   - job_name: "ai-calendar-API"
