@@ -46,7 +46,7 @@ Below is a snapshot of the available API endpoints from Swagger UI:
 
 This project utilizes .NET Aspire for orchestration and local development. The Aspire dashboard provides a centralized view of all running resources.
 
-![.NET Aspire Dashboard](![alt text](images/image.png))
+![.NET Aspire Dashboard](![alt text](images/dashboard.png))
 
 ## Model Context Protocol (MCP) Implementation
 
@@ -105,3 +105,31 @@ Some MCP operations require proper authentication using JWT tokens for secure ac
 #### Github Copilot Chat
 
 ![Github Copilot Chat](![alt text](images/copilot.png))
+
+## Monitoring
+As you know one of the main objectives of .NET Aspire is to provide a centralized view of all running resources. 
+The AICalendar leverages this feature to monitor the health and performance of the application.
+.NET Aspire integrations automatically set up Logging, Tracing, and Metrics configurations, which are sometimes known as the pillars of observability, using the .NET OpenTelemetry SDK.
+You can view the logs, traces, and metrics in the .NET Aspire dashboard. But you can also export the collected metrics
+from OpenTelemetry to other systems like Azure Monitor, Prometheus, or Grafana for further analysis and visualization.
+In the AiCalendar.ServiceDefault you can find the `OpenTelemetryConfiguration` class that sets up the OpenTelemetry SDK for logging, tracing, and metrics.
+There you can also add configuration which exports the collected metrics to /metrics endpoint. Then you can configure prometheus to scrape the metrics from this endpoint. After that you
+can also visualize the metrics in Grafana and setup Alertmanager.
+
+I run the Prometheus, Grafana, and Alertmanager in a Docker containers using the .NET Aspire API calls which provide you the option to orchestrate
+your projects, docker containers and other dependencies (Redis, Kafka, etc.) with C# code instead of docker-compose file with YAML syntax. 
+
+I also configured Node Exporter which is a Prometheus exporter for hardware and OS metrics exposed by *nix kernels, which can be used to monitor the host machine.
+After some problems running I finally managed to run it. But in Prometheus and Grafana I see only some of the metrics, not all. I have problem with the 
+node_exporter configuration for running in Docker container which leads to the missing metrics.
+
+### Grafana Dashboard
+I downloaded the Grafana dashboard from the [Grafana Dashboard](https://grafana.com/grafana/dashboards/19924-asp-net-core/) and imported it into my Grafana instance.
+I also downleaded second dashboard for the Node Exporter metrics from the [Grafana Dashboard](https://grafana.com/grafana/dashboards/1860-node-exporter-full/).
+
+![Grafana Dashboard](![alt text](images/grafana.png))
+
+### Alertmanager
+I configured the Alertmanager to send alerts to Dicord channel. I created a Discord webhook and configured the Alertmanager to use it.
+
+![Alertmanager](![alt text](images/discord.png))
