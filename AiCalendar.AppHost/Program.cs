@@ -28,13 +28,10 @@ var node_exporter = builder
     .WithBindMount("/proc", "/host/proc")
     .WithBindMount("/sys", "/host/sys")
     .WithBindMount("/", "/rootfs")
-    .WithEnvironment("HOST_PROC", "/host/proc")
-    .WithEnvironment("HOST_SYS", "/host/sys")
-    .WithEnvironment("HOST_ROOT", "/rootfs")
     .WithArgs("--path.procfs=/host/proc",
              "--path.rootfs=/rootfs",
              "--path.sysfs=/host/sys",
-             "--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)s")
+             "--collector.filesystem.mount-points-exclude=^/(dev|proc|sys|var/lib/docker/.+|var/lib/kubelet/.+)($|/)")
     .WaitFor(web_api)
     .WaitFor(mcp_server);
 
