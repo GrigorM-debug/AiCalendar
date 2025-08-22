@@ -25,13 +25,6 @@ var node_exporter = builder
     .AddContainer("nodeexporter", "prom/node-exporter")
     .WithLifetime(ContainerLifetime.Persistent)
     .WithHttpEndpoint(port: 9100, targetPort: 9100)
-    .WithBindMount("/proc", "/host/proc")
-    .WithBindMount("/sys", "/host/sys")
-    .WithBindMount("/", "/rootfs")
-    .WithArgs("--path.procfs=/host/proc",
-             "--path.rootfs=/rootfs",
-             "--path.sysfs=/host/sys",
-             "--collector.filesystem.mount-points-exclude=^/(dev|proc|sys|var/lib/docker/.+|var/lib/kubelet/.+)($|/)")
     .WaitFor(web_api)
     .WaitFor(mcp_server);
 
