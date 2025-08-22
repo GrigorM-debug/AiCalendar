@@ -120,12 +120,13 @@ I run the Prometheus, Grafana, and Alertmanager in a Docker containers using the
 your projects, docker containers and other dependencies (Redis, Kafka, etc.) with C# code instead of docker-compose file with YAML syntax. 
 
 I also configured Node Exporter which is a Prometheus exporter for hardware and OS metrics exposed by *nix kernels, which can be used to monitor the host machine.
-After some problems running I finally managed to run it. But in Prometheus and Grafana I see only some of the metrics, not all. I have problem with the 
-node_exporter configuration for running in Docker container which leads to the missing metrics.
+After some problems with running the Node Exporter i i found out that the problem and solved it. The solution was very simple.
+I decided to import second dashboard for the Node Exporter metrics from the [Grafana Dashboard](https://grafana.com/grafana/dashboards/1860-node-exporter-full/).
+
+![Node Exporter Dashboard](![alt text](images/node_exporter.png))
 
 ### Grafana Dashboard
 I downloaded the Grafana dashboard from the [Grafana Dashboard](https://grafana.com/grafana/dashboards/19924-asp-net-core/) and imported it into my Grafana instance.
-I also downleaded second dashboard for the Node Exporter metrics from the [Grafana Dashboard](https://grafana.com/grafana/dashboards/1860-node-exporter-full/).
 
 ![Grafana Dashboard](![alt text](images/grafana.png))
 
