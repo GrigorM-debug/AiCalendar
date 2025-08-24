@@ -77,7 +77,7 @@ namespace AiCalendar.Tests
             Assert.That(result, Is.Not.Null);
             Assert.That(result, Is.InstanceOf<OkObjectResult>());
             var okResult = result as OkObjectResult;
-            Assert.That(okResult.Value, Is.Not.Null);
+            Assert.That(okResult!.Value, Is.Not.Null);
             Assert.That(okResult.Value, Is.InstanceOf<EventDto>());
 
             var e = okResult.Value as EventDto;
@@ -102,7 +102,7 @@ namespace AiCalendar.Tests
             Assert.That(result, Is.Not.Null);
             Assert.That(result, Is.InstanceOf<NotFoundObjectResult>());
             var notFoundResult = result as NotFoundObjectResult;
-            Assert.That(notFoundResult.Value, Is.EqualTo("Event not found."));
+            Assert.That(notFoundResult!.Value, Is.EqualTo("Event not found."));
         }
 
         [Test]
@@ -139,13 +139,13 @@ namespace AiCalendar.Tests
             Assert.That(result, Is.InstanceOf<ObjectResult>());
             var createdResult = result as ObjectResult;
 
-            Assert.That(createdResult.StatusCode, Is.EqualTo(StatusCodes.Status201Created));
+            Assert.That(createdResult!.StatusCode, Is.EqualTo(StatusCodes.Status201Created));
 
             Assert.That(createdResult.Value, Is.Not.Null);
             Assert.That(createdResult.Value, Is.InstanceOf<EventDto>());
             var e = createdResult.Value as EventDto;
 
-            Assert.That(e.Id, Is.Not.Null.Or.Empty);
+            Assert.That(e!.Id, Is.Not.Null.Or.Empty);
             Assert.That(e.Title, Is.EqualTo(createEventDto.Title));
             Assert.That(e.StartDate, Is.EqualTo(createEventDto.StartTime));
             Assert.That(e.EndDate, Is.EqualTo(createEventDto.EndTime));
@@ -175,7 +175,7 @@ namespace AiCalendar.Tests
             Assert.That(result, Is.Not.Null);
             Assert.That(result, Is.InstanceOf<UnauthorizedObjectResult>());
             var unauthorizedResult = result as UnauthorizedObjectResult;
-            Assert.That(unauthorizedResult.Value, Is.EqualTo("You must be logged in to create an event."));
+            Assert.That(unauthorizedResult!.Value, Is.EqualTo("You must be logged in to create an event."));
         }
 
         [Test]
@@ -212,7 +212,7 @@ namespace AiCalendar.Tests
             Assert.That(result, Is.Not.Null);
             Assert.That(result, Is.InstanceOf<NotFoundObjectResult>());
             var notFoundResult = result as NotFoundObjectResult;
-            Assert.That(notFoundResult.Value, Is.EqualTo("User not found."));
+            Assert.That(notFoundResult!.Value, Is.EqualTo("User not found."));
         }
 
         [Test]
@@ -234,7 +234,7 @@ namespace AiCalendar.Tests
             Assert.That(result, Is.Not.Null);
             Assert.That(result, Is.InstanceOf<ConflictObjectResult>());
             var conflictResult = result as ConflictObjectResult;
-            Assert.That(conflictResult.Value, Is.EqualTo("You already have an event scheduled for this time period"));
+            Assert.That(conflictResult!.Value, Is.EqualTo("You already have an event scheduled for this time period"));
         }
 
         #endregion
@@ -258,7 +258,7 @@ namespace AiCalendar.Tests
             Assert.That(result, Is.Not.Null);
             Assert.That(result, Is.InstanceOf<UnauthorizedObjectResult>());
             var unauthorizedResult = result as UnauthorizedObjectResult;
-            Assert.That(unauthorizedResult.Value, Is.EqualTo("You must be logged in to delete an event."));
+            Assert.That(unauthorizedResult!.Value, Is.EqualTo("You must be logged in to delete an event."));
         }
 
         [Test]
@@ -288,7 +288,7 @@ namespace AiCalendar.Tests
             Assert.That(result, Is.Not.Null);
             Assert.That(result, Is.InstanceOf<NotFoundObjectResult>());
             var notFoundResult = result as NotFoundObjectResult;
-            Assert.That(notFoundResult.Value, Is.EqualTo("User not found."));
+            Assert.That(notFoundResult!.Value, Is.EqualTo("User not found."));
         }
 
         [Test]
@@ -318,7 +318,7 @@ namespace AiCalendar.Tests
             Assert.That(result, Is.Not.Null);
             Assert.That(result, Is.InstanceOf<NotFoundObjectResult>());
             var notFoundResult = result as NotFoundObjectResult;
-            Assert.That(notFoundResult.Value, Is.EqualTo("Event not found."));
+            Assert.That(notFoundResult!.Value, Is.EqualTo("Event not found."));
         }
 
         [Test]
@@ -348,7 +348,7 @@ namespace AiCalendar.Tests
             Assert.That(result, Is.Not.Null);
             Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
             var badRequestResult = result as BadRequestObjectResult;
-            Assert.That(badRequestResult.Value, Is.EqualTo("Invalid event ID format."));
+            Assert.That(badRequestResult!.Value, Is.EqualTo("Invalid event ID format."));
         }
 
         [Test]
@@ -406,7 +406,7 @@ namespace AiCalendar.Tests
             Assert.That(result, Is.Not.Null);
             Assert.That(result, Is.InstanceOf<NoContentResult>());
             var noContentResult = result as NoContentResult;
-            Assert.That(noContentResult.StatusCode, Is.EqualTo(StatusCodes.Status204NoContent));
+            Assert.That(noContentResult!.StatusCode, Is.EqualTo(StatusCodes.Status204NoContent));
 
             // Verify that the event was deleted
             var eventExists = await _eventService.EventExistsByIdAsync(Guid.Parse(eventId));
@@ -431,7 +431,7 @@ namespace AiCalendar.Tests
             Assert.That(result, Is.Not.Null);
             Assert.That(result, Is.InstanceOf<UnauthorizedObjectResult>());
             var unauthorizedResult = result as UnauthorizedObjectResult;
-            Assert.That(unauthorizedResult.Value, Is.EqualTo("You must be logged in to cancel an event."));
+            Assert.That(unauthorizedResult!.Value, Is.EqualTo("You must be logged in to cancel an event."));
         }
 
         [Test]
@@ -445,7 +445,7 @@ namespace AiCalendar.Tests
             Assert.That(result, Is.Not.Null);
             Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
             var badRequestResult = result as BadRequestObjectResult;
-            Assert.That(badRequestResult.Value, Is.EqualTo("Invalid event ID format."));
+            Assert.That(badRequestResult!.Value, Is.EqualTo("Invalid event ID format."));
         }
 
         [Test]
@@ -475,7 +475,7 @@ namespace AiCalendar.Tests
             Assert.That(result, Is.Not.Null);
             Assert.That(result, Is.InstanceOf<NotFoundObjectResult>());
             var notFoundResult = result as NotFoundObjectResult;
-            Assert.That(notFoundResult.Value, Is.EqualTo("User not found."));
+            Assert.That(notFoundResult!.Value, Is.EqualTo("User not found."));
         }
 
         [Test]
@@ -489,7 +489,7 @@ namespace AiCalendar.Tests
             Assert.That(result, Is.Not.Null);
             Assert.That(result, Is.InstanceOf<NotFoundObjectResult>());
             var notFoundResult = result as NotFoundObjectResult;
-            Assert.That(notFoundResult.Value, Is.EqualTo("Event not found."));
+            Assert.That(notFoundResult!.Value, Is.EqualTo("Event not found."));
         }
 
         [Test]
@@ -529,7 +529,7 @@ namespace AiCalendar.Tests
             Assert.That(result, Is.InstanceOf<OkObjectResult>());
             var okResult = result as OkObjectResult;
 
-            Assert.That(okResult.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
+            Assert.That(okResult!.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
             Assert.That(okResult.Value, Is.Not.Null);
             Assert.That(okResult.Value, Is.InstanceOf<EventDto>());
 
@@ -558,7 +558,7 @@ namespace AiCalendar.Tests
 
             Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
             var badRequestResult = result as BadRequestObjectResult;
-            Assert.That(badRequestResult.Value, Is.EqualTo("Event is already cancelled."));
+            Assert.That(badRequestResult!.Value, Is.EqualTo("Event is already cancelled."));
         }
         #endregion
 
@@ -588,7 +588,7 @@ namespace AiCalendar.Tests
             Assert.That(result, Is.Not.Null);
             Assert.That(result, Is.InstanceOf<UnauthorizedObjectResult>());
             var unauthorizedResult = result as UnauthorizedObjectResult;
-            Assert.That(unauthorizedResult.Value, Is.EqualTo("You must be logged in to update an event."));
+            Assert.That(unauthorizedResult!.Value, Is.EqualTo("You must be logged in to update an event."));
         }
 
         [Test]
@@ -609,7 +609,7 @@ namespace AiCalendar.Tests
             Assert.That(result, Is.Not.Null);
             Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
             var badRequestResult = result as BadRequestObjectResult;
-            Assert.That(badRequestResult.Value, Is.EqualTo("Invalid event ID format."));
+            Assert.That(badRequestResult!.Value, Is.EqualTo("Invalid event ID format."));
         }
 
         [Test]
@@ -648,7 +648,7 @@ namespace AiCalendar.Tests
             Assert.That(result, Is.Not.Null);
             Assert.That(result, Is.InstanceOf<NotFoundObjectResult>());
             var notFoundResult = result as NotFoundObjectResult;
-            Assert.That(notFoundResult.Value, Is.EqualTo("User not found."));
+            Assert.That(notFoundResult!.Value, Is.EqualTo("User not found."));
         }
 
         [Test]
@@ -669,7 +669,7 @@ namespace AiCalendar.Tests
             Assert.That(result, Is.Not.Null);
             Assert.That(result, Is.InstanceOf<NotFoundObjectResult>());
             var notFoundResult = result as NotFoundObjectResult;
-            Assert.That(notFoundResult.Value, Is.EqualTo("Event not found."));
+            Assert.That(notFoundResult!.Value, Is.EqualTo("Event not found."));
         }
 
         [Test]
@@ -725,7 +725,7 @@ namespace AiCalendar.Tests
             Assert.That(result, Is.Not.Null);
             Assert.That(result, Is.InstanceOf<ConflictObjectResult>());
             var conflictResult = result as ConflictObjectResult;
-            Assert.That(conflictResult.Value, Is.EqualTo("You already have an event scheduled for this time period"));
+            Assert.That(conflictResult!.Value, Is.EqualTo("You already have an event scheduled for this time period"));
         }
 
         [Test]
@@ -746,11 +746,11 @@ namespace AiCalendar.Tests
             Assert.That(result, Is.Not.Null);
             Assert.That(result, Is.InstanceOf<OkObjectResult>());
             var okResult = result as OkObjectResult;
-            Assert.That(okResult.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
+            Assert.That(okResult!.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
             Assert.That(okResult.Value, Is.Not.Null);
             Assert.That(okResult.Value, Is.InstanceOf<EventDto>());
             var e = okResult.Value as EventDto;
-            Assert.That(e.Id, Is.EqualTo(eventId.ToLower()));
+            Assert.That(e!.Id, Is.EqualTo(eventId.ToLower()));
             Assert.That(e.Title, Is.EqualTo(updateEventDto.Title));
             Assert.That(e.StartDate, Is.EqualTo(updateEventDto.StartTime));
             Assert.That(e.EndDate, Is.EqualTo(updateEventDto.EndTime));
@@ -774,12 +774,12 @@ namespace AiCalendar.Tests
             Assert.That(result, Is.Not.Null);
             Assert.That(result, Is.InstanceOf<OkObjectResult>());
             var okResult = result as OkObjectResult;
-            Assert.That(okResult.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
+            Assert.That(okResult!.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
             Assert.That(okResult.Value, Is.Not.Null);
             Assert.That(okResult.Value, Is.InstanceOf<EventDto>());
             var e = okResult.Value as EventDto;
 
-            Assert.That(e.Id, Is.EqualTo(eventId.ToLower()));
+            Assert.That(e!.Id, Is.EqualTo(eventId.ToLower()));
             Assert.That(e.Title, Is.EqualTo(updateEventDto.Title));
             Assert.That(e.StartDate, Is.EqualTo(new DateTime(2025, 6, 16, 9, 0, 0, DateTimeKind.Utc)));
             Assert.That(e.EndDate, Is.EqualTo(new DateTime(2025, 6, 16, 9, 30, 0, DateTimeKind.Utc)));
@@ -802,11 +802,11 @@ namespace AiCalendar.Tests
             Assert.That(result, Is.Not.Null);
             Assert.That(result, Is.InstanceOf<OkObjectResult>());
             var okResult = result as OkObjectResult;
-            Assert.That(okResult.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
+            Assert.That(okResult!.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
             Assert.That(okResult.Value, Is.Not.Null);
             Assert.That(okResult.Value, Is.InstanceOf<EventDto>());
             var e = okResult.Value as EventDto;
-            Assert.That(e.Id, Is.EqualTo(eventId.ToLower()));
+            Assert.That(e!.Id, Is.EqualTo(eventId.ToLower()));
             Assert.That(e.Title, Is.EqualTo("Team Stand-up Meeting"));
             Assert.That(e.StartDate, Is.EqualTo(new DateTime(2025, 6, 16, 9, 0, 0, DateTimeKind.Utc)));
             Assert.That(e.EndDate, Is.EqualTo(new DateTime(2025, 6, 16, 9, 30, 0, DateTimeKind.Utc)));
@@ -830,11 +830,11 @@ namespace AiCalendar.Tests
             Assert.That(result, Is.Not.Null);
             Assert.That(result, Is.InstanceOf<OkObjectResult>());
             var okResult = result as OkObjectResult;
-            Assert.That(okResult.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
+            Assert.That(okResult!.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
             Assert.That(okResult.Value, Is.Not.Null);
             Assert.That(okResult.Value, Is.InstanceOf<EventDto>());
             var e = okResult.Value as EventDto;
-            Assert.That(e.Id, Is.EqualTo(eventId.ToLower()));
+            Assert.That(e!.Id, Is.EqualTo(eventId.ToLower()));
             Assert.That(e.Title, Is.EqualTo("Team Stand-up Meeting"));
             Assert.That(e.StartDate, Is.EqualTo(updateEventDto.StartTime));
             Assert.That(e.EndDate, Is.EqualTo(updateEventDto.EndTime));
@@ -857,11 +857,11 @@ namespace AiCalendar.Tests
             Assert.That(result, Is.Not.Null);
             Assert.That(result, Is.InstanceOf<OkObjectResult>());
             var okResult = result as OkObjectResult;
-            Assert.That(okResult.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
+            Assert.That(okResult!.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
             Assert.That(okResult.Value, Is.Not.Null);
             Assert.That(okResult.Value, Is.InstanceOf<EventDto>());
             var e = okResult.Value as EventDto;
-            Assert.That(e.Id, Is.EqualTo(eventId.ToLower()));
+            Assert.That(e!.Id, Is.EqualTo(eventId.ToLower()));
             Assert.That(e.Title, Is.EqualTo("Team Stand-up Meeting"));
             Assert.That(e.StartDate, Is.EqualTo(updateEventDto.StartTime));
             Assert.That(e.EndDate, Is.EqualTo(new DateTime(2025, 6, 16, 9, 30, 0, DateTimeKind.Utc)));
@@ -884,11 +884,11 @@ namespace AiCalendar.Tests
             Assert.That(result, Is.Not.Null);
             Assert.That(result, Is.InstanceOf<OkObjectResult>());
             var okResult = result as OkObjectResult;
-            Assert.That(okResult.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
+            Assert.That(okResult!.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
             Assert.That(okResult.Value, Is.Not.Null);
             Assert.That(okResult.Value, Is.InstanceOf<EventDto>());
             var e = okResult.Value as EventDto;
-            Assert.That(e.Id, Is.EqualTo(eventId.ToLower()));
+            Assert.That(e!.Id, Is.EqualTo(eventId.ToLower()));
             Assert.That(e.Title, Is.EqualTo("Team Stand-up Meeting"));
             Assert.That(e.StartDate, Is.EqualTo(new DateTime(2025, 6, 16, 9, 0, 0, DateTimeKind.Utc)));
             Assert.That(e.EndDate, Is.EqualTo(updateEventDto.EndTime));
@@ -912,11 +912,11 @@ namespace AiCalendar.Tests
             Assert.That(result, Is.Not.Null);
             Assert.That(result, Is.InstanceOf<OkObjectResult>());
             var okResult = result as OkObjectResult;
-            Assert.That(okResult.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
+            Assert.That(okResult!.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
             Assert.That(okResult.Value, Is.Not.Null);
             Assert.That(okResult.Value, Is.InstanceOf<EventDto>());
             var e = okResult.Value as EventDto;
-            Assert.That(e.Id, Is.EqualTo(eventId.ToLower()));
+            Assert.That(e!.Id, Is.EqualTo(eventId.ToLower()));
             Assert.That(e.Title, Is.EqualTo(updateEventDto.Title));
             Assert.That(e.StartDate, Is.EqualTo(new DateTime(2025, 6, 16, 9, 0, 0, DateTimeKind.Utc)));
             Assert.That(e.EndDate, Is.EqualTo(new DateTime(2025, 6, 16, 9, 30, 0, DateTimeKind.Utc)));
@@ -940,11 +940,11 @@ namespace AiCalendar.Tests
             Assert.That(result, Is.Not.Null);
             Assert.That(result, Is.InstanceOf<OkObjectResult>());
             var okResult = result as OkObjectResult;
-            Assert.That(okResult.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
+            Assert.That(okResult!.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
             Assert.That(okResult.Value, Is.Not.Null);
             Assert.That(okResult.Value, Is.InstanceOf<EventDto>());
             var e = okResult.Value as EventDto;
-            Assert.That(e.Id, Is.EqualTo(eventId.ToLower()));
+            Assert.That(e!.Id, Is.EqualTo(eventId.ToLower()));
             Assert.That(e.Title, Is.EqualTo(updateEventDto.Title));
             Assert.That(e.StartDate, Is.EqualTo(updateEventDto.StartTime));
             Assert.That(e.EndDate, Is.EqualTo(new DateTime(2025, 6, 16, 9, 30, 0, DateTimeKind.Utc)));
@@ -968,11 +968,11 @@ namespace AiCalendar.Tests
             Assert.That(result, Is.Not.Null);
             Assert.That(result, Is.InstanceOf<OkObjectResult>());
             var okResult = result as OkObjectResult;
-            Assert.That(okResult.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
+            Assert.That(okResult!.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
             Assert.That(okResult.Value, Is.Not.Null);
             Assert.That(okResult.Value, Is.InstanceOf<EventDto>());
             var e = okResult.Value as EventDto;
-            Assert.That(e.Id, Is.EqualTo(eventId.ToLower()));
+            Assert.That(e!.Id, Is.EqualTo(eventId.ToLower()));
             Assert.That(e.Title, Is.EqualTo(updateEventDto.Title));
             Assert.That(e.StartDate, Is.EqualTo(new DateTime(2025, 6, 16, 9, 0, 0, DateTimeKind.Utc)));
             Assert.That(e.EndDate, Is.EqualTo(updateEventDto.EndTime));
@@ -996,11 +996,11 @@ namespace AiCalendar.Tests
             Assert.That(result, Is.Not.Null);
             Assert.That(result, Is.InstanceOf<OkObjectResult>());
             var okResult = result as OkObjectResult;
-            Assert.That(okResult.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
+            Assert.That(okResult!.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
             Assert.That(okResult.Value, Is.Not.Null);
             Assert.That(okResult.Value, Is.InstanceOf<EventDto>());
             var e = okResult.Value as EventDto;
-            Assert.That(e.Id, Is.EqualTo(eventId.ToLower()));
+            Assert.That(e!.Id, Is.EqualTo(eventId.ToLower()));
             Assert.That(e.Title, Is.EqualTo("Team Stand-up Meeting"));
             Assert.That(e.StartDate, Is.EqualTo(updateEventDto.StartTime));
             Assert.That(e.EndDate, Is.EqualTo(new DateTime(2025, 6, 16, 9, 30, 0, DateTimeKind.Utc)));
@@ -1024,11 +1024,11 @@ namespace AiCalendar.Tests
             Assert.That(result, Is.Not.Null);
             Assert.That(result, Is.InstanceOf<OkObjectResult>());
             var okResult = result as OkObjectResult;
-            Assert.That(okResult.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
+            Assert.That(okResult!.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
             Assert.That(okResult.Value, Is.Not.Null);
             Assert.That(okResult.Value, Is.InstanceOf<EventDto>());
             var e = okResult.Value as EventDto;
-            Assert.That(e.Id, Is.EqualTo(eventId.ToLower()));
+            Assert.That(e!.Id, Is.EqualTo(eventId.ToLower()));
             Assert.That(e.Title, Is.EqualTo("Team Stand-up Meeting"));
             Assert.That(e.StartDate, Is.EqualTo(new DateTime(2025, 6, 16, 9, 0, 0, DateTimeKind.Utc)));
             Assert.That(e.EndDate, Is.EqualTo(updateEventDto.EndTime));
@@ -1052,7 +1052,7 @@ namespace AiCalendar.Tests
             Assert.That(result, Is.Not.Null);
             Assert.That(result, Is.InstanceOf<ConflictObjectResult>());
             var conflictResult = result as ConflictObjectResult;
-            Assert.That(conflictResult.Value, Is.EqualTo("You already have an event scheduled for this time period"));
+            Assert.That(conflictResult!.Value, Is.EqualTo("You already have an event scheduled for this time period"));
         }
 
         [Test]
@@ -1072,7 +1072,7 @@ namespace AiCalendar.Tests
             Assert.That(result, Is.InstanceOf<ConflictObjectResult>());
 
             var conflictResult = result as ConflictObjectResult;
-            Assert.That(conflictResult.Value, Is.EqualTo("An event with the same title and description already exists."));
+            Assert.That(conflictResult!.Value, Is.EqualTo("An event with the same title and description already exists."));
         }
 
         [Test]
@@ -1091,7 +1091,7 @@ namespace AiCalendar.Tests
             Assert.That(result, Is.Not.Null);
             Assert.That(result, Is.InstanceOf<ConflictObjectResult>());
             var conflictResult = result as ConflictObjectResult;
-            Assert.That(conflictResult.Value, Is.EqualTo("An event with the same title and description already exists."));
+            Assert.That(conflictResult!.Value, Is.EqualTo("An event with the same title and description already exists."));
         }
 
         [Test]
@@ -1110,7 +1110,7 @@ namespace AiCalendar.Tests
             Assert.That(result, Is.Not.Null);
             Assert.That(result, Is.InstanceOf<ConflictObjectResult>());
             var conflictResult = result as ConflictObjectResult;
-            Assert.That(conflictResult.Value, Is.EqualTo("An event with the same title and description already exists."));
+            Assert.That(conflictResult!.Value, Is.EqualTo("An event with the same title and description already exists."));
         }
 
         #endregion
@@ -1130,11 +1130,11 @@ namespace AiCalendar.Tests
             Assert.That(result, Is.Not.Null);
             Assert.That(result, Is.InstanceOf<OkObjectResult>());
             var okResult = result as OkObjectResult;
-            Assert.That(okResult.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
+            Assert.That(okResult!.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
             Assert.That(okResult.Value, Is.Not.Null);
             Assert.That(okResult.Value, Is.InstanceOf<List<EventDto>>());
             var events = okResult.Value as List<EventDto>;
-            Assert.That(events.Count, Is.GreaterThan(0), "Expected at least one event to be returned.");
+            Assert.That(events!.Count, Is.GreaterThan(0), "Expected at least one event to be returned.");
 
             Assert.That(events[0].Id, Is.EqualTo("E1000000-0000-0000-0000-000000000001".ToLower()));
             Assert.That(events[0].Title, Is.EqualTo("Team Stand-up Meeting"));
@@ -1184,11 +1184,11 @@ namespace AiCalendar.Tests
             Assert.That(result, Is.Not.Null);
             Assert.That(result, Is.InstanceOf<OkObjectResult>());
             var okResult = result as OkObjectResult;
-            Assert.That(okResult.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
+            Assert.That(okResult!.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
             Assert.That(okResult.Value, Is.Not.Null);
             Assert.That(okResult.Value, Is.InstanceOf<List<EventDto>>());
             var events = okResult.Value as List<EventDto>;
-            Assert.That(events.Count, Is.EqualTo(0), "Expected no events to be returned.");
+            Assert.That(events!.Count, Is.EqualTo(0), "Expected no events to be returned.");
         }
 
         [Test]
@@ -1211,12 +1211,12 @@ namespace AiCalendar.Tests
             Assert.That(result, Is.Not.Null);
             Assert.That(result, Is.InstanceOf<OkObjectResult>());
             var okResult = result as OkObjectResult;
-            Assert.That(okResult.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
+            Assert.That(okResult!.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
             Assert.That(okResult.Value, Is.Not.Null);
             Assert.That(okResult.Value, Is.InstanceOf<List<EventDto>>());
 
             var events = okResult.Value as List<EventDto>;
-            Assert.That(events.Count, Is.GreaterThan(0), "Expected at least one event to match the filter criteria.");
+            Assert.That(events!.Count, Is.GreaterThan(0), "Expected at least one event to match the filter criteria.");
             Assert.That(events[0].Id, Is.EqualTo("E1000000-0000-0000-0000-000000000001".ToLower()));
             Assert.That(events[0].Title, Is.EqualTo("Team Stand-up Meeting"));
             Assert.That(events[0].StartDate, Is.EqualTo(new DateTime(2025, 6, 16, 9, 0, 0, DateTimeKind.Utc)));
@@ -1249,11 +1249,11 @@ namespace AiCalendar.Tests
             Assert.That(result, Is.Not.Null);
             Assert.That(result, Is.InstanceOf<OkObjectResult>());
             var okResult = result as OkObjectResult;
-            Assert.That(okResult.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
+            Assert.That(okResult!.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
             Assert.That(okResult.Value, Is.Not.Null);
             Assert.That(okResult.Value, Is.InstanceOf<List<EventDto>>());
             var events = okResult.Value as List<EventDto>;
-            Assert.That(events.Count, Is.EqualTo(0), "Expected no events to match the filter criteria.");
+            Assert.That(events!.Count, Is.EqualTo(0), "Expected no events to match the filter criteria.");
         }
 
         [Test]
@@ -1276,11 +1276,11 @@ namespace AiCalendar.Tests
             Assert.That(result, Is.Not.Null);
             Assert.That(result, Is.InstanceOf<OkObjectResult>());
             var okResult = result as OkObjectResult;
-            Assert.That(okResult.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
+            Assert.That(okResult!.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
             Assert.That(okResult.Value, Is.Not.Null);
             Assert.That(okResult.Value, Is.InstanceOf<List<EventDto>>());
             var events = okResult.Value as List<EventDto>;
-            Assert.That(events.Count, Is.EqualTo(0), "Expected no events to match the filter criteria.");
+            Assert.That(events!.Count, Is.EqualTo(0), "Expected no events to match the filter criteria.");
         }
 
         [Test]
@@ -1302,11 +1302,11 @@ namespace AiCalendar.Tests
             Assert.That(result, Is.Not.Null);
             Assert.That(result, Is.InstanceOf<OkObjectResult>());
             var okResult = result as OkObjectResult;
-            Assert.That(okResult.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
+            Assert.That(okResult!.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
             Assert.That(okResult.Value, Is.Not.Null);
             Assert.That(okResult.Value, Is.InstanceOf<List<EventDto>>());
             var events = okResult.Value as List<EventDto>;
-            Assert.That(events.Count, Is.GreaterThan(0), "Expected at least one event to match the start date filter.");
+            Assert.That(events!.Count, Is.GreaterThan(0), "Expected at least one event to match the start date filter.");
             Assert.That(events[0].Id, Is.EqualTo("E1000000-0000-0000-0000-000000000001".ToLower()));
             Assert.That(events[0].Title, Is.EqualTo("Team Stand-up Meeting"));
             Assert.That(events[0].StartDate, Is.EqualTo(new DateTime(2025, 6, 16, 9, 0, 0, DateTimeKind.Utc)));
@@ -1357,11 +1357,11 @@ namespace AiCalendar.Tests
             Assert.That(result, Is.Not.Null);
             Assert.That(result, Is.InstanceOf<OkObjectResult>());
             var okResult = result as OkObjectResult;
-            Assert.That(okResult.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
+            Assert.That(okResult!.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
             Assert.That(okResult.Value, Is.Not.Null);
             Assert.That(okResult.Value, Is.InstanceOf<List<EventDto>>());
             var events = okResult.Value as List<EventDto>;
-            Assert.That(events.Count, Is.GreaterThan(0), "Expected at least one event to match the end date filter.");
+            Assert.That(events!.Count, Is.GreaterThan(0), "Expected at least one event to match the end date filter.");
             Assert.That(events[0].Id, Is.EqualTo("E1000000-0000-0000-0000-000000000001".ToLower()));
             Assert.That(events[0].Title, Is.EqualTo("Team Stand-up Meeting"));
             Assert.That(events[0].StartDate, Is.EqualTo(new DateTime(2025, 6, 16, 9, 0, 0, DateTimeKind.Utc)));
@@ -1396,11 +1396,11 @@ namespace AiCalendar.Tests
             Assert.That(result, Is.Not.Null);
             Assert.That(result, Is.InstanceOf<OkObjectResult>());
             var okResult = result as OkObjectResult;
-            Assert.That(okResult.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
+            Assert.That(okResult!.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
             Assert.That(okResult.Value, Is.Not.Null);
             Assert.That(okResult.Value, Is.InstanceOf<List<EventDto>>());
             var events = okResult.Value as List<EventDto>;
-            Assert.That(events.Count, Is.EqualTo(0), "Expected no events to be returned when filtering by cancelled events.");
+            Assert.That(events!.Count, Is.EqualTo(0), "Expected no events to be returned when filtering by cancelled events.");
         }
 
         [Test]
@@ -1424,11 +1424,11 @@ namespace AiCalendar.Tests
             Assert.That(result, Is.Not.Null);
             Assert.That(result, Is.InstanceOf<OkObjectResult>());
             var okResult = result as OkObjectResult;
-            Assert.That(okResult.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
+            Assert.That(okResult!.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
             Assert.That(okResult.Value, Is.Not.Null);
             Assert.That(okResult.Value, Is.InstanceOf<List<EventDto>>());
             var events = okResult.Value as List<EventDto>;
-            Assert.That(events.Count, Is.EqualTo(1), "Expected at least one cancelled event to be returned.");
+            Assert.That(events!.Count, Is.EqualTo(1), "Expected at least one cancelled event to be returned.");
 
             Assert.That(events[0].Id, Is.EqualTo("E1000000-0000-0000-0000-000000000001".ToLower()));
             Assert.That(events[0].Title, Is.EqualTo("Team Stand-up Meeting"));
@@ -1457,11 +1457,11 @@ namespace AiCalendar.Tests
             Assert.That(result, Is.Not.Null);
             Assert.That(result, Is.InstanceOf<OkObjectResult>());
             var okResult = result as OkObjectResult;
-            Assert.That(okResult.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
+            Assert.That(okResult!.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
             Assert.That(okResult.Value, Is.Not.Null);
             Assert.That(okResult.Value, Is.InstanceOf<List<EventDto>>());
             var events = okResult.Value as List<EventDto>;
-            Assert.That(events.Count, Is.EqualTo(0), "Expected no non-cancelled events to be returned.");
+            Assert.That(events!.Count, Is.EqualTo(0), "Expected no non-cancelled events to be returned.");
         }
 
         [Test]
@@ -1484,11 +1484,11 @@ namespace AiCalendar.Tests
             Assert.That(result, Is.Not.Null);
             Assert.That(result, Is.InstanceOf<OkObjectResult>());
             var okResult = result as OkObjectResult;
-            Assert.That(okResult.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
+            Assert.That(okResult!.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
             Assert.That(okResult.Value, Is.Not.Null);
             Assert.That(okResult.Value, Is.InstanceOf<List<EventDto>>());
             var events = okResult.Value as List<EventDto>;
-            Assert.That(events.Count, Is.EqualTo(0), "Expected no events to be returned when filtering by start date with no events in the database.");
+            Assert.That(events!.Count, Is.EqualTo(0), "Expected no events to be returned when filtering by start date with no events in the database.");
         }
 
         [Test]
@@ -1510,11 +1510,11 @@ namespace AiCalendar.Tests
             Assert.That(result, Is.Not.Null);
             Assert.That(result, Is.InstanceOf<OkObjectResult>());
             var okResult = result as OkObjectResult;
-            Assert.That(okResult.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
+            Assert.That(okResult!.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
             Assert.That(okResult.Value, Is.Not.Null);
             Assert.That(okResult.Value, Is.InstanceOf<List<EventDto>>());
             var events = okResult.Value as List<EventDto>;
-            Assert.That(events.Count, Is.EqualTo(0), "Expected no events to be returned when filtering by end date with no events in the database.");
+            Assert.That(events!.Count, Is.EqualTo(0), "Expected no events to be returned when filtering by end date with no events in the database.");
         }
 
         [Test]
@@ -1536,11 +1536,11 @@ namespace AiCalendar.Tests
             Assert.That(result, Is.Not.Null);
             Assert.That(result, Is.InstanceOf<OkObjectResult>());
             var okResult = result as OkObjectResult;
-            Assert.That(okResult.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
+            Assert.That(okResult!.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
             Assert.That(okResult.Value, Is.Not.Null);
             Assert.That(okResult.Value, Is.InstanceOf<List<EventDto>>());
             var events = okResult.Value as List<EventDto>;
-            Assert.That(events.Count, Is.EqualTo(0), "Expected no events to be returned when filtering by start date with no matching events.");
+            Assert.That(events!.Count, Is.EqualTo(0), "Expected no events to be returned when filtering by start date with no matching events.");
         }
 
         [Test]
@@ -1561,11 +1561,11 @@ namespace AiCalendar.Tests
             Assert.That(result, Is.Not.Null);
             Assert.That(result, Is.InstanceOf<OkObjectResult>());
             var okResult = result as OkObjectResult;
-            Assert.That(okResult.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
+            Assert.That(okResult!.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
             Assert.That(okResult.Value, Is.Not.Null);
             Assert.That(okResult.Value, Is.InstanceOf<List<EventDto>>());
             var events = okResult.Value as List<EventDto>;
-            Assert.That(events.Count, Is.EqualTo(0), "Expected no events to be returned when filtering by end date with no matching events.");
+            Assert.That(events!.Count, Is.EqualTo(0), "Expected no events to be returned when filtering by end date with no matching events.");
         }
 
         [Test]
@@ -1586,11 +1586,11 @@ namespace AiCalendar.Tests
             Assert.That(result, Is.Not.Null);
             Assert.That(result, Is.InstanceOf<OkObjectResult>());
             var okResult = result as OkObjectResult;
-            Assert.That(okResult.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
+            Assert.That(okResult!.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
             Assert.That(okResult.Value, Is.Not.Null);
             Assert.That(okResult.Value, Is.InstanceOf<List<EventDto>>());
             var events = okResult.Value as List<EventDto>;
-            Assert.That(events.Count, Is.EqualTo(0), "Expected no non-cancelled events to be returned when there are no non-cancelled events in the database.");
+            Assert.That(events!.Count, Is.EqualTo(0), "Expected no non-cancelled events to be returned when there are no non-cancelled events in the database.");
         }
 
         [Test]
@@ -1611,11 +1611,11 @@ namespace AiCalendar.Tests
             Assert.That(result, Is.Not.Null);
             Assert.That(result, Is.InstanceOf<OkObjectResult>());
             var okResult = result as OkObjectResult;
-            Assert.That(okResult.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
+            Assert.That(okResult!.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
             Assert.That(okResult.Value, Is.Not.Null);
             Assert.That(okResult.Value, Is.InstanceOf<List<EventDto>>());
             var events = okResult.Value as List<EventDto>;
-            Assert.That(events.Count, Is.EqualTo(0), "Expected no cancelled events to be returned when there are no cancelled events in the database.");
+            Assert.That(events!.Count, Is.EqualTo(0), "Expected no cancelled events to be returned when there are no cancelled events in the database.");
         }
         #endregion
     }

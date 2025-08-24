@@ -295,10 +295,7 @@ namespace AiCalendar.Tests
                 NewPassword = "updatedhashedpassword123"
             };
 
-            var exception = Assert.ThrowsAsync<Exception>(async () =>
-            {
-                await _userService.UpdateUserAsync(userId, updatedUser);
-            });
+            var exception = Assert.ThrowsAsync<Exception>(() => _userService.UpdateUserAsync(userId, updatedUser)); 
 
             Assert.That(exception, Is.Not.Null, "Exception should be thrown when old password is incorrect.");
             Assert.That(exception?.Message, Is.EqualTo("Old password is incorrect."),
@@ -318,10 +315,7 @@ namespace AiCalendar.Tests
                 NewPassword = "hashedpassword123"
             };
 
-            var exception = Assert.ThrowsAsync<Exception>(async () =>
-            {
-                await _userService.UpdateUserAsync(userId, updatedUser);
-            });
+            var exception = Assert.ThrowsAsync<Exception>(() => _userService.UpdateUserAsync(userId, updatedUser));
 
             Assert.That(exception, Is.Not.Null, "Exception should be thrown when old and new passwords are the same.");
             Assert.That(exception?.Message, Is.EqualTo("New password cannot be the same as the old password."),
