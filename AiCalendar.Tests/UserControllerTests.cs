@@ -21,7 +21,6 @@ using System.Linq;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
 
 namespace AiCalendar.Tests
 {
@@ -55,7 +54,7 @@ namespace AiCalendar.Tests
             };
 
             var configuration = new ConfigurationBuilder()
-                .AddInMemoryCollection(configurationValues)
+                .AddInMemoryCollection(configurationValues!)
                 .Build();
 
             _tokenProvider = new TokenProvider(configuration);
@@ -89,13 +88,13 @@ namespace AiCalendar.Tests
             var objectResult = result as ObjectResult;
 
             // 2. Check the StatusCode
-            Assert.That(objectResult.StatusCode, Is.EqualTo(201)); // Or (int)System.Net.HttpStatusCode.Created
+            Assert.That(objectResult!.StatusCode, Is.EqualTo(201)); // Or (int)System.Net.HttpStatusCode.Created
 
             // 3. Check the value returned
             Assert.That(objectResult.Value, Is.InstanceOf<UserDto>());
             var returnedUser = objectResult.Value as UserDto;
 
-            Assert.That(returnedUser.UserName, Is.EqualTo(newUser.UserName));
+            Assert.That(returnedUser!.UserName, Is.EqualTo(newUser.UserName));
             Assert.That(returnedUser.Email, Is.EqualTo(newUser.Email));
 
         }
@@ -152,7 +151,7 @@ namespace AiCalendar.Tests
 
             Assert.That(result, Is.InstanceOf<ConflictObjectResult>());
             var conflictResult = result as ConflictObjectResult;
-            Assert.That(conflictResult.StatusCode, Is.EqualTo(409)); // Or (int)System.Net.HttpStatusCode.Conflict
+            Assert.That(conflictResult!.StatusCode, Is.EqualTo(409)); // Or (int)System.Net.HttpStatusCode.Conflict
             Assert.That(conflictResult.Value, Is.EqualTo($"User with this data '{username}' and '{email}' already exists."));
         }
 
@@ -211,7 +210,7 @@ namespace AiCalendar.Tests
 
             Assert.That(result, Is.InstanceOf<NotFoundObjectResult>());
             var resultObj = result as NotFoundObjectResult;
-            Assert.That(resultObj.Value, Is.EqualTo("User not found."));
+            Assert.That(resultObj!.Value, Is.EqualTo("User not found."));
         }
 
         [Test]
@@ -230,7 +229,7 @@ namespace AiCalendar.Tests
             var result = await _userController.Login(user);
             Assert.That(result, Is.InstanceOf<UnauthorizedObjectResult>());
             var resultObj = result as UnauthorizedObjectResult;
-            Assert.That(resultObj.Value, Is.EqualTo("Invalid password."));
+            Assert.That(resultObj!.Value, Is.EqualTo("Invalid password."));
         }
 
         [Test]
@@ -249,10 +248,10 @@ namespace AiCalendar.Tests
             var result = await _userController.Login(user);
             Assert.That(result, Is.InstanceOf<OkObjectResult>());
             var resultObj = result as OkObjectResult;
-            Assert.That(resultObj.Value, Is.InstanceOf<LoginResponseDto>());
+            Assert.That(resultObj!.Value, Is.InstanceOf<LoginResponseDto>());
             var userData = resultObj.Value as LoginResponseDto;
 
-            Assert.That(userData.Email, Is.EqualTo(user.Email));
+            Assert.That(userData!.Email, Is.EqualTo(user.Email));
             Assert.That(userData.Username, Is.EqualTo(user.UserName));
         }
 
@@ -266,9 +265,9 @@ namespace AiCalendar.Tests
             var result = await _userController.GetUsers(null);
             Assert.That(result, Is.InstanceOf<OkObjectResult>());
             var objectResult = result as OkObjectResult;
-            Assert.That(objectResult.Value, Is.InstanceOf<List<UserDtoExtended>>());
+            Assert.That(objectResult!.Value, Is.InstanceOf<List<UserDtoExtended>>());
             var users = objectResult.Value as List<UserDtoExtended>;
-            Assert.That(users.Count, Is.EqualTo(3)); // We seeded 3 users
+            Assert.That(users!.Count, Is.EqualTo(3)); // We seeded 3 users
         }
 
         [Test]
@@ -285,9 +284,9 @@ namespace AiCalendar.Tests
             var result = await _userController.GetUsers(filter);
             Assert.That(result, Is.InstanceOf<OkObjectResult>());
             var objectResult = result as OkObjectResult;
-            Assert.That(objectResult.Value, Is.InstanceOf<List<UserDtoExtended>>());
+            Assert.That(objectResult!.Value, Is.InstanceOf<List<UserDtoExtended>>());
             var users = objectResult.Value as List<UserDtoExtended>;
-            Assert.That(users.Count, Is.EqualTo(1)); // Only one user matches the search term
+            Assert.That(users!.Count, Is.EqualTo(1)); // Only one user matches the search term
             Assert.That(users[0].UserName, Is.EqualTo(username));
         }
 
@@ -303,9 +302,9 @@ namespace AiCalendar.Tests
             var result = await _userController.GetUsers(filter);
             Assert.That(result, Is.InstanceOf<OkObjectResult>());
             var objectResult = result as OkObjectResult;
-            Assert.That(objectResult.Value, Is.InstanceOf<List<UserDtoExtended>>());
+            Assert.That(objectResult!.Value, Is.InstanceOf<List<UserDtoExtended>>());
             var users = objectResult.Value as List<UserDtoExtended>;
-            Assert.That(users.Count, Is.EqualTo(0)); // No users match the search term
+            Assert.That(users!.Count, Is.EqualTo(0)); // No users match the search term
         }
 
         [Test]
@@ -322,9 +321,9 @@ namespace AiCalendar.Tests
             var result = await _userController.GetUsers(filter);
             Assert.That(result, Is.InstanceOf<OkObjectResult>());
             var objectResult = result as OkObjectResult;
-            Assert.That(objectResult.Value, Is.InstanceOf<List<UserDtoExtended>>());
+            Assert.That(objectResult!.Value, Is.InstanceOf<List<UserDtoExtended>>());
             var users = objectResult.Value as List<UserDtoExtended>;
-            Assert.That(users.Count, Is.EqualTo(1));
+            Assert.That(users!.Count, Is.EqualTo(1));
             Assert.That(users[0].Email, Is.EqualTo(email));
         }
 
@@ -342,9 +341,9 @@ namespace AiCalendar.Tests
             var result = await _userController.GetUsers(filter);
             Assert.That(result, Is.InstanceOf<OkObjectResult>());
             var objectResult = result as OkObjectResult;
-            Assert.That(objectResult.Value, Is.InstanceOf<List<UserDtoExtended>>());
+            Assert.That(objectResult!.Value, Is.InstanceOf<List<UserDtoExtended>>());
             var users = objectResult.Value as List<UserDtoExtended>;
-            Assert.That(users.Count, Is.EqualTo(0));
+            Assert.That(users!.Count, Is.EqualTo(0));
         }
 
         [Test]
@@ -364,9 +363,9 @@ namespace AiCalendar.Tests
             var result = await _userController.GetUsers(filter);
             Assert.That(result, Is.InstanceOf<OkObjectResult>());
             var objectResult = result as OkObjectResult;
-            Assert.That(objectResult.Value, Is.InstanceOf<List<UserDtoExtended>>());
+            Assert.That(objectResult!.Value, Is.InstanceOf<List<UserDtoExtended>>());
             var users = objectResult.Value as List<UserDtoExtended>;
-            Assert.That(users.Count, Is.EqualTo(1));
+            Assert.That(users!.Count, Is.EqualTo(1));
             Assert.That(users[0].UserName, Is.EqualTo(username));
             Assert.That(users[0].Email, Is.EqualTo(email));
             Assert.That(users[0].CreatedEvents
@@ -388,9 +387,9 @@ namespace AiCalendar.Tests
             var result = await _userController.GetUsers(filter);
             Assert.That(result, Is.InstanceOf<OkObjectResult>());
             var objectResult = result as OkObjectResult;
-            Assert.That(objectResult.Value, Is.InstanceOf<List<UserDtoExtended>>());
+            Assert.That(objectResult!.Value, Is.InstanceOf<List<UserDtoExtended>>());
             var users = objectResult.Value as List<UserDtoExtended>;
-            Assert.That(users.Count, Is.EqualTo(0));
+            Assert.That(users!.Count, Is.EqualTo(0));
         }
 
         [Test]
@@ -409,9 +408,9 @@ namespace AiCalendar.Tests
 
             Assert.That(result, Is.InstanceOf<OkObjectResult>());
             var objectResult = result as OkObjectResult;
-            Assert.That(objectResult.Value, Is.InstanceOf<List<UserDtoExtended>>());
+            Assert.That(objectResult!.Value, Is.InstanceOf<List<UserDtoExtended>>());
             var users = objectResult.Value as List<UserDtoExtended>;
-            Assert.That(users.Count, Is.EqualTo(1)); // Only one user has a cancelled event
+            Assert.That(users!.Count, Is.EqualTo(1)); // Only one user has a cancelled event
             Assert.That(users[0].CreatedEvents.Count, Is.EqualTo(2)); // The user has one cancelled event
             Assert.That(users[0].CreatedEvents.Any(e => e.IsCancelled)); // The event is cancelled
             Assert.That(users[0].CreatedEvents.First().Id, Is.EqualTo(event1Id.ToString()));
@@ -429,7 +428,7 @@ namespace AiCalendar.Tests
             var result = await _userController.GetUserParticipatingEvents();
             Assert.That(result, Is.InstanceOf<UnauthorizedObjectResult>());
             var unauthorizedResult = result as UnauthorizedObjectResult;
-            Assert.That(unauthorizedResult.Value, Is.EqualTo("You are not authorized to access this resource."));
+            Assert.That(unauthorizedResult!.Value, Is.EqualTo("You are not authorized to access this resource."));
         }
 
         [Test]
@@ -454,7 +453,7 @@ namespace AiCalendar.Tests
             var result = await _userController.GetUserParticipatingEvents();
             Assert.That(result, Is.InstanceOf<NotFoundObjectResult>());
             var notFoundResult = result as NotFoundObjectResult;
-            Assert.That(notFoundResult.Value, Is.EqualTo("User not found."));
+            Assert.That(notFoundResult!.Value, Is.EqualTo("User not found."));
         }
 
         [Test]
@@ -479,7 +478,7 @@ namespace AiCalendar.Tests
             var result = await _userController.GetUserParticipatingEvents();
             Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
             var badRequestResult = result as BadRequestObjectResult;
-            Assert.That(badRequestResult.Value, Is.EqualTo("Invalid user ID format."));
+            Assert.That(badRequestResult!.Value, Is.EqualTo("Invalid user ID format."));
         }
 
         [Test]
@@ -515,7 +514,7 @@ namespace AiCalendar.Tests
             var result = await _userController.GetUserParticipatingEvents();
             Assert.That(result, Is.InstanceOf<OkObjectResult>());
             var badRequestResult = result as OkObjectResult;
-            Assert.That(badRequestResult.Value, Is.Empty);
+            Assert.That(badRequestResult!.Value, Is.Empty);
         }
 
         [Test]
@@ -543,7 +542,7 @@ namespace AiCalendar.Tests
 
             Assert.That(result, Is.InstanceOf<OkObjectResult>());
             var okResult = result as OkObjectResult;
-            var participatingEvents = okResult.Value as List<EventDto>;
+            var participatingEvents = okResult!.Value as List<EventDto>;
             Assert.That(participatingEvents, Is.Not.Empty);
             Assert.That(participatingEvents.Count, Is.EqualTo(3)); // Assuming the user has 2 participating events
             Assert.That(
@@ -564,7 +563,7 @@ namespace AiCalendar.Tests
             var result = await _userController.DeleteUser("A1B2C3D4-E5F6-7890-1234-567890ABCDEF".ToLower());
             Assert.That(result, Is.InstanceOf<UnauthorizedObjectResult>());
             var unauthorizedResult = result as UnauthorizedObjectResult;
-            Assert.That(unauthorizedResult.Value, Is.EqualTo("You are not authorized to access this resource."));
+            Assert.That(unauthorizedResult!.Value, Is.EqualTo("You are not authorized to access this resource."));
         }
 
         [Test]
@@ -589,7 +588,7 @@ namespace AiCalendar.Tests
             var result = await _userController.DeleteUser(userId);
             Assert.That(result, Is.InstanceOf<NotFoundObjectResult>());
             var notFoundResult = result as NotFoundObjectResult;
-            Assert.That(notFoundResult.Value, Is.EqualTo("User not found."));
+            Assert.That(notFoundResult!.Value, Is.EqualTo("User not found."));
         }
 
         [Test]
@@ -615,7 +614,7 @@ namespace AiCalendar.Tests
             var result = await _userController.DeleteUser("invalid guid");
             Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
             var badRequestResult = result as BadRequestObjectResult;
-            Assert.That(badRequestResult.Value, Is.EqualTo("Invalid user ID format."));
+            Assert.That(badRequestResult!.Value, Is.EqualTo("Invalid user ID format."));
         }
 
         [Test]
@@ -668,7 +667,7 @@ namespace AiCalendar.Tests
             var result = await _userController.DeleteUser(user1Id.ToString().ToLower());
             Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
             var badRequestResult = result as BadRequestObjectResult;
-            Assert.That(badRequestResult.Value,
+            Assert.That(badRequestResult!.Value,
                 Is.EqualTo("User has active events. Please cancel them before deleting your account."));
         }
 
@@ -718,7 +717,7 @@ namespace AiCalendar.Tests
             var result = await _userController.GetUserEvents(null);
             Assert.That(result, Is.InstanceOf<UnauthorizedObjectResult>());
             var unauthorizedResult = result as UnauthorizedObjectResult;
-            Assert.That(unauthorizedResult.Value, Is.EqualTo("You are not authorized to access this resource."));
+            Assert.That(unauthorizedResult!.Value, Is.EqualTo("You are not authorized to access this resource."));
         }
 
         [Test]
@@ -745,7 +744,7 @@ namespace AiCalendar.Tests
             var result = await _userController.GetUserEvents(null);
             Assert.That(result, Is.InstanceOf<NotFoundObjectResult>());
             var notFoundResult = result as NotFoundObjectResult;
-            Assert.That(notFoundResult.Value, Is.EqualTo("User not found."));
+            Assert.That(notFoundResult!.Value, Is.EqualTo("User not found."));
         }
 
         [Test]
@@ -779,7 +778,7 @@ namespace AiCalendar.Tests
             var result = await _userController.GetUserEvents(null);
             Assert.That(result, Is.InstanceOf<OkObjectResult>());
             var okResult = result as OkObjectResult;
-            var userEvents = okResult.Value as IEnumerable<EventDto>;
+            var userEvents = okResult!.Value as IEnumerable<EventDto>;
             Assert.That(userEvents, Is.Empty);
         }
 
@@ -806,7 +805,7 @@ namespace AiCalendar.Tests
             var result = await _userController.GetUserEvents(null);
             Assert.That(result, Is.InstanceOf<OkObjectResult>());
             var okResult = result as OkObjectResult;
-            var userEvents = okResult.Value as IEnumerable<EventDto>;
+            var userEvents = okResult!.Value as IEnumerable<EventDto>;
             Assert.That(userEvents, Is.Not.Empty);
             Assert.That(userEvents.Count(), Is.EqualTo(2));
             Assert.That(userEvents.All(e => e.CreatorId == "A1B2C3D4-E5F6-7890-1234-567890ABCDEF".ToLower()),
@@ -841,7 +840,7 @@ namespace AiCalendar.Tests
             var result = await _userController.GetUserEvents(filter);
             Assert.That(result, Is.InstanceOf<OkObjectResult>());
             var okResult = result as OkObjectResult;
-            var userEvents = okResult.Value as IEnumerable<EventDto>;
+            var userEvents = okResult!.Value as IEnumerable<EventDto>;
             Assert.That(userEvents, Is.Not.Empty);
             Assert.That(userEvents.Count(), Is.EqualTo(2));
             Assert.That(userEvents.First().StartDate, Is.EqualTo(new DateTime(2025, 6, 16, 9, 0, 0, DateTimeKind.Utc)));
@@ -880,7 +879,7 @@ namespace AiCalendar.Tests
 
             Assert.That(result, Is.InstanceOf<OkObjectResult>());
             var okResult = result as OkObjectResult;
-            var userEvents = okResult.Value as IEnumerable<EventDto>;
+            var userEvents = okResult!.Value as IEnumerable<EventDto>;
             Assert.That(userEvents, Is.Empty);
         }
 
@@ -912,12 +911,12 @@ namespace AiCalendar.Tests
             var result = await _userController.GetUserEvents(filter);
             Assert.That(result, Is.InstanceOf<OkObjectResult>());
             var okResult = result as OkObjectResult;
-            var userEvents = okResult.Value as IEnumerable<EventDto>;
+            var userEvents = okResult!.Value as IEnumerable<EventDto>;
             Assert.That(userEvents, Is.Not.Empty);
             Assert.That(userEvents.Count(), Is.EqualTo(1));
             Assert.That(userEvents.All(e => e.CreatorId == "A1B2C3D4-E5F6-7890-1234-567890ABCDEF".ToLower()),
                 Is.True); // All events should be created by the user
-            Assert.That(userEvents.All(e => e.EndDate <= new DateTime(2025, 6, 16, 10, 0, 0, DateTimeKind.Utc)));
+            Assert.That(userEvents!.All(e => e.EndDate <= new DateTime(2025, 6, 16, 10, 0, 0, DateTimeKind.Utc)));
         }
 
         [Test]
@@ -948,7 +947,7 @@ namespace AiCalendar.Tests
             var result = await _userController.GetUserEvents(filter);
             Assert.That(result, Is.InstanceOf<OkObjectResult>());
             var okResult = result as OkObjectResult;
-            var userEvents = okResult.Value as IEnumerable<EventDto>;
+            var userEvents = okResult!.Value as IEnumerable<EventDto>;
             Assert.That(userEvents, Is.Empty);
             Assert.That(userEvents.Count(), Is.EqualTo(0));
         }
@@ -982,7 +981,7 @@ namespace AiCalendar.Tests
             var result = await _userController.GetUserEvents(filter);
             Assert.That(result, Is.InstanceOf<OkObjectResult>());
             var okResult = result as OkObjectResult;
-            var userEvents = okResult.Value as IEnumerable<EventDto>;
+            var userEvents = okResult!.Value as IEnumerable<EventDto>;
             Assert.That(userEvents, Is.Not.Empty);
             Assert.That(userEvents.Count(), Is.EqualTo(1)); // Only one event matches the filter
             Assert.That(userEvents.All(e => e.CreatorId == "A1B2C3D4-E5F6-7890-1234-567890ABCDEF".ToLower()),
@@ -1018,7 +1017,7 @@ namespace AiCalendar.Tests
             var result = await _userController.GetUserEvents(filter);
             Assert.That(result, Is.InstanceOf<OkObjectResult>());
             var okResult = result as OkObjectResult;
-            var userEvents = okResult.Value as IEnumerable<EventDto>;
+            var userEvents = okResult!.Value as IEnumerable<EventDto>;
             Assert.That(userEvents, Is.Empty);
         }
 
@@ -1054,7 +1053,7 @@ namespace AiCalendar.Tests
 
             Assert.That(result, Is.InstanceOf<OkObjectResult>());
             var okResult = result as OkObjectResult;
-            var userEvents = okResult.Value as IEnumerable<EventDto>;
+            var userEvents = okResult!.Value as IEnumerable<EventDto>;
             Assert.That(userEvents, Is.Not.Empty);
             Assert.That(userEvents.Count(), Is.EqualTo(1)); // Assuming the user has 1 cancelled event
             Assert.That(userEvents.All(e => e.IsCancelled), Is.True); // All events should be cancelled
@@ -1088,7 +1087,7 @@ namespace AiCalendar.Tests
             var result = await _userController.GetUserEvents(filter);
             Assert.That(result, Is.InstanceOf<OkObjectResult>());
             var okResult = result as OkObjectResult;
-            var userEvents = okResult.Value as IEnumerable<EventDto>;
+            var userEvents = okResult!.Value as IEnumerable<EventDto>;
             Assert.That(userEvents, Is.Empty);
         }
         #endregion
@@ -1115,7 +1114,7 @@ namespace AiCalendar.Tests
             var result = await _userController.UpdateUser(userId, updatedUser);
             Assert.That(result, Is.InstanceOf<UnauthorizedObjectResult>());
             var unauthorizedResult = result as UnauthorizedObjectResult;
-            Assert.That(unauthorizedResult.Value, Is.EqualTo("You are not authorized to delete this account."));
+            Assert.That(unauthorizedResult!.Value, Is.EqualTo("You are not authorized to delete this account."));
         }
 
         [Test]
@@ -1150,7 +1149,7 @@ namespace AiCalendar.Tests
 
             Assert.That(result, Is.InstanceOf<NotFoundObjectResult>());
             var notFoundResult = result as NotFoundObjectResult;
-            Assert.That(notFoundResult.Value, Is.EqualTo("User no found."));
+            Assert.That(notFoundResult!.Value, Is.EqualTo("User no found."));
         }
 
         [Test]
@@ -1185,7 +1184,7 @@ namespace AiCalendar.Tests
 
             Assert.That(result, Is.InstanceOf<NotFoundObjectResult>());
             var notFoundResult = result as NotFoundObjectResult;
-            Assert.That(notFoundResult.Value, Is.EqualTo("Current user not found."));
+            Assert.That(notFoundResult!.Value, Is.EqualTo("Current user not found."));
         }
 
         [Test]
@@ -1219,7 +1218,7 @@ namespace AiCalendar.Tests
             var result = await _userController.UpdateUser(userId, updatedUser);
             Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
             var badRequestResult = result as BadRequestObjectResult;
-            Assert.That(badRequestResult.Value, Is.EqualTo("Invalid user ID format."));
+            Assert.That(badRequestResult!.Value, Is.EqualTo("Invalid user ID format."));
         }
 
         [Test]
@@ -1478,7 +1477,7 @@ namespace AiCalendar.Tests
             Assert.That(userDto, Is.Not.Null);
             Assert.That(userDto.Id, Is.EqualTo(userId.ToLower()));
             Assert.That(userDto.Email, Is.EqualTo("admin@example.com"));
-            Assert.That(userDto.UserName, Is.EqualTo(userDto.UserName));
+            Assert.That(userDto.UserName, Is.EqualTo(updateUser.UserName));
 
             // Verify that the password was updated
             var user = await _userService.GetUserByIdAsync(Guid.Parse(userId));
@@ -1576,7 +1575,7 @@ namespace AiCalendar.Tests
             var result = await _userController.UpdateUser(userId, updateUser);
             Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
             var badRequestResult = result as BadRequestObjectResult;
-            Assert.That(badRequestResult.Value.GetType().GetProperty("error").GetValue(badRequestResult.Value), Is.EqualTo("Old password is incorrect."));
+            Assert.That(badRequestResult!.Value!.GetType()!.GetProperty("error")!.GetValue(badRequestResult!.Value)!, Is.EqualTo("Old password is incorrect."));
         }
 
         [Test]
@@ -1612,7 +1611,7 @@ namespace AiCalendar.Tests
             var result = await _userController.UpdateUser(userId, updateUser);
             Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
             var badRequestResult = result as BadRequestObjectResult;
-            Assert.That(badRequestResult.Value.GetType().GetProperty("error").GetValue(badRequestResult.Value), Is.EqualTo("New password cannot be the same as the old password."));
+            Assert.That(badRequestResult!.Value!.GetType()!.GetProperty("error")!.GetValue(badRequestResult!.Value)!, Is.EqualTo("New password cannot be the same as the old password."));
         }
 
         [Test]
@@ -1651,7 +1650,7 @@ namespace AiCalendar.Tests
 
             Assert.That(result, Is.InstanceOf<ConflictObjectResult>());
             var conflictResult = result as ConflictObjectResult;
-            Assert.That(conflictResult.StatusCode, Is.EqualTo(409)); // Or (int)System.Net.HttpStatusCode.Conflict
+            Assert.That(conflictResult!.StatusCode, Is.EqualTo(409)); // Or (int)System.Net.HttpStatusCode.Conflict
             Assert.That(conflictResult.Value, Is.EqualTo("User with this data already exists."));
         }
 
@@ -1690,7 +1689,7 @@ namespace AiCalendar.Tests
 
             Assert.That(result, Is.InstanceOf<ConflictObjectResult>());
             var conflictResult = result as ConflictObjectResult;
-            Assert.That(conflictResult.StatusCode, Is.EqualTo(409)); // Or (int)System.Net.HttpStatusCode.Conflict
+            Assert.That(conflictResult!.StatusCode, Is.EqualTo(409)); // Or (int)System.Net.HttpStatusCode.Conflict
             Assert.That(conflictResult.Value, Is.EqualTo("User with this data already exists."));
         }
 
@@ -1729,7 +1728,7 @@ namespace AiCalendar.Tests
 
             Assert.That(result, Is.InstanceOf<ConflictObjectResult>());
             var conflictResult = result as ConflictObjectResult;
-            Assert.That(conflictResult.StatusCode, Is.EqualTo(409)); // Or (int)System.Net.HttpStatusCode.Conflict
+            Assert.That(conflictResult!.StatusCode, Is.EqualTo(409)); // Or (int)System.Net.HttpStatusCode.Conflict
             Assert.That(conflictResult.Value, Is.EqualTo("User with this data already exists."));
         }
 
