@@ -35,7 +35,7 @@ namespace AiCalendar.WebApi.Controllers
                 return NotFound();
             }
 
-            IExceptionHandlerFeature  exceptionHandlerFeature = HttpContext.Features.Get<IExceptionHandlerFeature>();
+            IExceptionHandlerFeature  exceptionHandlerFeature = HttpContext.Features.Get<IExceptionHandlerFeature>()!;
 
             Exception exception = exceptionHandlerFeature.Error;
 
@@ -60,7 +60,7 @@ namespace AiCalendar.WebApi.Controllers
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
         public IActionResult Error()
         {
-            IExceptionHandlerFeature exceptionHandlerFeature = HttpContext.Features.Get<IExceptionHandlerFeature>();
+            IExceptionHandlerFeature exceptionHandlerFeature = HttpContext.Features.Get<IExceptionHandlerFeature>()!;
 
             Exception exception = exceptionHandlerFeature.Error;
 

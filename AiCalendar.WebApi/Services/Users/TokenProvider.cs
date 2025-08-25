@@ -22,7 +22,7 @@ namespace AiCalendar.WebApi.Services.Users
         {
             string secretKey = _configuration["Jwt:Secret"];
 
-            SymmetricSecurityKey securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
+            SymmetricSecurityKey securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey!));
 
             SigningCredentials credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 

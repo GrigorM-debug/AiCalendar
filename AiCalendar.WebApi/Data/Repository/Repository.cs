@@ -48,7 +48,7 @@ namespace AiCalendar.WebApi.Data.Repository
         public async Task DeleteAsync(Guid id)
         {
             var entity = await _dbSet.FindAsync(id);
-            _dbSet.Remove(entity);
+            _dbSet.Remove(entity!);
         }
 
         public void DeleteEntity(TEntity entity)
