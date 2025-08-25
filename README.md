@@ -134,3 +134,17 @@ I downloaded the Grafana dashboard from the [Grafana Dashboard](https://grafana.
 I configured the Alertmanager to send alerts to Dicord channel. I created a Discord webhook and configured the Alertmanager to use it.
 
 ![Alertmanager](![alt text](images/discord.png))
+
+## Deployment
+I tried to deploy the app to Azure, but i had some problems with the deployment.
+I am using student Azure account from SoftUni Software University which has some limitations.
+Before trying to deploy the app to Azure, I red the Microsoft documentation about how to deploy .net Aspire app in azure.
+They have a very good documentation about it. In the documetation they had shown two ways to do it.
+	1. Using the Azure CLI
+	2. Using Visual Studio
+I tried to deploy the app using Azure CLI. I tried it for two days in each region. Some gave an error right from the start, while others did so after a few minutes.
+I started wondering what was going on. Was I doing something wrong? But I kept trying. 
+After many unsuccessful attempts, I remembered that when we were studying Azure at SoftUni Software University, I had similar problems when completing my tasks. 
+There were times when the applications could not be deployed. Or they were deployed with great difficulty. It's just that our student accounts are very limited.
+But despite the unsuccessful deployment, I am glad that I tried and now have an idea of how to deploy .NET Aspire app. 
+

@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Aspire.Hosting.ApplicationModel;
 using Projects;
 using Microsoft.Extensions.Hosting;
@@ -51,8 +52,8 @@ var alertmanager = builder
 var grafana = builder
     .AddContainer("grafana", "grafana/grafana")
     .WithLifetime(ContainerLifetime.Persistent)
-    .WithVolume("grafana_data", "/var/lib/grafana")
-    .WithHttpEndpoint(port: 3001, targetPort: 3000)
+    .WithVolume("grafana-data", "/var/lib/grafana")
+    .WithHttpEndpoint(port: 80, targetPort: 3000)
     .WithEnvironment("GF_SECURITY_ADMIN_USER", "admin")
     .WithEnvironment("GF_SECURITY_ADMIN_PASSWORD", "admin")
     .WaitFor(prometheus)
