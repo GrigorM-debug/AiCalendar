@@ -21,6 +21,9 @@
         <InputText id="inputPassword" type="password" class="form-control" @bind-Value="Model.Password" />
         <ValidationMessage For="@(() => Model.Password)" />
     </div>
+    <div class="mb-3">
+        <NavLink href="users/login" style="color: purple;">Already have account</NavLink>
+    </div>
     <div class="mb-3 text-center">
         <button type="submit" class="btn btn-primary btn-lg mx-auto" style="background-color: purple;">Register</button>
     </div>
