@@ -1,0 +1,16 @@
+﻿@page "/users/logout"
+@using AiCalendar.Blazor.Services
+@using Microsoft.AspNetCore.Components.Authorization
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager Navigation
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        await ((CustomAuthenticationStateProvider)AuthenticationStateProvider).ClearToken();
+
+        ((CustomAuthenticationStateProvider)AuthenticationStateProvider).NotifyUserLogout();
+
+        Navigation.NavigateTo("/", forceLoad: true);
+    }
+}

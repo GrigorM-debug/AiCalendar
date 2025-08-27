@@ -70,6 +70,11 @@ namespace AiCalendar.Blazor.Services
             return token;
         }
 
+        public async Task ClearToken()
+        {
+            await _localStorageService.RemoveItemAsync(Tokenkey);
+        }
+
         public async Task SetToken(string token)
         {
             await _localStorageService.SetItemAsStringAsync(Tokenkey, token);

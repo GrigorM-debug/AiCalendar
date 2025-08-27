@@ -18,6 +18,9 @@ builder.Services.AddHttpClient("ApiClient", client =>
     client.BaseAddress = new Uri(baseUrl);
 });
 
+builder.Services.AddScoped(sp =>
+    sp.GetRequiredService<IHttpClientFactory>().CreateClient("ApiClient"));
+
 // Add services to the container.
 builder.Services.AddRazorComponents(options =>
     {
@@ -28,6 +31,7 @@ builder.Services.AddRazorComponents(options =>
 builder.Services.AddBlazoredLocalStorage();
 
 builder.Services.AddScoped<CustomAuthenticationStateProvider>();
+builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<StatusCodeErrorHandeller>();
 
 var app = builder.Build();

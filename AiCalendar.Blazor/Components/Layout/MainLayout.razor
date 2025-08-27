@@ -1,5 +1,6 @@
 ﻿@inherits LayoutComponentBase
 @inject ILogger<MainLayout> Logger
+@using Microsoft.AspNetCore.Components.Authorization
 
 <div class="page">
     <div class="sidebar">
@@ -8,7 +9,15 @@
 
     <main>
         <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+            @* <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a> *@
+            <AuthorizeView>
+                <Authorized>
+                    <span class="ms-auto">Welcome, @context.User.Identity.Name!</span>
+                </Authorized>
+                <NotAuthorized>
+                    <span class="ms-auto">Welcome, Guest!</span>
+                </NotAuthorized>
+            </AuthorizeView>
         </div>
 
         <article class="content px-4">

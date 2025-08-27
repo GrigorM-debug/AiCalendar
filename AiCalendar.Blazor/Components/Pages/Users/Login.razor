@@ -72,6 +72,8 @@
 
                 if (!string.IsNullOrEmpty(responseData.Token))
                 {
+                    await ((CustomAuthenticationStateProvider)AuthenticationStateProvider).SetToken(responseData.Token);
+
                     ((CustomAuthenticationStateProvider)AuthenticationStateProvider).NotifyUserAuthentication(responseData.Token);
                 }
 
