@@ -1,0 +1,42 @@
+﻿@page "/users/register"
+@using AiCalendar.Blazor.ViewModels.Users
+
+<h3 class="text-center">Register</h3>
+
+<EditForm FormName="Register" Model="Model" OnValidSubmit="Submit" Method="post" class="row g-3">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+    <div class="mb-3">
+        <label for="inputUsername" class="form-label">UserName</label>
+        <InputText id="inputUsername" class="form-control" @bind-Value="Model.UserName" />
+        <ValidationMessage For="@(() => Model.UserName)" />
+    </div>
+    <div class="mb-3">
+        <label for="inputEmail" class="form-label">Email</label>
+        <InputText id="inputEmail" class="form-control" @bind-Value="Model.Email" />
+        <ValidationMessage For="@(() => Model.Email)" />
+    </div>
+    <div class="mb-3">
+        <label for="inputPassword" class="form-label">Password</label>
+        <InputText id="inputPassword" type="password" class="form-control" @bind-Value="Model.Password" />
+        <ValidationMessage For="@(() => Model.Password)" />
+    </div>
+    <div class="mb-3 text-center">
+        <button type="submit" class="btn btn-primary btn-lg mx-auto" style="background-color: purple;">Register</button>
+    </div>
+</EditForm>
+
+@code {
+    [SupplyParameterFromForm]
+    private LoginAndRegisterInputViewModel? Model { get; set; }
+
+    protected override void OnInitialized()
+    {
+        Model ??= new();
+    }
+
+    private void Submit()
+    {
+        //Todo: Register logic
+    }
+}
