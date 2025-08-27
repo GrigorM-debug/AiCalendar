@@ -1,5 +1,15 @@
 ﻿@page "/users/login"
+@inject StatusCodeErrorHandeller StatusCodeErrorHandeller
+@inject NavigationManager Navigation
+@using AiCalendar.Blazor.Components.Utils
+@using AiCalendar.Blazor.Services
 @using AiCalendar.Blazor.ViewModels.Users
+@inject ILogger<Login> Logger
+@inject HttpClient Http
+@inject IJSRuntime JSRuntime
+@using AiCalendar.Blazor.ViewModels.Users
+@using Microsoft.AspNetCore.Components.Authorization
+@inject AuthenticationStateProvider AuthenticationStateProvider
 
 <h3 class="text-center">Login</h3>
 
@@ -25,7 +35,12 @@
         <NavLink href="users/register" style="color: purple;">Don't have account'</NavLink>
     </div>
     <div class="mb-3 text-center">
-        <button type="submit" class="btn btn-primary btn-lg mx-auto" style="background-color: purple;">Login</button>
+        <button 
+            type="submit" 
+            class="btn btn-primary btn-lg mx-auto" 
+            style="background-color: purple;"
+            disabled="@isDisabled"
+            >Login</button>
     </div>
 </EditForm>
 
@@ -33,13 +48,41 @@
     [SupplyParameterFromForm]
     private LoginAndRegisterInputViewModel? Model { get; set; }
 
+    private bool isDisabled = false;
+
     protected override void OnInitialized()
     {
         Model ??= new();
+
     }
 
-    private void Submit()
+    private async Task Submit()
     {
-        //Todo: Login logic
+        isDisabled = true;
+
+        try
+        {
+            var response = await Http.PostAsJsonAsync("api/v1/User/login", Model);
+
+            StatusCodeErrorHandeller.HandleStatusCode(response);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var responseData = await response.Content.ReadFromJsonAsync<LoginResponseViewModel>();
+
+                if (!string.IsNullOrEmpty(responseData.Token))
+                {
+                    ((CustomAuthenticationStateProvider)AuthenticationStateProvider).NotifyUserAuthentication(responseData.Token);
+                }
+
+                await JSRuntime.InvokeVoidAsync("showAlert", "Successfully logged in! 🎉", "success");
+
+                Navigation.NavigateTo("users/login");
+            }
+        }
+        catch (HttpRequestException exception)
+        {
+            Logger.LogError(exception, "An error occurred during registration.");
+        }
     }
 }

@@ -1,5 +1,12 @@
 ﻿@page "/users/register"
+@using System.Net
+@using AiCalendar.Blazor.Components.Utils
 @using AiCalendar.Blazor.ViewModels.Users
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@inject StatusCodeErrorHandeller StatusCodeErrorHandeller
+@inject ILogger<Register> Logger
+@inject IJSRuntime JSRuntime
 
 <h3 class="text-center">Register</h3>
 
@@ -25,7 +32,12 @@
         <NavLink href="users/login" style="color: purple;">Already have account</NavLink>
     </div>
     <div class="mb-3 text-center">
-        <button type="submit" class="btn btn-primary btn-lg mx-auto" style="background-color: purple;">Register</button>
+        <button 
+            type="submit" 
+            class="btn btn-primary btn-lg mx-auto" 
+            style="background-color: purple;"
+            disabled="@isDisabled"
+            >Register</button>
     </div>
 </EditForm>
 
@@ -33,13 +45,33 @@
     [SupplyParameterFromForm]
     private LoginAndRegisterInputViewModel? Model { get; set; }
 
+    private bool isDisabled = false;
+
     protected override void OnInitialized()
     {
         Model ??= new();
     }
 
-    private void Submit()
+    private async Task Submit()
     {
-        //Todo: Register logic
+        isDisabled = true;
+
+        try
+        {
+            var response = await Http.PostAsJsonAsync("api/v1/User/register", Model);
+
+            StatusCodeErrorHandeller.HandleStatusCode(response);
+
+            if (response.IsSuccessStatusCode)
+            {
+                await JSRuntime.InvokeVoidAsync("showAlert", "Successfully registered new user! 🎉", "success");
+                
+                Navigation.NavigateTo("users/login");
+            }
+        }
+        catch (HttpRequestException exception)
+        {
+            Logger.LogError(exception, "An error occurred during registration.");
+        }
     }
 }

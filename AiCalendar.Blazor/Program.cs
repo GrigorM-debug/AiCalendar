@@ -1,8 +1,22 @@
 using AiCalendar.Blazor.Components;
+using AiCalendar.Blazor.Components.Utils;
+using AiCalendar.Blazor.Services;
+using Blazored.LocalStorage;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
+
+builder.Services.AddHttpClient("ApiClient", client =>
+{
+    var baseUrl = builder.Configuration["ApiSettings:BaseUrl"];
+
+    if (string.IsNullOrEmpty(baseUrl))
+    {
+        throw new InvalidOperationException("ApiSettings:BaseUrl is not configured in appsettings.json.");
+    }
+    client.BaseAddress = new Uri(baseUrl);
+});
 
 // Add services to the container.
 builder.Services.AddRazorComponents(options =>
@@ -10,6 +24,11 @@ builder.Services.AddRazorComponents(options =>
         options.DetailedErrors = builder.Environment.IsDevelopment();
     })
     .AddInteractiveServerComponents();
+
+builder.Services.AddBlazoredLocalStorage();
+
+builder.Services.AddScoped<CustomAuthenticationStateProvider>();
+builder.Services.AddScoped<StatusCodeErrorHandeller>();
 
 var app = builder.Build();
 
