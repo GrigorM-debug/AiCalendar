@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AiCalendar.Tests", "AiCalen
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AiCalendar.MCPServer", "AiCalendar.MCPServer\AiCalendar.MCPServer.csproj", "{B53550EC-6457-E5FB-0B9F-A2561828CD9E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AiCalendar.Blazor", "AiCalendar.Blazor\AiCalendar.Blazor.csproj", "{4343193D-DF4A-1A78-32FB-3D9D8BE7C718}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,10 @@ Global
 		{B53550EC-6457-E5FB-0B9F-A2561828CD9E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B53550EC-6457-E5FB-0B9F-A2561828CD9E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B53550EC-6457-E5FB-0B9F-A2561828CD9E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4343193D-DF4A-1A78-32FB-3D9D8BE7C718}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4343193D-DF4A-1A78-32FB-3D9D8BE7C718}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4343193D-DF4A-1A78-32FB-3D9D8BE7C718}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4343193D-DF4A-1A78-32FB-3D9D8BE7C718}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

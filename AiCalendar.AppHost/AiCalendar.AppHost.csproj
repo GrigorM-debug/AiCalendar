@@ -19,6 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\AiCalendar.Blazor\AiCalendar.Blazor.csproj" />
     <ProjectReference Include="..\AiCalendar.MCPServer\AiCalendar.MCPServer.csproj" />
     <ProjectReference Include="..\AiCalendar.WebApi\AiCalendar.WebApi.csproj" />
   </ItemGroup>
