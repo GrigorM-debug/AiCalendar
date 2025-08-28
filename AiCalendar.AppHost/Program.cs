@@ -22,12 +22,17 @@ var mcp_server = builder.AddProject<Projects.AiCalendar_MCPServer>("aicalendar-m
     .WithReference(web_api)
     .WaitFor(web_api);
 
+var frontend = builder.AddProject<Projects.AiCalendar_Blazor>("aicalendar-blazor")
+    .WaitFor(web_api)
+    .WaitFor(mcp_server);
+
 var node_exporter = builder
     .AddContainer("nodeexporter", "prom/node-exporter")
     .WithLifetime(ContainerLifetime.Persistent)
     .WithHttpEndpoint(port: 9100, targetPort: 9100)
     .WaitFor(web_api)
-    .WaitFor(mcp_server);
+    .WaitFor(mcp_server)
+    .WaitFor(frontend);
 
 var prometheus = builder
     .AddContainer("prometheus", "prom/prometheus")
@@ -38,6 +43,7 @@ var prometheus = builder
     .WithHttpEndpoint(port: 9090, targetPort: 9090)
     .WaitFor(web_api)
     .WaitFor(mcp_server)
+    .WaitFor(frontend)
     .WaitFor(node_exporter);
 
 var alertmanager = builder
@@ -58,5 +64,6 @@ var grafana = builder
     .WithEnvironment("GF_SECURITY_ADMIN_PASSWORD", "admin")
     .WaitFor(prometheus)
     .WaitFor(alertmanager);
+
 
 builder.Build().Run();

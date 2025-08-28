@@ -24,6 +24,13 @@ scrape_configs:
      - targets: ['host.docker.internal:5242']
     metrics_path: /metrics 
 
+  - job_name: "ai-calendar-frontend"
+    static_configs:
+     - targets: ['host.docker.internal:5024']
+    metrics_path: /metrics
+    tls_config:
+      insecure_skip_verify: true
+
   - job_name: "node-exporter"
     static_configs:
      - targets: ['nodeexporter:9100']
