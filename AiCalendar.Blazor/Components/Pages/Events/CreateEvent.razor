@@ -1,0 +1,99 @@
+﻿@using AiCalendar.Blazor.Components.Utils
+@using AiCalendar.Blazor.ViewModels.Events
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using Swashbuckle.AspNetCore.SwaggerGen
+@attribute [Authorize]
+@page "/events/create"
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@inject ILogger<CreateEvent> Logger
+@rendermode InteractiveServer
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IJSRuntime JSRuntime
+@inject StatusCodeErrorHandeller StatusCodeErrorHandeller
+
+<h3>CreateEvent</h3>
+
+<EditForm FormName="CreateEvent" Model="Model" OnValidSubmit="Submit" Method="post" class="row g-3">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+    <div class="mb-3">
+        <label for="inputTitle" class="form-label">Title</label>
+        <InputText id="inputTitle" class="form-control" @bind-Value="Model.Title" />
+        <ValidationMessage For="@(() => Model.Title)" />
+    </div>
+    <div class="mb-3">
+        <label for="inputDescription" class="form-label">Description</label>
+        <InputTextArea id="inputDescription" class="form-control" @bind-Value="Model.Description" />
+        <ValidationMessage For="@(() => Model.Description)" />
+    </div>
+    <div class="mb-3">
+        <label for="inputStartTime" class="form-label">Start Time</label>
+        <InputDate Type="InputDateType.DateTimeLocal" id="inputStartTime" class="form-control" @bind-Value="Model.StartTime" />
+        <ValidationMessage For="@(() => Model.StartTime)" />
+    </div>
+    <div class="mb-3">
+        <label for="inputEndTime" class="form-label">End Time</label>
+        <InputDate Type="InputDateType.DateTimeLocal" id="inputEndTime" class="form-control" @bind-Value="Model.EndTime" />
+        <ValidationMessage For="@(() => Model.EndTime)" />
+    </div>
+    <div class="mb-3 text-center">
+        <button 
+            type="submit" 
+            class="btn btn-primary btn-lg mx-auto" 
+            style="background-color: purple;"
+            disabled="@isDisabled"
+        >Create Event</button>
+    </div>
+</EditForm>
+
+@code {
+    [SupplyParameterFromForm]
+    private CreateEventViewModel? Model { get; set; }
+
+    [CascadingParameter] protected Task<AuthenticationState> AuthState { get; set; }
+
+    private bool isDisabled = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Model ??= new();
+
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (!user.Identity.IsAuthenticated)
+        {
+            Navigation.NavigateTo("/status-code/401", forceLoad: true);
+        }
+    }
+
+    private async Task Submit()
+    {
+        isDisabled = true;
+
+        try
+        {
+            var response = await Http.PostAsJsonAsync("api/v1/Event", Model);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var responseData = await response.Content.ReadFromJsonAsync<EventViewModel>();
+
+                //Later we can navigate to the event details page
+                Navigation.NavigateTo("/", forceLoad: true);
+
+                await JSRuntime.InvokeVoidAsync("showAlert", "Successfully created event! 🎉", "success");
+            }
+            else
+            {
+                StatusCodeErrorHandeller.HandleStatusCode(response);
+            }
+        }
+        catch (HttpRequestException exception)
+        {
+            Logger.LogError(exception, "An error occurred during registration.");
+        }
+    }
+}
