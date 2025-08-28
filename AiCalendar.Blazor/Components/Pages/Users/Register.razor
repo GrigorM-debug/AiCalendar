@@ -1,12 +1,15 @@
 ﻿@page "/users/register"
-@using System.Net
+@attribute [AllowAnonymous]
 @using AiCalendar.Blazor.Components.Utils
 @using AiCalendar.Blazor.ViewModels.Users
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
 @inject HttpClient Http
 @inject NavigationManager Navigation
 @inject StatusCodeErrorHandeller StatusCodeErrorHandeller
 @inject ILogger<Register> Logger
 @inject IJSRuntime JSRuntime
+@rendermode InteractiveServer
 
 <h3 class="text-center">Register</h3>
 
@@ -45,10 +48,18 @@
     [SupplyParameterFromForm]
     private LoginAndRegisterInputViewModel? Model { get; set; }
 
+    [CascadingParameter] protected Task<AuthenticationState> AuthState { get; set; }
+
     private bool isDisabled = false;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
+        var user = (await AuthState).User;
+        if (user.Identity.IsAuthenticated)
+        {
+            Navigation.NavigateTo("/", forceLoad: true);
+        }
+
         Model ??= new();
     }
 
@@ -60,13 +71,14 @@
         {
             var response = await Http.PostAsJsonAsync("api/v1/User/register", Model);
 
-            StatusCodeErrorHandeller.HandleStatusCode(response);
-
             if (response.IsSuccessStatusCode)
             {
+                Navigation.NavigateTo("users/login", forceLoad: true);
                 await JSRuntime.InvokeVoidAsync("showAlert", "Successfully registered new user! 🎉", "success");
-                
-                Navigation.NavigateTo("users/login");
+            }
+            else
+            {
+                StatusCodeErrorHandeller.HandleStatusCode(response);
             }
         }
         catch (HttpRequestException exception)

@@ -1,15 +1,24 @@
 ﻿@page "/users/logout"
+@attribute [Authorize]
 @using AiCalendar.Blazor.Services
+@using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject NavigationManager Navigation
 
 @code {
+    [CascadingParameter] protected Task<AuthenticationState> AuthState { get; set; }
+
     protected override async Task OnInitializedAsync()
     {
-        await ((CustomAuthenticationStateProvider)AuthenticationStateProvider).ClearToken();
+        var user = (await AuthState).User;
+        if (!user.Identity.IsAuthenticated)
+        {
+            Navigation.NavigateTo("/users/login", forceLoad: true);
+            return;
+        }
 
-        ((CustomAuthenticationStateProvider)AuthenticationStateProvider).NotifyUserLogout();
+        await ((CustomAuthenticationStateProvider)AuthenticationStateProvider).MarkUserAsLoggedOut();
 
         Navigation.NavigateTo("/", forceLoad: true);
     }

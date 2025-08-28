@@ -2,6 +2,7 @@ using AiCalendar.Blazor.Components;
 using AiCalendar.Blazor.Components.Utils;
 using AiCalendar.Blazor.Services;
 using Blazored.LocalStorage;
+using Microsoft.AspNetCore.Components.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -30,8 +31,15 @@ builder.Services.AddRazorComponents(options =>
 
 builder.Services.AddBlazoredLocalStorage();
 
-builder.Services.AddScoped<CustomAuthenticationStateProvider>();
+
+builder.Services.AddAuthorization();
+builder.Services.AddAuthorizationCore();
 builder.Services.AddCascadingAuthenticationState();
+
+//builder.Services.AddScoped<CustomAuthenticationStateProvider>();
+builder.Services.AddServerSideBlazor();
+builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthenticationStateProvider>();
+
 builder.Services.AddScoped<StatusCodeErrorHandeller>();
 
 var app = builder.Build();

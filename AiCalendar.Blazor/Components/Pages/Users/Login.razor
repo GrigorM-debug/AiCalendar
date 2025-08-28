@@ -1,15 +1,17 @@
 ﻿@page "/users/login"
+@attribute [AllowAnonymous]
 @inject StatusCodeErrorHandeller StatusCodeErrorHandeller
 @inject NavigationManager Navigation
 @using AiCalendar.Blazor.Components.Utils
 @using AiCalendar.Blazor.Services
 @using AiCalendar.Blazor.ViewModels.Users
+@using Microsoft.AspNetCore.Authorization
 @inject ILogger<Login> Logger
 @inject HttpClient Http
 @inject IJSRuntime JSRuntime
-@using AiCalendar.Blazor.ViewModels.Users
 @using Microsoft.AspNetCore.Components.Authorization
 @inject AuthenticationStateProvider AuthenticationStateProvider
+@rendermode InteractiveServer
 
 <h3 class="text-center">Login</h3>
 
@@ -48,12 +50,19 @@
     [SupplyParameterFromForm]
     private LoginAndRegisterInputViewModel? Model { get; set; }
 
+    [CascadingParameter] protected Task<AuthenticationState> AuthState { get; set; }
+
     private bool isDisabled = false;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        Model ??= new();
+        var user = (await AuthState).User;
+        if (user.Identity.IsAuthenticated)
+        {
+            Navigation.NavigateTo("/", forceLoad: true);
+        }
 
+        Model ??= new();
     }
 
     private async Task Submit()
@@ -64,22 +73,22 @@
         {
             var response = await Http.PostAsJsonAsync("api/v1/User/login", Model);
 
-            StatusCodeErrorHandeller.HandleStatusCode(response);
-
             if (response.IsSuccessStatusCode)
             {
                 var responseData = await response.Content.ReadFromJsonAsync<LoginResponseViewModel>();
 
                 if (!string.IsNullOrEmpty(responseData.Token))
                 {
-                    await ((CustomAuthenticationStateProvider)AuthenticationStateProvider).SetToken(responseData.Token);
-
-                    ((CustomAuthenticationStateProvider)AuthenticationStateProvider).NotifyUserAuthentication(responseData.Token);
+                    await ((CustomAuthenticationStateProvider)AuthenticationStateProvider).MarkUserAsAuthenticated(responseData.Token);
                 }
 
-                await JSRuntime.InvokeVoidAsync("showAlert", "Successfully logged in! 🎉", "success");
+                Navigation.NavigateTo("/", forceLoad: true);
 
-                Navigation.NavigateTo("users/login");
+                await JSRuntime.InvokeVoidAsync("showAlert", "Successfully logged in! 🎉", "success");
+            }
+            else
+            {
+                StatusCodeErrorHandeller.HandleStatusCode(response);
             }
         }
         catch (HttpRequestException exception)
