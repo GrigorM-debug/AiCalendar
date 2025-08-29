@@ -31,7 +31,6 @@ builder.Services.AddRazorComponents(options =>
 
 builder.Services.AddBlazoredLocalStorage();
 
-
 builder.Services.AddAuthorization();
 builder.Services.AddAuthorizationCore();
 builder.Services.AddCascadingAuthenticationState();

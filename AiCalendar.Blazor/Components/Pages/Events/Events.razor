@@ -41,7 +41,7 @@
                                 @foreach (var e in _events
                                               .Where(e => e.StartDate.Date == day.Value.Date))
                                 {
-                                    <div class="@(e.IsCancelled ? "event btn-warning text-white rounded p-1 mb-1" : "event btn-primary text-white rounded p-1 mb-1")">
+                                    <div @onclick="@(() => NavigateToDetailsPage(e.Id))" class=" @(e.IsCancelled ? "event btn-warning text-white rounded p-1 mb-1" : "event btn-primary text-white rounded p-1 mb-1")">
                                         <span>@e.StartDate.Hour:@e.StartDate.Minute</span>
                                         <span>@e.Title</span>
                                     </div>
@@ -218,5 +218,10 @@
         {
             Logger.LogError(exception, "Error fetching events");
         }
+    }
+
+    private void NavigateToDetailsPage(string eventId)
+    {
+        Navigation.NavigateTo($"/events/details/{eventId}", forceLoad: true);
     }
 }

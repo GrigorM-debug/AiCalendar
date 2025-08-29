@@ -1,0 +1,180 @@
+﻿@page "/events/details/{eventId}"
+@attribute [Authorize]
+@using AiCalendar.Blazor.Components.Utils
+@using AiCalendar.Blazor.ViewModels.Events
+@using Microsoft.AspNetCore.Authorization
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@inject ILogger<Details> Logger
+@inject StatusCodeErrorHandeller StatusCodeErrorHandeller
+@inject JSRuntime JSRuntime
+
+<h3>Event Details</h3>
+
+@if (_event != null)
+{
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">@_event.Title</h5>
+            <h6 class="card-subtitle mb-2 text-muted">@_event.StartDate.ToString("f") - @_event.EndDate.ToString("f")</h6>
+            <p class="card-text">@_event.Description</p>
+            @if (_event.IsCancelled)
+            {
+                <span class="badge bg-warning text-dark">Cancelled</span>
+            }
+            else
+            {
+                <span class="badge bg-success">Active</span>
+            }
+        </div>
+
+        @* Table for event participants *@
+        @if (_event.Participants.Any())
+        {
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                @foreach (var p in _event.Participants)
+                {
+                    <tr>
+                        <td>@p.UserName</td>
+                        <td>@p.Email</td>
+                        <td>
+                            <button class="btn btn-danger btn-sm" @onclick="() => RemoveParticipant(p.Id)">Remove</button>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        }
+
+        <div class="card-footer d-flex justify-content-between">
+            @if (_event.IsCancelled)
+            {
+                <button class="btn btn-warning" @onclick="CancelEvent">Cancel Event</button>
+            }
+            
+            <button class="btn btn-success" @onclick="UpdateEvent">Update Event</button>
+            <button class="btn btn-danger" @onclick="DeleteEvent">Delete Event</button>
+
+        </div>
+    </div>
+}
+else
+{
+    <p>Loading event details...</p>
+}
+
+@code {
+    [Parameter]
+    private string eventId { get; set; }
+
+    private EventViewModel? _event = new EventViewModel();
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Load event details using eventId
+        await FetchEventData();
+    }
+
+    private async Task FetchEventData()
+    {
+        try
+        {
+            var response = await Http.GetAsync($"api/v1/Event/{eventId}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                _event = await response.Content.ReadFromJsonAsync<EventViewModel>();
+            }
+            else
+            {
+                StatusCodeErrorHandeller.HandleStatusCode(response);
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            Logger.LogError(ex, "Error fetching events");
+        }
+    }
+
+    private async Task CancelEvent()
+    {
+        if (_event == null || _event.IsCancelled)
+            return;
+        try
+        {
+            var response = await Http.PostAsync($"api/v1/Event/{eventId}/cancel", null);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                await FetchEventData();
+                await JSRuntime.InvokeVoidAsync("showAlert", "Event cancelled successfully! 🎉", "success");
+            }
+            else
+            {
+                StatusCodeErrorHandeller.HandleStatusCode(response);
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            Logger.LogError(ex, "Error cancelling event");
+        }
+    }
+
+    private async Task RemoveParticipant(string participantId)
+    {
+        try
+        {
+            var response = await Http.DeleteAsync($"api/v1/Event/{eventId}/participants/{participantId}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                await FetchEventData();
+                await JSRuntime.InvokeVoidAsync("showAlert", "Participant removed successfully! 🎉", "success");
+            }
+            else
+            {
+                StatusCodeErrorHandeller.HandleStatusCode(response);
+            }
+        }
+        catch (HttpRequestException exception)
+        {
+            Logger.LogError(exception, "Error removing participant");
+        }
+    }
+
+    private async Task DeleteEvent()
+    {
+        try
+        {
+            var response = await Http.DeleteAsync($"api/v1/Event/{eventId}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                Navigation.NavigateTo("/events", forceLoad: true);
+                await JSRuntime.InvokeVoidAsync("showAlert", "Event deleted successfully! 🎉", "success");
+            }
+            else
+            {
+                StatusCodeErrorHandeller.HandleStatusCode(response);
+            }
+        }
+        catch (HttpRequestException exception)
+        {
+            Logger.LogError(exception, "Error deleting event");
+        }
+    }
+
+    private void UpdateEvent()
+    {
+        // Navigate to update event page
+        Navigation.NavigateTo($"/events/update/{eventId}", forceLoad: true);
+    }
+}
