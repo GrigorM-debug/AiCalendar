@@ -2,6 +2,8 @@ using AiCalendar.Blazor.Components;
 using AiCalendar.Blazor.Components.Utils;
 using AiCalendar.Blazor.Services;
 using Blazored.LocalStorage;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Components.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -31,12 +33,28 @@ builder.Services.AddRazorComponents(options =>
 
 builder.Services.AddBlazoredLocalStorage();
 
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie();
+
 builder.Services.AddAuthorization();
 builder.Services.AddAuthorizationCore();
 builder.Services.AddCascadingAuthenticationState();
+builder.Services.AddHttpContextAccessor(); // Important for accessing HttpContext
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
+
+builder.Services.AddDistributedMemoryCache();
+
+builder.Services.AddScoped<UserSessionManager>();
 
 //builder.Services.AddScoped<CustomAuthenticationStateProvider>();
+
 builder.Services.AddServerSideBlazor();
+
 builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthenticationStateProvider>();
 
 builder.Services.AddScoped<StatusCodeErrorHandeller>();
@@ -52,6 +70,10 @@ if (!app.Environment.IsDevelopment())
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
+
+app.UseSession(); 
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.UseStatusCodePagesWithReExecute("/status-code/{0}");
 

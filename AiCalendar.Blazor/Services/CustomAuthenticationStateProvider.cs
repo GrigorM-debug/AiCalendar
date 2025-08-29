@@ -1,10 +1,13 @@
 ﻿using Blazored.LocalStorage;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.JSInterop;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Security.Claims;
+using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 
 namespace AiCalendar.Blazor.Services
 {
@@ -50,7 +53,8 @@ namespace AiCalendar.Blazor.Services
 
             var user = new ClaimsPrincipal(identity);
 
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", token);
+            _httpClient.DefaultRequestHeaders.Authorization = null;
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
             return new AuthenticationState(user);
         }
@@ -70,7 +74,7 @@ namespace AiCalendar.Blazor.Services
 
         public async Task MarkUserAsLoggedOut()
         {
-            await _localStorageService.RemoveItemAsync(Tokenkey);
+             await _localStorageService.RemoveItemAsync(Tokenkey);
 
             _httpClient.DefaultRequestHeaders.Authorization = null;
 

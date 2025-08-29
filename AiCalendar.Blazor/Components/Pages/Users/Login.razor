@@ -12,6 +12,7 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @rendermode InteractiveServer
+@inject UserSessionManager Auth
 
 <h3 class="text-center">Login</h3>
 
@@ -80,6 +81,7 @@
                 if (!string.IsNullOrEmpty(responseData.Token))
                 {
                     await ((CustomAuthenticationStateProvider)AuthenticationStateProvider).MarkUserAsAuthenticated(responseData.Token);
+                    // await Auth.SignInUserAsync(responseData.Token);
                 }
 
                 Navigation.NavigateTo("/", forceLoad: true);
