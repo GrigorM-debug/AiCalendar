@@ -63,6 +63,7 @@ namespace AiCalendar.Blazor.Services
         {
             await _localStorageService.SetItemAsStringAsync(Tokenkey, token);
 
+            _httpClient.DefaultRequestHeaders.Authorization = null;
             _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
             var claims = ParseClaimsFromJwt(token);

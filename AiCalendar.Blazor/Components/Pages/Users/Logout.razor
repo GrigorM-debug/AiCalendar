@@ -1,11 +1,12 @@
 ﻿@page "/users/logout"
 @attribute [Authorize]
 @using AiCalendar.Blazor.Services
+@using AiCalendar.Blazor.Services.UserSession
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject NavigationManager Navigation
-@inject UserSessionManager Auth
+@inject IUserSessionManager Auth
 @rendermode InteractiveServer
 
 @code {
@@ -21,7 +22,7 @@
         }
 
         await ((CustomAuthenticationStateProvider)AuthenticationStateProvider).MarkUserAsLoggedOut();
-        // await Auth.SignOutUserAsync();
+        //Auth.SignOutUser();
 
         Navigation.NavigateTo("/", forceLoad: true);
     }
