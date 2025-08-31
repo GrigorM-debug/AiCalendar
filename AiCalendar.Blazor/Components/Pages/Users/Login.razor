@@ -4,6 +4,7 @@
 @inject NavigationManager Navigation
 @using AiCalendar.Blazor.Components.Utils
 @using AiCalendar.Blazor.Services
+@using AiCalendar.Blazor.Services.UserSession
 @using AiCalendar.Blazor.ViewModels.Users
 @using Microsoft.AspNetCore.Authorization
 @inject ILogger<Login> Logger
@@ -12,6 +13,7 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @rendermode InteractiveServer
+@* @inject IUserSessionManager UserSessionManager  *@
 
 <h3 class="text-center">Login</h3>
 
@@ -80,6 +82,7 @@
                 if (!string.IsNullOrEmpty(responseData.Token))
                 {
                     await ((CustomAuthenticationStateProvider)AuthenticationStateProvider).MarkUserAsAuthenticated(responseData.Token);
+                    // await UserSessionManager.SignInUserAsync(responseData.Token);
                 }
 
                 Navigation.NavigateTo("/", forceLoad: true);

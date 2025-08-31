@@ -1,0 +1,243 @@
+﻿@page "/events"
+@* @attribute [Authorize] *@
+@using System.Globalization
+@using AiCalendar.Blazor.Components.Utils
+@using AiCalendar.Blazor.ViewModels.Events
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@inject NavigationManager Navigation
+@inject ILogger<Events> Logger
+@inject StatusCodeErrorHandeller StatusCodeErrorHandeller
+@inject HttpClient Http
+@inject IJSRuntime JSRuntime
+@rendermode InteractiveServer
+
+<h3 class="text-center">@_currentDate.ToString("MMMM yyyy", CultureInfo.InvariantCulture)</h3>
+
+<div class="d-flex justify-content-between mb-3">
+    <button @onclick="PreviousMonth" class="btn" style="background-color: purple; color: white">&lt; Prev</button>
+    <button @onclick="NextMonth" class="btn" style="background-color: purple; color: white">Next &gt;</button>
+</div>
+
+<div class="calendar-container overflow-x-auto">
+    <div class="d-flex text-center fw-bold bg-light border-bottom border-top py-2 g-4">
+        <div class="day-col">Sun</div>
+        <div class="day-col">Mon</div>
+        <div class="day-col">Tue</div>
+        <div class="day-col">Wed</div>
+        <div class="day-col">Thu</div>
+        <div class="day-col">Fri</div>
+        <div class="day-col">Sat</div>
+    </div>
+
+    <div class="d-flex flex-wrap gy-2 gx-2">
+        @foreach (var day in _daysInMonth)
+        {
+            <div class="col day-cell">
+                @if (day.HasValue)
+                {
+                    <div class="card h-100 day-card">
+                        <div class="card-body p-2">
+                            <span class="day-number float-end fw-bold">@day.Value.Day @day.Value.DayOfWeek</span>
+                            <div class="events mt-4">
+                                @foreach (var e in _events
+                                              .Where(e => e.StartDate.Date == day.Value.Date))
+                                {
+                                    <div @onclick="@(() => NavigateToDetailsPage(e.Id))"
+                                         class="btn @GetEventClass(e) text-white rounded p-1 mb-1">
+                                        <span>@e.StartDate.Hour:@e.StartDate.Minute</span>
+                                        <span>@e.Title</span>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="day-col">
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+
+<style>
+    .calendar-container {
+        width: 100%;
+    }
+
+    .day-card {
+        width: 150px
+    }
+
+    .day-col {
+        min-width: 140px; 
+        width: calc(100% / 7);
+    }
+
+    .day-cell {
+        min-height: 100px;
+        width: 200px
+    }
+
+    .day-number {
+        font-size: 1.1rem;
+    }
+</style>
+
+@code {
+    private DateTime _currentDate;
+    private List<DateTime?> _daysInMonth;
+    private List<EventViewModel>? _events = new List<EventViewModel>();
+
+    private EventFilter? filter = new EventFilter()
+    {
+        StartDate = null,
+        EndDate = null,
+        IsCancelled = null /* To include the cancelled events as well. If it is false you get \
+                            only the active events. If it is true you get only cancelled events*/
+    };
+
+    [CascadingParameter]
+    protected Task<AuthenticationState> AuthState { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthState;
+        var user = authState.User;
+
+        if (!user.Identity.IsAuthenticated)
+        {
+            Navigation.NavigateTo("/status-code/401", forceLoad: true);
+            await JSRuntime.InvokeVoidAsync("alert", "You must be logged in to access this page.", "error");
+        }
+
+        _currentDate = DateTime.UtcNow;
+        GenerateCalendarDays();
+
+        await FetchEvents();
+    }
+
+    private async Task PreviousMonth()
+    {
+        _currentDate = _currentDate.AddMonths(-1);
+        GenerateCalendarDays();
+        //await FetchEvents();
+    }
+
+    private async Task NextMonth()
+    {
+        _currentDate = _currentDate.AddMonths(1);
+        GenerateCalendarDays();
+        // await FetchEvents();
+    }
+
+    private void GenerateCalendarDays()
+    {
+        _daysInMonth = new List<DateTime?>();
+        var firstDayOfMonth = new DateTime(_currentDate.Year, _currentDate.Month, 1);
+        var daysInMonth = DateTime.DaysInMonth(_currentDate.Year, _currentDate.Month);
+        var startDayOfWeek = (int)firstDayOfMonth.DayOfWeek;
+
+        // Add empty cells for days before the first day of the month
+        for (int i = 0; i < startDayOfWeek + 1; i++)
+        {
+            _daysInMonth.Add(null);
+        }
+
+        // Add days of the month
+        for (int day = 1; day <= daysInMonth; day++)
+        {
+            _daysInMonth.Add(new DateTime(_currentDate.Year, _currentDate.Month, day));
+        }
+
+        // Optionally add empty cells to complete the last week
+        while (_daysInMonth.Count % 7 != 0)
+        {
+            _daysInMonth.Add(null);
+        }
+
+        if (_daysInMonth.Count(d => !d.HasValue) == 1)
+        {
+            var fistElement = _daysInMonth.First();
+
+            _daysInMonth.Remove(fistElement);
+        }
+    }
+
+    private async Task FetchEvents()
+    {
+        try
+        {
+            var query = new List<string>();
+
+            if (filter?.StartDate != null)
+                query.Add($"StartDate={Uri.EscapeDataString(filter.StartDate.Value.ToString("o"))}");
+
+            if (filter?.EndDate != null)
+                query.Add($"EndDate={Uri.EscapeDataString(filter.EndDate.Value.ToString("o"))}");
+
+            if (filter?.IsCancelled != null)
+                query.Add($"IsCancelled={filter.IsCancelled.Value}");
+
+            var queryString = query.Count > 0 ? "?" + string.Join("&", query) : string.Empty;
+
+            // User created events
+            var response = await Http.GetAsync($"api/v1/User/events/{queryString}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var eventsResponse = await response.Content.ReadFromJsonAsync<List<EventViewModel>>();
+
+                foreach (var e in eventsResponse)
+                {
+                    if(!_events.Any(ev => ev.Id == e.Id))
+                        _events.Add(e);
+                }
+            }
+            else
+            {
+                StatusCodeErrorHandeller.HandleStatusCode(response);
+            }
+
+            // Events the user is participating in
+            var response2 = await Http.GetAsync("api/v1/User/participating-events");
+
+            if (response2.IsSuccessStatusCode)
+            {
+                var participatingEvents = await response2.Content.ReadFromJsonAsync<List<EventViewModel>>();
+
+                foreach (var e in participatingEvents)
+                {
+                    if (!_events.Any(ev => ev.Id == e.Id))
+                        _events.Add(e);
+                }
+            }
+            else
+            {
+                StatusCodeErrorHandeller.HandleStatusCode(response2);
+            }
+        }
+        catch (HttpRequestException exception)
+        {
+            Logger.LogError(exception, "Error fetching events");
+        }
+    }
+
+    private string GetEventClass(EventViewModel e)
+    {
+        if (e.IsCancelled)
+            return "btn-warning";
+        if (e.EndDate < DateTime.UtcNow)
+            return "btn-info";
+        return "btn-success";
+    }
+
+    private void NavigateToDetailsPage(string eventId)
+    {
+        Navigation.NavigateTo($"/events/details/{eventId}", forceLoad: true);
+    }
+}

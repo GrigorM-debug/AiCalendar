@@ -33,7 +33,7 @@ namespace AiCalendar.WebApi.Services.Events
                .ThenInclude(p => p.User);
             
            Event? e = await query
-                .FirstOrDefaultAsync(e => e.Id == id && e.IsCancelled == false);
+                .FirstOrDefaultAsync(e => e.Id == id);
 
             if (e == null)
             {

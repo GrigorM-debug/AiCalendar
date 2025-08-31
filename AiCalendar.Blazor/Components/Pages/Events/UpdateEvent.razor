@@ -1,0 +1,139 @@
+﻿@page "/events/update/{eventId}"
+@* @attribute [Authorize] *@
+@using AiCalendar.Blazor.Components.Utils
+@using AiCalendar.Blazor.ViewModels.Events
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@inject ILogger<UpdateEvent> Logger
+@inject StatusCodeErrorHandeller StatusCodeErrorHandeller
+@inject IJSRuntime JSRuntime
+@rendermode InteractiveServer
+
+@* /* Page for updating an event */ *@
+<h3>Update Event</h3>
+
+<EditForm FormName="UpdateEvent" Model="Model" OnValidSubmit="UpdateEventAsync" Method="post" class="row g-3">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+    <div class="mb-3">
+        <label for="inputTitle" class="form-label">Title</label>
+        <InputText id="inputTitle" class="form-control" @bind-Value="Model.Title" />
+        <ValidationMessage For="@(() => Model.Title)" />
+    </div>
+    <div class="mb-3">
+        <label for="inputDescription" class="form-label">Description</label>
+        <InputTextArea id="inputDescription" class="form-control" @bind-Value="Model.Description" />
+        <ValidationMessage For="@(() => Model.Description)" />
+    </div>
+    <div class="mb-3">
+        <label for="inputStartTime" class="form-label">Start Time</label>
+        <InputDate Type="InputDateType.DateTimeLocal" id="inputStartTime" class="form-control" @bind-Value="Model.StartTime" />
+        <ValidationMessage For="@(() => Model.StartTime)" />
+    </div>
+    <div class="mb-3">
+        <label for="inputEndTime" class="form-label">End Time</label>
+        <InputDate Type="InputDateType.DateTimeLocal" id="inputEndTime" class="form-control" @bind-Value="Model.EndTime" />
+        <ValidationMessage For="@(() => Model.EndTime)" />
+    </div>
+    <div class="mb-3 text-center">
+        <button 
+            type="submit" 
+            class="btn btn-primary btn-lg mx-auto" 
+            style="background-color: purple;"
+            disabled="@isDisabled"
+        >Update Event</button>
+    </div>
+</EditForm>
+
+@code {
+    [Parameter]
+    public string eventId { get; set; }
+
+    [CascadingParameter] 
+    protected Task<AuthenticationState> AuthState { get; set; }
+
+    private EventViewModel EventData { get; set; }
+
+    private UpdateEventViewModel Model { get; set; }
+
+    private bool isDisabled = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthState;
+        var user = authState.User;
+
+        if (!(user.Identity?.IsAuthenticated ?? false))
+        {
+            Navigation.NavigateTo("/status-code/401", forceLoad: true);
+        }
+
+        if (string.IsNullOrEmpty(eventId))
+        {
+            Navigation.NavigateTo($"/events/details/{eventId}", forceLoad: true);
+            await JSRuntime.InvokeVoidAsync("showAlert", "Event id can't be null or empty", "error");
+        }
+
+        Model ??= new();
+
+        await FetchEventData();
+    }
+
+    private async Task FetchEventData()
+    {
+        try
+        {
+            var response = await Http.GetAsync($"api/v1/Event/{eventId}");
+
+            if(response.IsSuccessStatusCode)
+            {
+                EventData = await response.Content.ReadFromJsonAsync<EventViewModel>();
+
+                if(EventData != null)
+                {
+                    Model.Title = EventData.Title;
+                    Model.Description = EventData.Description;
+                    Model.StartTime = EventData.StartDate;
+                    Model.EndTime = EventData.EndDate;
+                }
+            }
+            else
+            {
+                StatusCodeErrorHandeller.HandleStatusCode(response);
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            Logger.LogError(ex, "Error fetching events");
+        }
+    }
+
+    private async Task UpdateEventAsync()
+    {
+        isDisabled = true;
+
+        try
+        {
+            var response = await Http.PutAsJsonAsync($"api/v1/Event/{eventId}", Model);
+
+            if(response.IsSuccessStatusCode)
+            {
+                var responseData = await response.Content.ReadFromJsonAsync<EventViewModel>();
+
+                Navigation.NavigateTo($"/events/details/{responseData.Id}", forceLoad: true);
+                await JSRuntime.InvokeVoidAsync("showAlert", "Successfully updated event! 🎉", "success");
+            }
+            else
+            {
+                StatusCodeErrorHandeller.HandleStatusCode(response);
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            Logger.LogError(ex, "Error updating event");
+        }
+    }
+
+}
