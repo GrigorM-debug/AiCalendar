@@ -37,8 +37,14 @@ builder.Services.AddRazorComponents(options =>
 
 builder.Services.AddBlazoredLocalStorage();
 
-builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-    .AddCookie();
+//builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+//    .AddCookie(options =>
+//    {
+//        options.LoginPath = "/users/login";
+//        options.LogoutPath = "/users/logout";
+//        options.ExpireTimeSpan = TimeSpan.FromDays(7); 
+//        options.SlidingExpiration = true;
+//    });
 
 builder.Services.AddAuthentication(options =>
 {
@@ -78,7 +84,7 @@ builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddDistributedMemoryCache();
 
-builder.Services.AddScoped<IUserSessionManager, UserSessionManager>();
+//builder.Services.AddScoped<IUserSessionManager, UserSessionManager>();
 
 builder.Services.AddServerSideBlazor();
 

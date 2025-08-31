@@ -82,7 +82,7 @@
                 var responseData = await response.Content.ReadFromJsonAsync<EventViewModel>();
 
                 //Later we can navigate to the event details page
-                Navigation.NavigateTo("/", forceLoad: true);
+                Navigation.NavigateTo($"/events/details/{responseData.Id}", forceLoad: true);
 
                 await JSRuntime.InvokeVoidAsync("showAlert", "Successfully created event! 🎉", "success");
             }

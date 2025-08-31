@@ -1,5 +1,5 @@
 ﻿@page "/events"
-@attribute [Authorize]
+@* @attribute [Authorize] *@
 @using System.Globalization
 @using AiCalendar.Blazor.Components.Utils
 @using AiCalendar.Blazor.ViewModels.Events
@@ -9,6 +9,7 @@
 @inject ILogger<Events> Logger
 @inject StatusCodeErrorHandeller StatusCodeErrorHandeller
 @inject HttpClient Http
+@inject IJSRuntime JSRuntime
 @rendermode InteractiveServer
 
 <h3 class="text-center">@_currentDate.ToString("MMMM yyyy", CultureInfo.InvariantCulture)</h3>
@@ -42,7 +43,8 @@
                                 @foreach (var e in _events
                                               .Where(e => e.StartDate.Date == day.Value.Date))
                                 {
-                                    <div @onclick="@(() => NavigateToDetailsPage(e.Id))" class=" @(e.IsCancelled ? "event btn-warning text-white rounded p-1 mb-1" : "event btn-primary text-white rounded p-1 mb-1")">
+                                    <div @onclick="@(() => NavigateToDetailsPage(e.Id))"
+                                         class="btn @GetEventClass(e) text-white rounded p-1 mb-1">
                                         <span>@e.StartDate.Hour:@e.StartDate.Minute</span>
                                         <span>@e.Title</span>
                                     </div>
@@ -95,7 +97,8 @@
     {
         StartDate = null,
         EndDate = null,
-        IsCancelled = false
+        IsCancelled = null /* To include the cancelled events as well. If it is false you get \
+                            only the active events. If it is true you get only cancelled events*/
     };
 
     [CascadingParameter]
@@ -103,10 +106,13 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var user = (AuthState.Result).User;
+        var authState = await AuthState;
+        var user = authState.User;
+
         if (!user.Identity.IsAuthenticated)
         {
             Navigation.NavigateTo("/status-code/401", forceLoad: true);
+            await JSRuntime.InvokeVoidAsync("alert", "You must be logged in to access this page.", "error");
         }
 
         _currentDate = DateTime.UtcNow;
@@ -164,8 +170,6 @@
 
     private async Task FetchEvents()
     {
-        var userId = (await AuthState).User.FindFirst(c => c.Type == "sub")?.Value;
-
         try
         {
             var query = new List<string>();
@@ -221,6 +225,15 @@
         {
             Logger.LogError(exception, "Error fetching events");
         }
+    }
+
+    private string GetEventClass(EventViewModel e)
+    {
+        if (e.IsCancelled)
+            return "btn-warning";
+        if (e.EndDate < DateTime.UtcNow)
+            return "btn-info";
+        return "btn-success";
     }
 
     private void NavigateToDetailsPage(string eventId)

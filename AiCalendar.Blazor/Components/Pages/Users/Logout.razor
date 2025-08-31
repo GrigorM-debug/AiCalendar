@@ -6,7 +6,7 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject NavigationManager Navigation
-@inject IUserSessionManager Auth
+@* @inject IUserSessionManager UserSessionManager  *@
 @rendermode InteractiveServer
 
 @code {
@@ -22,7 +22,7 @@
         }
 
         await ((CustomAuthenticationStateProvider)AuthenticationStateProvider).MarkUserAsLoggedOut();
-        //Auth.SignOutUser();
+        // UserSessionManager.SignOutUser();
 
         Navigation.NavigateTo("/", forceLoad: true);
     }
