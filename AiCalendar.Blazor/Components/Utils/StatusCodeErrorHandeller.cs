@@ -33,6 +33,9 @@ namespace AiCalendar.Blazor.Components.Utils
                 case System.Net.HttpStatusCode.TooManyRequests:
                     _navigationManager.NavigateTo("/status-code/429", forceLoad: true);
                     break;
+                case System.Net.HttpStatusCode.Conflict:
+                    _navigationManager.NavigateTo("/status-code/409", forceLoad: true);
+                    break;
                 default:
                     break;
             }

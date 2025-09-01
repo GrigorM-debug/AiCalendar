@@ -15,7 +15,7 @@
 
     setTimeout(() => {
         document.body.removeChild(alertDiv);
-    }, 3000);
+    }, 5000);
 }
 
 function backgroundColor(type) {
