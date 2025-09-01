@@ -1,0 +1,110 @@
+﻿@page "/users/update-account"
+@* @attribute [Authorize] *@
+@using System.Globalization
+@using AiCalendar.Blazor.Components.Utils
+@using AiCalendar.Blazor.Services
+@using AiCalendar.Blazor.ViewModels.Events
+@using AiCalendar.Blazor.ViewModels.Users
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@inject ILogger<UpdateAccount> Logger
+@inject StatusCodeErrorHandeller StatusCodeErrorHandeller
+@inject IJSRuntime JSRuntime
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@rendermode InteractiveServer
+
+<h3>UpdateAccount</h3>
+
+<EditForm FormName="UpdateUser" Model="Model" OnValidSubmit="OnValidSubmit" Method="post" class="row g-3">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+    <div class="mb-3">
+        <label for="inputUsername" class="form-label">UserName</label>
+        <InputText id="inputUsername" class="form-control" @bind-Value="Model.UserName" />
+        <ValidationMessage For="@(() => Model.UserName)" />
+    </div>
+    <div class="mb-3">
+        <label for="inputEmail" class="form-label">Email</label>
+        <InputText id="inputEmail" class="form-control" @bind-Value="Model.Email" />
+        <ValidationMessage For="@(() => Model.Email)" />
+    </div>
+    <div class="mb-3">
+        <label for="inputOldPassword" class="form-label">Password</label>
+        <InputText id="inputOldPassword" type="password" class="form-control" @bind-Value="Model.OldPassword" />
+        <ValidationMessage For="@(() => Model.OldPassword)" />
+    </div>
+    <div class="mb-3">
+        <label for="inputNewPassword" class="form-label">New Password</label>
+        <InputText id="inputNewPassword" type="password" class="form-control" @bind-Value="Model.NewPassword" />
+        <ValidationMessage For="@(() => Model.NewPassword)" />
+    </div>
+    <div class="mb-3 text-center">
+        <button 
+            type="submit" 
+            class="btn btn-primary btn-lg mx-auto" 
+            style="background-color: purple;"
+            disabled="@IsDisabled"
+        >Update Account</button>
+    </div>
+</EditForm>
+
+@code {
+    [CascadingParameter] 
+    protected Task<AuthenticationState> AuthState { get; set; }
+
+    private string UserId { get; set; }
+
+    private UpdateUserViewModel Model { get; set; }
+
+    private bool IsDisabled { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthState;
+        var user = authState.User;
+
+        if (!(user.Identity?.IsAuthenticated ?? false))
+        {
+            Navigation.NavigateTo("/status-code/401", forceLoad: true);
+        }
+
+        UserId = user.FindFirst(c => c.Type == "sub")?.Value;
+
+        if (string.IsNullOrEmpty(UserId))
+        {
+            Navigation.NavigateTo("/status-code/401", forceLoad: true);
+        }
+
+        Model ??= new();
+        IsDisabled = false;
+    }
+
+    private async Task OnValidSubmit()
+    {
+        IsDisabled = true;
+
+        try
+        {
+            var response = await Http.PutAsJsonAsync($"api/v1/User/{UserId}", Model);
+
+            if (response.IsSuccessStatusCode)
+            {
+                await ((CustomAuthenticationStateProvider)AuthenticationStateProvider).MarkUserAsLoggedOut();
+                
+                Navigation.NavigateTo("/users/login", forceLoad: true);
+                await JSRuntime.InvokeVoidAsync("showAlert", "Account updated successfully. You have to login again !", "success");
+            }
+            else
+            {
+                StatusCodeErrorHandeller.HandleStatusCode(response);
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            Logger.LogError(ex, "Error updating account");
+            await JSRuntime.InvokeVoidAsync("alert", "An error occurred while updating the account.");
+        }
+    }
+}

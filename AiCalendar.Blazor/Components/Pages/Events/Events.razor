@@ -12,57 +12,63 @@
 @inject IJSRuntime JSRuntime
 @rendermode InteractiveServer
 
-<h3 class="text-center">@_currentDate.ToString("MMMM yyyy", CultureInfo.InvariantCulture)</h3>
+@if (_events.Any())
+{
+    <h3 class="text-center">@_currentDate.ToString("MMMM yyyy", CultureInfo.InvariantCulture)</h3>
 
-<div class="d-flex justify-content-between mb-3">
-    <button @onclick="PreviousMonth" class="btn" style="background-color: purple; color: white">&lt; Prev</button>
-    <button @onclick="NextMonth" class="btn" style="background-color: purple; color: white">Next &gt;</button>
-</div>
-
-<div class="calendar-container overflow-x-auto">
-    <div class="d-flex text-center fw-bold bg-light border-bottom border-top py-2 g-4">
-        <div class="day-col">Sun</div>
-        <div class="day-col">Mon</div>
-        <div class="day-col">Tue</div>
-        <div class="day-col">Wed</div>
-        <div class="day-col">Thu</div>
-        <div class="day-col">Fri</div>
-        <div class="day-col">Sat</div>
+    <div class="d-flex justify-content-between mb-3">
+        <button @onclick="PreviousMonth" class="btn" style="background-color: purple; color: white">&lt; Prev</button>
+        <button @onclick="NextMonth" class="btn" style="background-color: purple; color: white">Next &gt;</button>
     </div>
 
-    <div class="d-flex flex-wrap gy-2 gx-2">
-        @foreach (var day in _daysInMonth)
-        {
-            <div class="col day-cell">
-                @if (day.HasValue)
-                {
-                    <div class="card h-100 day-card">
-                        <div class="card-body p-2">
-                            <span class="day-number float-end fw-bold">@day.Value.Day @day.Value.DayOfWeek</span>
-                            <div class="events mt-4">
-                                @foreach (var e in _events
-                                              .Where(e => e.StartDate.Date == day.Value.Date))
-                                {
-                                    <div @onclick="@(() => NavigateToDetailsPage(e.Id))"
-                                         class="btn @GetEventClass(e) text-white rounded p-1 mb-1">
-                                        <span>@e.StartDate.Hour:@e.StartDate.Minute</span>
-                                        <span>@e.Title</span>
-                                    </div>
-                                }
+    <div class="calendar-container overflow-x-auto">
+        <div class="d-flex text-center fw-bold bg-light border-bottom border-top py-2 g-4">
+            <div class="day-col">Sun</div>
+            <div class="day-col">Mon</div>
+            <div class="day-col">Tue</div>
+            <div class="day-col">Wed</div>
+            <div class="day-col">Thu</div>
+            <div class="day-col">Fri</div>
+            <div class="day-col">Sat</div>
+        </div>
+
+        <div class="d-flex flex-wrap gy-2 gx-2">
+            @foreach (var day in _daysInMonth)
+            {
+                <div class="col day-cell">
+                    @if (day.HasValue)
+                    {
+                        <div class="card h-100 day-card">
+                            <div class="card-body p-2">
+                                <span class="day-number float-end fw-bold">@day.Value.Day @day.Value.DayOfWeek</span>
+                                <div class="events mt-4">
+                                    @foreach (var e in _events
+                                                  .Where(e => e.StartDate.Date == day.Value.Date))
+                                    {
+                                        <div @onclick="@(() => NavigateToDetailsPage(e.Id))"
+                                             class="btn @GetEventClass(e) text-white rounded p-1 mb-1">
+                                            <span>@e.StartDate.Hour:@e.StartDate.Minute</span>
+                                            <span>@e.Title</span>
+                                        </div>
+                                    }
+                                </div>
                             </div>
                         </div>
-                    </div>
-                }
-                else
-                {
-                    <div class="day-col">
-                    </div>
-                }
-            </div>
-        }
+                    }
+                    else
+                    {
+                        <div class="day-col">
+                        </div>
+                    }
+                </div>
+            }
+        </div>
     </div>
-</div>
-
+}
+else
+{
+    <Spinner />
+}
 
 <style>
     .calendar-container {
