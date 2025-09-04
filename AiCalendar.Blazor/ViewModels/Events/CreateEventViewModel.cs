@@ -9,10 +9,12 @@ namespace AiCalendar.Blazor.ViewModels.Events
         [Required(ErrorMessage = EventConstants.TitleRequiredMessage)]
         [StringLength(EventConstants.TitleMaxLength, ErrorMessage = EventConstants.TitleLengthErrorMessage,
             MinimumLength = EventConstants.TitleMinLength)]
+        [DataType(DataType.Text, ErrorMessage = EventConstants.InvalidDataTypeErrorMessage)]
         public string Title { get; set; } = string.Empty;
 
         [StringLength(EventConstants.DescriptionMaxLength, ErrorMessage = EventConstants.DescriptionLengthErrorMessage,
             MinimumLength = EventConstants.DescriptionMinLength)]
+        [DataType(DataType.Text, ErrorMessage = EventConstants.InvalidDataTypeErrorMessage)]
         public string? Description { get; set; } = string.Empty;
 
         [Required]

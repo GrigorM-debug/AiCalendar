@@ -1,4 +1,5 @@
-﻿using AiCalendar.WebApi.Controllers;
+﻿using AiCalendar.WebApi.Constants;
+using AiCalendar.WebApi.Controllers;
 using AiCalendar.WebApi.Data.Repository;
 using AiCalendar.WebApi.DTOs.Event;
 using AiCalendar.WebApi.DTOs.Users;
@@ -78,7 +79,7 @@ namespace AiCalendar.Tests
             {
                 Email = "mohamed@example.com",
                 UserName = "Mohamed",
-                Password = "password123"
+                Password = "Mohamed56740mehmedov#"
             };
 
             var result = await _userController.Register(newUser);
@@ -126,7 +127,7 @@ namespace AiCalendar.Tests
             {
                 UserName = "Mohamed",
                 Email = "mohamed@example.com",
-                Password = "password123"
+                Password = "Mohamed56740mehmedov"
             };
 
             var result = await _userController.Register(newUser);
@@ -144,7 +145,7 @@ namespace AiCalendar.Tests
             {
                 UserName = username,
                 Email = email,
-                Password = "password123"
+                Password = "Mohamed56740mehmedov"
             };
 
             var result = await _userController.Register(newUser);
@@ -154,7 +155,6 @@ namespace AiCalendar.Tests
             Assert.That(conflictResult!.StatusCode, Is.EqualTo(409)); // Or (int)System.Net.HttpStatusCode.Conflict
             Assert.That(conflictResult.Value, Is.EqualTo($"User with this data '{username}' and '{email}' already exists."));
         }
-
         #endregion
 
         #region Login
