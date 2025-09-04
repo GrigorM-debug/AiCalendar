@@ -14,7 +14,7 @@
 
 @if (_event != null)
 {
-    <h3>Event Details</h3>
+    <h3 class="text-center">Event Details</h3>
 
     <div class="card">
         <div class="card-body">
@@ -36,10 +36,23 @@
             {
                 <span class="badge bg-success">Status: Active</span>
             }
-        </div>
+        
 
-        @* Table for event participants *@
-        <p class="card-text">Participants: </p>
+            @* Table for event participants *@
+            <div class="d-flex justify-content-lg-between">
+                <p class="card-text"> Participants: </p>
+                @if(!_event.IsCancelled)
+                {
+                    <button
+                        class="btn"
+                        style="background-color: purple; color: white"
+                        @onclick="SelectParticipants"
+                    >
+                        Select Participants
+                    </button>
+                }
+            </div>
+        </div>
         @if (_event.Participants.Any())
         {
             <table class="table">
@@ -242,5 +255,17 @@ else
 
         // Navigate to update event page
         Navigation.NavigateTo($"/events/update/{eventId}", forceLoad: true);
+    }
+
+    private void SelectParticipants()
+    {
+        if (UserId != _event.CreatorId)
+        {
+            Navigation.NavigateTo("/status-code/403", forceLoad: true);
+        }
+
+        string creatorId = _event.CreatorId;
+
+        Navigation.NavigateTo($"/event/{eventId}/select-participants/{creatorId}", forceLoad: true);
     }
 }

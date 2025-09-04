@@ -1,0 +1,170 @@
+﻿@page "/event/{eventId}/select-participants/{creatorId}"
+@using System.Text
+@using AiCalendar.Blazor.Components.Pages.Users
+@using AiCalendar.Blazor.Components.Utils
+@using AiCalendar.Blazor.ViewModels.Users
+@using Microsoft.AspNetCore.Components.Authorization
+@inject NavigationManager Navigation
+@inject HttpClient Http
+@inject ILogger<SelectParticipants> Logger
+@inject StatusCodeErrorHandeller StatusCodeErrorHandeller
+@inject IJSRuntime JSRuntime
+@rendermode InteractiveServer
+
+@if (Users.Any())
+{
+    <h3>Select Participants</h3>
+
+    <div class="card">
+        <table class="table">
+            <thead>
+            <tr>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach (var u in Users)
+            {
+                <tr>
+                    <td>@u.UserName</td>
+                    <td>@u.Email</td>
+                    <td>
+                        <button
+                            class="btn btn-sm"
+                            style="background-color: purple; color: white"
+                                    @onclick="() => AddParticipant(u.Id)">
+                            Add Participant
+                        </button>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <Spinner />
+}
+
+
+
+@code {
+    [Parameter]
+    public string eventId { get; set; }
+
+    [Parameter]
+    public string creatorId { get; set; }
+
+    [CascadingParameter]
+    protected Task<AuthenticationState> AuthState { get; set; }
+
+    private string UserId { get; set; }
+
+    private UserFilterViewModel Filter { get; set; }
+
+    private List<UserExtendedViewModel> Users { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthState;
+        var user = authState.User;
+
+        if (!(user.Identity?.IsAuthenticated ?? false))
+        {
+            Navigation.NavigateTo("/status-code/401", forceLoad: true);
+        }
+
+        UserId = user.FindFirst(c => c.Type == "sub")?.Value;
+
+        if (string.IsNullOrEmpty(UserId))
+        {
+            Navigation.NavigateTo("/status-code/401", forceLoad: true);
+        }
+
+        if (creatorId != UserId)
+        {
+            Navigation.NavigateTo("/status-code/403", forceLoad: true);
+        }
+
+        Filter ??= new UserFilterViewModel()
+        {
+            HasActiveEvents = null,
+            Email = null,
+            Username = null
+        };
+
+        Users ??= new List<UserExtendedViewModel>();
+
+        await FetchUsers();
+    }
+
+    private async Task FetchUsers()
+    {
+        var query = new List<string>();
+
+        if (!string.IsNullOrEmpty(Filter?.Username))
+            query.Add($"Username={Uri.EscapeDataString(Filter.Username)}");
+
+        if (!string.IsNullOrEmpty(Filter?.Email))
+            query.Add($"Email={Uri.EscapeDataString(Filter.Email)}");
+
+        if (Filter?.HasActiveEvents != null)
+            query.Add($"HasActiveEvents={Filter.HasActiveEvents.Value}");
+
+        var queryString = query.Count > 0 ? "?" + string.Join("&", query) : string.Empty;
+
+        try
+        {
+            var response = await Http.GetAsync($"api/v1/User/users{queryString}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var responseData = await response
+                    .Content
+                    .ReadFromJsonAsync<List<UserExtendedViewModel>>();
+
+                Users = responseData
+                    .Where(r => r.Id != UserId && r.ParticipatingEvents
+                        .All(p => p.Id != eventId))
+                    .ToList();
+            }
+            else
+            {
+                StatusCodeErrorHandeller.HandleStatusCode(response);
+            }
+        }
+        catch (HttpRequestException exception)
+        {
+            Logger.LogError($"An error occured: {exception}");
+        }
+    }
+
+    private async Task AddParticipant(string participantId)
+    {
+        try
+        {
+            var response = await Http.PostAsync(
+                $"api/v1/EventParticipants/events/{eventId}/participants/{participantId}",
+                new StringContent(string.Empty, Encoding.UTF8, "application/json")
+            );
+
+            if (response.IsSuccessStatusCode)
+            {
+                await FetchUsers();
+                await JSRuntime.InvokeVoidAsync("showAlert", "Participant successfully added !", "success");
+            }
+            else
+            {
+                StatusCodeErrorHandeller.HandleStatusCode(response);
+            }
+        }
+        catch (HttpRequestException exception)
+        {
+            Logger.LogError($"An error occured: {exception}");
+        }
+    }
+
+}
