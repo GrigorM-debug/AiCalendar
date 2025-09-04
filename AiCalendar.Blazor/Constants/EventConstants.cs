@@ -16,5 +16,7 @@
         public const string DateTimeFormatErrorMessage = "Invalid DateTimeFormat";
 
         public const string StartTimeGreaterThanOrTheSameAsEndTimeErrorMessage = "Start time must be less than end time and not equal to end time.";
+
+        public const string InvalidDataTypeErrorMessage = "The data type of the field is invalid.";
     }
 }

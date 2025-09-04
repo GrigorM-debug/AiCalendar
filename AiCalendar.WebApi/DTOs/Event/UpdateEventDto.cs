@@ -20,12 +20,19 @@ namespace AiCalendar.WebApi.DTOs.Event
         {
             if (!string.IsNullOrEmpty(Title))
             {
-                if (Title.Length < EventConstants.TitleMinLength || Title.Length > EventConstants.TitleMaxLength)
+                if (Title.Length < EventConstants.TitleMinLength && Title.Length > EventConstants.TitleMaxLength)
                 {
                     yield return new ValidationResult(
                         EventConstants.TitleLengthErrorMessage,
                         new[] { nameof(Title) });
                 }
+
+                var titleType = new DataTypeAttribute(DataType.Text);
+                if (!titleType.IsValid(Title))
+                {
+                    yield return new ValidationResult(EventConstants.InvalidDataTypeErrorMessage, new[] { nameof(titleType) });
+                }
+
             }
 
             if (!string.IsNullOrEmpty(Description))
@@ -36,6 +43,12 @@ namespace AiCalendar.WebApi.DTOs.Event
                     yield return new ValidationResult(
                         EventConstants.DescriptionLengthErrorMessage,
                         new[] { nameof(Description) });
+                }
+
+                var descriptionType = new DataTypeAttribute(DataType.Text);
+                if (!descriptionType.IsValid(Description))
+                {
+                    yield return new ValidationResult(EventConstants.InvalidDataTypeErrorMessage, new[] { nameof(descriptionType) });
                 }
             }
 
@@ -48,7 +61,6 @@ namespace AiCalendar.WebApi.DTOs.Event
                         new[] { nameof(StartTime), nameof(EndTime) });
                 }
             }
-            
         }
     }
 }

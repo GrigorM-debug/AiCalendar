@@ -25,6 +25,14 @@ namespace AiCalendar.Blazor.ViewModels.Events
                         EventConstants.TitleLengthErrorMessage,
                         new[] { nameof(Title) });
                 }
+
+                var titleType = new DataTypeAttribute(DataType.Text);
+                if (!titleType.IsValid(Title))
+                {
+                    yield return new ValidationResult(
+                        EventConstants.InvalidDataTypeErrorMessage,
+                        new[] { nameof(Title) });
+                }
             }
 
             if (!string.IsNullOrEmpty(Description))
@@ -34,6 +42,14 @@ namespace AiCalendar.Blazor.ViewModels.Events
                 {
                     yield return new ValidationResult(
                         EventConstants.DescriptionLengthErrorMessage,
+                        new[] { nameof(Description) });
+                }
+
+                var descriptionType = new DataTypeAttribute(DataType.Text);
+                if (!descriptionType.IsValid(Description))
+                {
+                    yield return new ValidationResult(
+                        EventConstants.InvalidDataTypeErrorMessage,
                         new[] { nameof(Description) });
                 }
             }
