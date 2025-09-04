@@ -34,6 +34,10 @@
         <label for="inputOldPassword" class="form-label">Password</label>
         <InputText id="inputOldPassword" type="password" class="form-control" @bind-Value="Model.OldPassword" />
         <ValidationMessage For="@(() => Model.OldPassword)" />
+        @if (!string.IsNullOrEmpty(WrongPasswordMessage))
+        {
+            <p class="text-danger">@WrongPasswordMessage</p>
+        }
     </div>
     <div class="mb-3">
         <label for="inputNewPassword" class="form-label">New Password</label>
@@ -56,9 +60,12 @@
 
     private string UserId { get; set; }
 
+    [SupplyParameterFromForm]
     private UpdateUserViewModel Model { get; set; }
 
     private bool IsDisabled { get; set; }
+
+    private string WrongPasswordMessage { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
@@ -92,9 +99,19 @@
             if (response.IsSuccessStatusCode)
             {
                 await ((CustomAuthenticationStateProvider)AuthenticationStateProvider).MarkUserAsLoggedOut();
-                
+
                 Navigation.NavigateTo("/users/login", forceLoad: true);
                 await JSRuntime.InvokeVoidAsync("showAlert", "Account updated successfully. You have to login again !", "success");
+            }
+            else if (response.StatusCode == System.Net.HttpStatusCode.BadRequest)
+            {
+                var responseContent = await response.Content.ReadAsStringAsync();
+
+                if (responseContent.Contains("password"))
+                {
+                    WrongPasswordMessage = responseContent;
+                    await JSRuntime.InvokeVoidAsync("showAlert", "Incorrect password. Please try again.", "error");
+                }
             }
             else
             {
@@ -104,7 +121,8 @@
         catch (HttpRequestException ex)
         {
             Logger.LogError(ex, "Error updating account");
-            await JSRuntime.InvokeVoidAsync("alert", "An error occurred while updating the account.");
         }
+
+        IsDisabled = false;
     }
 }
