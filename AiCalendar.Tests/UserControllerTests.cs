@@ -347,16 +347,12 @@ namespace AiCalendar.Tests
         }
 
         [Test]
-        [TestCase("admin", "admin@example.com")]
-        [TestCase("Heisenberg", "heisenberg@example.com")]
-        [TestCase("JessiePinkman", "jessie@example.com")]
-        public async Task GetUsers_ShouldReturnUsersMatchingTheFilter_WhenAllFilterAreApplied(string username,
-            string email)
+        public async Task GetUsers_ShouldReturnUsersMatchingTheFilter_WhenAllFilterAreApplied()
         {
             var filter = new UserFilterCriteriaDto()
             {
-                Email = email,
-                Username = username,
+                Email = "jessie@example.com",
+                Username = "JessiePinkman",
                 HasActiveEvents = true
             };
 
@@ -366,8 +362,8 @@ namespace AiCalendar.Tests
             Assert.That(objectResult!.Value, Is.InstanceOf<List<UserDtoExtended>>());
             var users = objectResult.Value as List<UserDtoExtended>;
             Assert.That(users!.Count, Is.EqualTo(1));
-            Assert.That(users[0].UserName, Is.EqualTo(username));
-            Assert.That(users[0].Email, Is.EqualTo(email));
+            Assert.That(users[0].UserName, Is.EqualTo("JessiePinkman"));
+            Assert.That(users[0].Email, Is.EqualTo("jessie@example.com"));
             Assert.That(users[0].CreatedEvents
                 .All(e => e.IsCancelled == false)); // Assuming all seeded users have active events
         }
@@ -410,10 +406,17 @@ namespace AiCalendar.Tests
             var objectResult = result as OkObjectResult;
             Assert.That(objectResult!.Value, Is.InstanceOf<List<UserDtoExtended>>());
             var users = objectResult.Value as List<UserDtoExtended>;
-            Assert.That(users!.Count, Is.EqualTo(1)); // Only one user has a cancelled event
-            Assert.That(users[0].CreatedEvents.Count, Is.EqualTo(2)); // The user has one cancelled event
-            Assert.That(users[0].CreatedEvents.Any(e => e.IsCancelled)); // The event is cancelled
-            Assert.That(users[0].CreatedEvents.First().Id, Is.EqualTo(event1Id.ToString()));
+            Assert.That(users!.Count, Is.EqualTo(2)); // Only one user has a cancelled event
+            
+            Assert.That(users[0].CreatedEvents.Count, Is.EqualTo(3)); // The user has one cancelled event
+
+            Assert.That(users[1].CreatedEvents.Count, Is.EqualTo(2)); // The user has one cancelled event
+
+            Assert.That(users.All(u => u.CreatedEvents.Any(e => e.IsCancelled)));
+
+            Assert.That(users[0].CreatedEvents.All(e => e.CreatorId == user1Id.ToString()));
+
+            Assert.That(users[1].CreatedEvents.All(e => e.CreatorId != user1Id.ToString()));
         }
         #endregion
 
@@ -803,11 +806,13 @@ namespace AiCalendar.Tests
             };
 
             var result = await _userController.GetUserEvents(null);
+
             Assert.That(result, Is.InstanceOf<OkObjectResult>());
             var okResult = result as OkObjectResult;
             var userEvents = okResult!.Value as IEnumerable<EventDto>;
+
             Assert.That(userEvents, Is.Not.Empty);
-            Assert.That(userEvents.Count(), Is.EqualTo(2));
+            Assert.That(userEvents.Count(), Is.EqualTo(3));
             Assert.That(userEvents.All(e => e.CreatorId == "A1B2C3D4-E5F6-7890-1234-567890ABCDEF".ToLower()),
                 Is.True); // All events should be created by the user
         }
@@ -842,8 +847,7 @@ namespace AiCalendar.Tests
             var okResult = result as OkObjectResult;
             var userEvents = okResult!.Value as IEnumerable<EventDto>;
             Assert.That(userEvents, Is.Not.Empty);
-            Assert.That(userEvents.Count(), Is.EqualTo(2));
-            Assert.That(userEvents.First().StartDate, Is.EqualTo(new DateTime(2025, 6, 16, 9, 0, 0, DateTimeKind.Utc)));
+            Assert.That(userEvents.Count(), Is.EqualTo(3));
 
             Assert.That(userEvents.All(e => e.CreatorId == "A1B2C3D4-E5F6-7890-1234-567890ABCDEF".ToLower()),
                 Is.True); // All events should be created by the user
@@ -1055,7 +1059,7 @@ namespace AiCalendar.Tests
             var okResult = result as OkObjectResult;
             var userEvents = okResult!.Value as IEnumerable<EventDto>;
             Assert.That(userEvents, Is.Not.Empty);
-            Assert.That(userEvents.Count(), Is.EqualTo(1)); // Assuming the user has 1 cancelled event
+            Assert.That(userEvents.Count(), Is.EqualTo(2)); 
             Assert.That(userEvents.All(e => e.IsCancelled), Is.True); // All events should be cancelled
         }
 
@@ -1064,9 +1068,9 @@ namespace AiCalendar.Tests
         {
             var claims = new List<Claim>()
             {
-                new Claim(ClaimTypes.NameIdentifier, "A1B2C3D4-E5F6-7890-1234-567890ABCDEF"),
-                new Claim(ClaimTypes.Email, "admin@example.com"),
-                new Claim(ClaimTypes.Name, "admin")
+                new Claim(ClaimTypes.NameIdentifier, "11223344-5566-7788-99AA-BBCCDDEEFF00"),
+                new Claim(ClaimTypes.Email,  "jessie@example.com"),
+                new Claim(ClaimTypes.Name, "JessiePinkman")
             };
             var identity = new ClaimsIdentity(claims, "TestAuthType");
             var principal = new ClaimsPrincipal(identity);

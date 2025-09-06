@@ -392,5 +392,62 @@ namespace AiCalendar.WebApi.Services.Events
 
             return isExisting;
         }
+
+        /// <summary>
+        /// UnCancels the event with the specified unique identifier on behalf of the specified user.
+        /// </summary>
+        /// <param name="eventId">The unique identifier of the event to cancel.</param>
+        /// <param name="userId">The unique identifier of the user performing the cancellation.</param>
+        /// <returns>The updated event with its cancellation status set.</returns>
+        public async Task<EventDto> UncancelEventAsync(Guid eventId, Guid userId)
+        {
+            IQueryable<Event> query = _eventRepository
+                .WithIncludes(e => e.Creator)
+                .AsQueryable();
+
+            query = query
+                .Include(e => e.Participants)
+                .ThenInclude(p => p.User);
+
+            Event? eventToCancel = await query
+                .FirstOrDefaultAsync(e => e.Id == eventId && e.CreatorId == userId);
+
+            eventToCancel.IsCancelled = false;
+
+            _eventRepository.UpdateAsync(eventToCancel);
+            await _eventRepository.SaveChangesAsync();
+
+            EventDto cancelledEventDto = new EventDto
+            {
+                Id = eventToCancel.Id.ToString(),
+                Title = eventToCancel.Title,
+                Description = eventToCancel.Description,
+                StartDate = eventToCancel.StartTime,
+                EndDate = eventToCancel.EndTime,
+                CreatorId = eventToCancel.CreatorId.ToString(),
+                IsCancelled = eventToCancel.IsCancelled,
+                Participants = eventToCancel.Participants.Select(p => new UserDto
+                {
+                    Id = p.UserId.ToString(),
+                    UserName = p.User.UserName,
+                    Email = p.User.Email
+                }).ToList()
+            };
+
+            return cancelledEventDto;
+        }
+
+        /// <summary>
+        /// Checks if an event with the specified unique identifier is already uncancelled.
+        /// <param name="eventId">The id of the event</param>
+        /// <returns>Boolean depending on event cancelling condition</returns>
+        /// </summary>
+        public async Task<bool> CheckIfEventIsAlreadyUncanceled(Guid eventId)
+        {
+            bool isCancelled = await _eventRepository
+                .ExistsByExpressionAsync(e => e.Id == eventId && !e.IsCancelled);
+
+            return isCancelled;
+        }
     }
 }
