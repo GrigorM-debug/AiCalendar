@@ -562,6 +562,148 @@ namespace AiCalendar.Tests
         }
         #endregion
 
+        #region UncancelEventAsync
+        
+        [Test]
+        public async Task UncancelEventAsync_ShouldReturnEventDto_WhenEventIsUncancelledSuccessfully()
+        {
+            var result = await _eventController.UncancelEventAsync("E1000000-0000-0000-0000-000000000006");
+
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result, Is.InstanceOf<OkObjectResult>());
+            var okResult = result as OkObjectResult;
+            Assert.That(okResult!.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
+            Assert.That(okResult.Value, Is.Not.Null);
+            Assert.That(okResult.Value, Is.InstanceOf<EventDto>());
+            var e = okResult.Value as EventDto;
+            Assert.That(e, Is.Not.Null);
+            Assert.That(e.Id, Is.EqualTo("E1000000-0000-0000-0000-000000000006".ToLower()));
+            Assert.That(e.Title, Is.EqualTo("Code Review Session"));
+            Assert.That(e.StartDate, Is.EqualTo(new DateTime(2025, 6, 19, 10, 0, 0, DateTimeKind.Utc)));
+            Assert.That(e.EndDate, Is.EqualTo(new DateTime(2025, 6, 19, 11, 30, 0, DateTimeKind.Utc)));
+            Assert.That(e.CreatorId, Is.EqualTo("A1B2C3D4-E5F6-7890-1234-567890ABCDEF".ToLower()));
+            Assert.That(e.Description, Is.EqualTo("Reviewing code for the new feature implementation."));
+            Assert.That(e.IsCancelled, Is.False, "Event should be marked as not cancelled.");
+        }
+
+        [Test]
+        public async Task UncancelEventAsync_ShouldReturnBadRequest_WhenEventIsNotCancelled()
+        {
+            var result = await _eventController.UncancelEventAsync("E1000000-0000-0000-0000-000000000001");
+
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
+            var badRequestResult = result as BadRequestObjectResult;
+            Assert.That(badRequestResult!.Value, Is.EqualTo("Event is not cancelled."));
+        }
+
+        [Test]
+        public async Task UncancelEventAsync_ShouldReturnNotFound_WhenEventDoesNotExist()
+        {
+            // Arrange
+            var eventId = "E1000000-0000-0000-0000-000000000999"; // Non-existent event ID
+            // Act
+            var result = await _eventController.UncancelEventAsync(eventId);
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result, Is.InstanceOf<NotFoundObjectResult>());
+            var notFoundResult = result as NotFoundObjectResult;
+            Assert.That(notFoundResult!.Value, Is.EqualTo("Event not found."));
+        }
+
+        [Test]
+        public async Task UncancelEventAsync_ShouldReturnUnAuthorized_WhenUserIsNotLoggedIn()
+        {
+            _eventController.ControllerContext = new ControllerContext();
+            _eventController.ControllerContext.HttpContext = new DefaultHttpContext();
+            _eventController.ControllerContext.HttpContext.User = new ClaimsPrincipal();
+
+            var result = await _eventController.UncancelEventAsync("E1000000-0000-0000-0000-000000000006");
+
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result, Is.InstanceOf<UnauthorizedObjectResult>());
+            var unauthorizedResult = result as UnauthorizedObjectResult;
+            Assert.That(unauthorizedResult!.Value, Is.EqualTo("You must be logged in to restore an event."));
+        }
+
+        [Test]
+        public async Task UncancelEventAsync_ShouldReturnForbidden_WhenUserIsNotEventCreator()
+        {
+            var userId = "F0E9D8C7-B6A5-4321-FEDC-BA9876543210";
+            var claim = new List<Claim>()
+            {
+                new Claim(ClaimTypes.Name, "Heisenberg"),
+                new Claim(ClaimTypes.Email, "heisenberg@example.com"),
+                new Claim(ClaimTypes.NameIdentifier, userId)
+            };
+
+            var identity = new ClaimsIdentity(claim, "TestAuth");
+            var user = new ClaimsPrincipal(identity);
+            _eventController.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext { User = user }
+            };
+
+            // Arrange
+            var eventId = "E1000000-0000-0000-0000-000000000006"; // Event created by another user
+
+            // Act
+            var result = await _eventController.UncancelEventAsync(eventId);
+            
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result, Is.InstanceOf<ForbidResult>());
+        }
+
+        [Test]
+        public async Task UncancelEventAsync_ShouldReturnBadRequest_WhenEventIdIsInvalidGuid()
+        {
+            // Arrange
+            var eventId = "InvalidEventId"; // Invalid event ID
+            // Act
+            var result = await _eventController.UncancelEventAsync(eventId);
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
+            var badRequestResult = result as BadRequestObjectResult;
+            Assert.That(badRequestResult!.Value, Is.EqualTo("Invalid event ID format."));
+        }
+
+        [Test]
+        public async Task UncancelEventAsync_ShouldReturnNotFound_WhenCurrentUserDoesNotExist()
+        {
+            var userId = Guid.NewGuid().ToString();
+
+            var claim = new List<Claim>()
+            {
+                new Claim(ClaimTypes.Name, "Ivan"),
+                new Claim(ClaimTypes.Email, "Ivan@example.com"),
+                new Claim(ClaimTypes.NameIdentifier, userId)
+            };
+
+            var identity = new ClaimsIdentity(claim, "TestAuth");
+            var user = new ClaimsPrincipal(identity);
+            _eventController.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext { User = user }
+            };
+            // Arrange
+            var eventId = "E1000000-0000-0000-0000-000000000006"; 
+            // Act
+            var result = await _eventController.UncancelEventAsync(eventId);
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result, Is.InstanceOf<NotFoundObjectResult>());
+            var notFoundResult = result as NotFoundObjectResult;
+            Assert.That(notFoundResult!.Value, Is.EqualTo("User not found."));
+        }
+
+
+        #endregion
+
         #region UpdateEventAsync
 
         [Test]

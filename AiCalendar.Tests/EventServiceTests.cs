@@ -602,6 +602,26 @@ namespace AiCalendar.Tests
         }
         #endregion
 
+        #region CheckIfEventIsAlreadyUnCancelled
+
+        [Test]
+        public async Task CheckIfEventIsAlreadyUnCancelled_ShouldReturnFalse_WhenEventIsActive()
+        {
+            Guid eventId = Guid.Parse("E1000000-0000-0000-0000-000000000001");
+            bool isCancelled = await _eventService.CheckIfEventIsAlreadyUncanceled(eventId);
+            Assert.That(isCancelled, Is.True);
+        }
+
+        [Test]
+        public async Task CheckIfEventIsAlreadyUnCancelled_ShouldReturnTrue_WhenEventIsCancelled()
+        {
+            Guid eventId = Guid.Parse("E1000000-0000-0000-0000-000000000005");
+            bool isCancelled = await _eventService.CheckIfEventIsAlreadyUncanceled(eventId);
+            Assert.That(isCancelled, Is.False);
+        }
+
+        #endregion
+
         #region CheckIfEventExistsByTitleAndDescription
 
         [Test]

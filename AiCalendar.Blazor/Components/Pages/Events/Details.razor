@@ -86,15 +86,19 @@
         }
 
         <div class="card-footer d-flex justify-content-between">
-            @if (!_event.IsCancelled && UserId == _event.CreatorId)
-            {
-                <button class="btn btn-warning" @onclick="CancelEvent">Cancel Event</button>
-            }
-
             @if (UserId == _event.CreatorId)
             {
                 <button class="btn btn-info" @onclick="UpdateEvent">Update Event</button>
                 <button class="btn btn-danger" @onclick="DeleteEvent">Delete Event</button>
+
+                @if (!_event.IsCancelled)
+                {
+                    <button class="btn btn-warning" @onclick="CancelEvent">Cancel Event</button>
+                }
+                else
+                {
+                    <button class="btn btn-warning" @onclick="UncancelEvent">Uncancel Event</button>
+                }
             }
         </div>
     </div>
@@ -187,6 +191,39 @@ else
         catch (HttpRequestException ex)
         {
             Logger.LogError(ex, "Error cancelling event");
+        }
+    }
+
+    private async Task UncancelEvent()
+    {
+        if (UserId != _event.CreatorId)
+        {
+            Navigation.NavigateTo("/status-code/403", forceLoad: true);
+            await JSRuntime.InvokeVoidAsync("showAlert", "You have to be the event creator to cancelled it", "error");
+        }
+
+        if (_event == null || _event.IsCancelled)
+        {
+            await JSRuntime.InvokeVoidAsync("showAlert", "Event is already cancelled", "error");
+        }
+
+        try
+        {
+            var response = await Http.PatchAsync($"api/v1/Event/{eventId}/uncancel", null);
+           
+            if (response.IsSuccessStatusCode)
+            {
+                await FetchEventData();
+                await JSRuntime.InvokeVoidAsync("showAlert", "Event uncancelled successfully! 🎉", "success");
+            }
+            else
+            {
+                StatusCodeErrorHandeller.HandleStatusCode(response);
+            }
+        }
+        catch(HttpRequestException ex)
+        {
+            Logger.LogError(ex, "Error uncancelling event");
         }
     }
 

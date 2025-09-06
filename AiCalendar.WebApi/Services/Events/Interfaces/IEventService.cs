@@ -101,5 +101,20 @@ namespace AiCalendar.WebApi.Services.Events.Interfaces
         /// <param name="description">The description of the event to check.</param>
         /// <returns><c>true</c> if an event exists with the given title and description; otherwise, <c>false</c>.</returns>
         Task<bool> CheckIfEventExistsByTitleAndDescription(string? title, string? description, Guid userId);
+
+        /// <summary>
+        /// UnCancels the event with the specified unique identifier on behalf of the specified user.
+        /// </summary>
+        /// <param name="eventId">The unique identifier of the event to cancel.</param>
+        /// <param name="userId">The unique identifier of the user performing the cancellation.</param>
+        /// <returns>The updated event with its cancellation status set.</returns>
+        Task<EventDto> UncancelEventAsync(Guid eventId, Guid userId);
+
+        /// <summary>
+        /// Checks if an event with the specified unique identifier is already uncancelled.
+        /// <param name="eventId">The id of the event</param>
+        /// <returns>Boolean depending on event cancelling condition</returns>
+        /// </summary>
+        Task<bool> CheckIfEventIsAlreadyUncanceled(Guid eventId);
     }
 }

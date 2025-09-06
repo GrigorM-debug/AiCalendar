@@ -344,6 +344,77 @@ namespace AiCalendar.WebApi.Controllers
         }
 
         /// <summary>
+        /// Uncancels an event by its unique identifier for the authenticated user.
+        /// </summary>
+        /// <param name="id">The unique identifier of the event as a string.</param>
+        /// <returns>Returns the uncancelled event.</returns>
+        /// <response code="200">Event uncancelled successfully.</response>
+        /// <response code="400">Invalid user ID or event ID format.</response>
+        /// <response code="401">User is not authenticated.</response>
+        /// <response code="403">User is not the creator of the event.</response>
+        /// <response code="404">Event not found.</response>
+        [HttpPatch("{id}/uncancel")]
+        [ProducesResponseType(typeof(EventDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> UncancelEventAsync(string id)
+        {
+            string? userIdString = User.GetUserId();
+
+            if (User?.Identity == null || User?.Identity?.IsAuthenticated == false || userIdString == null)
+            {
+                _logger.LogWarning("Unauthorized attempt to restore an event without authentication.");
+                return Unauthorized("You must be logged in to restore an event.");
+            }
+
+            if (!Guid.TryParse(userIdString, out Guid userId))
+            {
+                _logger.LogWarning("Invalid user ID format: {UserId}", userIdString);
+                return BadRequest("Invalid user ID.");
+            }
+
+            if (!Guid.TryParse(id, out Guid eventId))
+            {
+                _logger.LogWarning("Invalid event ID format: {EventId}", id);
+                return BadRequest("Invalid event ID format.");
+            }
+
+            bool isUserExists = await _userService.UserExistsByIdAsync(userId);
+            if (!isUserExists)
+            {
+                _logger.LogWarning("User not found for ID: {UserId}", userId);
+                return NotFound("User not found.");
+            }
+
+            bool isEventExists = await _eventService.EventExistsByIdAsync(eventId);
+            if (!isEventExists)
+            {
+                _logger.LogWarning("Event not found for ID: {EventId}", eventId);
+                return NotFound("Event not found.");
+            }
+
+            bool isUserEventCreator = await _eventService.IsUserEventCreator(eventId, userId);
+            if (!isUserEventCreator)
+            {
+                _logger.LogWarning("User {UserId} is not the creator of the event with ID: {EventId}", userId, eventId);
+                return Forbid("You are not the creator of this event.");
+            }
+
+            bool isEventIsAlreadyUnCancelled = await _eventService.CheckIfEventIsAlreadyUncanceled(eventId);
+            if (isEventIsAlreadyUnCancelled)
+            {
+                _logger.LogWarning("Event with ID: {EventId} is not cancelled.", eventId);
+                return BadRequest("Event is not cancelled.");
+            }
+
+            EventDto restoredEvent = await _eventService.UncancelEventAsync(eventId, userId);
+
+            return Ok(restoredEvent);
+        }
+
+        /// <summary>
         /// Gets events with optional filtering
         /// </summary>
         /// <param name="filter">Optional filter criteria for events</param>

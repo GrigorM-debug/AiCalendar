@@ -77,6 +77,8 @@ namespace AiCalendar.Tests
             Guid event2Id = Guid.Parse("E1000000-0000-0000-0000-000000000002");
             Guid event3Id = Guid.Parse("E1000000-0000-0000-0000-000000000003");
             Guid event4Id = Guid.Parse("E1000000-0000-0000-0000-000000000004");
+            Guid event5Id = Guid.Parse("E1000000-0000-0000-0000-000000000005");
+            Guid event6Id = Guid.Parse("E1000000-0000-0000-0000-000000000006");
 
             IEnumerable<Event> events = new List<Event>
             {
@@ -116,6 +118,26 @@ namespace AiCalendar.Tests
                     StartTime = new DateTime(2025, 6, 21, 7, 0, 0, DateTimeKind.Utc), // Saturday, June 21, 7:00 AM UTC
                     EndTime = new DateTime(2025, 6, 21, 15, 0, 0, DateTimeKind.Utc), // Saturday, June 21, 3:00 PM UTC
                     CreatorId = user1Id, // Created by admin
+                },
+                new Event()
+                {
+                    Id = event5Id,
+                    Title = "Lunch with Sarah",
+                    Description = "Catching up with Sarah at the new cafe.",
+                    StartTime = new DateTime(2025, 6, 18, 12, 30, 0, DateTimeKind.Utc), // Wednesday, June 18, 12:30 PM UTC
+                    EndTime = new DateTime(2025, 6, 18, 13, 30, 0, DateTimeKind.Utc), // Wednesday, June 18, 1:30 PM UTC
+                    CreatorId = user2Id, // Created by Heisenberg
+                    IsCancelled = true
+                },
+                new Event()
+                {
+                    Id = event6Id,
+                    Title = "Code Review Session",
+                    Description = "Reviewing code for the new feature implementation.",
+                    StartTime = new DateTime(2025, 6, 19, 10, 0, 0, DateTimeKind.Utc), // Thursday, June 19, 10:00 AM UTC
+                    EndTime = new DateTime(2025, 6, 19, 11, 30, 0, DateTimeKind.Utc), // Thursday, June 19, 11:30 AM UTC
+                    CreatorId = user1Id, // Created by admin
+                    IsCancelled = true
                 }
             };
 
