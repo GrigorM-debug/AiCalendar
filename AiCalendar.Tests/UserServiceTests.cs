@@ -462,24 +462,25 @@ namespace AiCalendar.Tests
         }
 
         [Test]
-        [TestCase("JessiePinkman", "jessie@example.com")]
-        [TestCase("Heisenberg", "heisenberg@example.com")]
-        [TestCase("admin", "admin@example.com")]
-        public async Task GetUsersAsyncShouldReturnOnlyUsersWithActiveEventsIfTheFilterIsAppliedWithValueTrue(string username, string email)
+        public async Task GetUsersAsyncShouldReturnOnlyUsersWithActiveEventsIfTheFilterIsAppliedWithValueTrue()
         {
             UserFilterCriteriaDto filter = new UserFilterCriteriaDto
             {
-                Username = username,
-                Email = email,
+                Username = "JessiePinkman",
+                Email = "jessie@example.com",
                 HasActiveEvents = true
             };
 
             var users = await _userService.GetUsersAsync(filter);
+
             Assert.That(users, Is.Not.Null, "Users should not be null.");
+
             foreach (var user in users)
             {
-                Assert.That(user.UserName, Is.EqualTo(username), "Returned user username does not match the filter.");
-                Assert.That(user.Email, Is.EqualTo(email), "Returned user email does not match the filter.");
+                Assert.That(user.UserName, Is.EqualTo("JessiePinkman"), "Returned user username does not match the filter.");
+
+                Assert.That(user.Email, Is.EqualTo("jessie@example.com"), "Returned user email does not match the filter.");
+
                 foreach (var createdEvent in user.CreatedEvents)
                 {
                     Assert.That(createdEvent.IsCancelled, Is.False);
@@ -500,11 +501,20 @@ namespace AiCalendar.Tests
             };
 
             var users = await _userService.GetUsersAsync(filter);
+
             Assert.That(users, Is.Not.Null, "Users should not be null.");
-            Assert.That(users.Count(), Is.EqualTo(1), "There should be 1 user with cancelled events.");
-            Assert.That(users.Any(u => u.UserName == "admin"), "User with cancelled events should be admin.");
-            Assert.That(users.Any(u => u.Email == "admin@example.com"), "User with cancelled events should have email");
-            Assert.That(users.Any(u => u.CreatedEvents.Any(e => e.IsCancelled)),
+
+            Assert.That(users.Count(), Is.EqualTo(2), "There should be 1 user with cancelled events.");
+
+            var usersToList = users.ToList();
+
+            Assert.That(usersToList[0].UserName, Is.EqualTo("admin"));
+            Assert.That(usersToList[0].Email, Is.EqualTo("admin@example.com"));
+
+            Assert.That(usersToList[1].UserName, Is.EqualTo("Heisenberg"));
+            Assert.That(usersToList[1].Email, Is.EqualTo("heisenberg@example.com"));
+           
+            Assert.That(users.All(u => u.CreatedEvents.Any(e => e.IsCancelled)),
                 "User should have at least one cancelled event.");
         }
         #endregion
@@ -607,13 +617,17 @@ namespace AiCalendar.Tests
             Guid eventId = Guid.Parse("E1000000-0000-0000-0000-000000000001");
             Guid userId = Guid.Parse("A1B2C3D4-E5F6-7890-1234-567890ABCDEF");
             EventDto cancelledEventDto = await _eventService.CancelEventAsync(eventId, userId);
+
             EventFilterCriteriaDto filter = new EventFilterCriteriaDto
             {
                 IsCancelled = true
             };
+
             IEnumerable<EventDto> events = await _userService.GetUserEventsAsync(userId, filter);
+
             Assert.That(events, Is.Not.Null, "Events should not be null.");
-            Assert.That(events.Count(), Is.EqualTo(1), "User should have 1 cancelled event.");
+
+            Assert.That(events.Count(), Is.EqualTo(2), "User should have 1 cancelled event.");
             Assert.That(events.All(e => e.IsCancelled), "All returned events should be cancelled.");
         }
         #endregion

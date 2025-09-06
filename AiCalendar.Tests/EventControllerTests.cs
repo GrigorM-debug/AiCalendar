@@ -1527,6 +1527,9 @@ namespace AiCalendar.Tests
             _eventController.ControllerContext = new ControllerContext();
             _eventController.ControllerContext.HttpContext = new DefaultHttpContext();
             _eventController.ControllerContext.HttpContext.User = new ClaimsPrincipal();
+
+            await _context.Database.EnsureDeletedAsync();
+
             // Arrange
             var filter = new EventFilterCriteriaDto()
             {
@@ -1570,7 +1573,7 @@ namespace AiCalendar.Tests
             Assert.That(okResult.Value, Is.Not.Null);
             Assert.That(okResult.Value, Is.InstanceOf<List<EventDto>>());
             var events = okResult.Value as List<EventDto>;
-            Assert.That(events!.Count, Is.EqualTo(1), "Expected at least one cancelled event to be returned.");
+            Assert.That(events!.Count, Is.EqualTo(3));
 
             Assert.That(events[0].Id, Is.EqualTo("E1000000-0000-0000-0000-000000000001".ToLower()));
             Assert.That(events[0].Title, Is.EqualTo("Team Stand-up Meeting"));
@@ -1579,6 +1582,22 @@ namespace AiCalendar.Tests
             Assert.That(events[0].CreatorId, Is.EqualTo("A1B2C3D4-E5F6-7890-1234-567890ABCDEF".ToLower()));
             Assert.That(events[0].Description, Is.EqualTo("Daily team synchronization meeting."));
             Assert.That(events[0].IsCancelled, Is.True, "Expected the event to be marked as cancelled.");
+
+            Assert.That(events[1].Id, Is.EqualTo("E1000000-0000-0000-0000-000000000005".ToLower()));
+            Assert.That(events[1].Title, Is.EqualTo("Lunch with Sarah"));
+            Assert.That(events[1].StartDate, Is.EqualTo(new DateTime(2025, 6, 18, 12, 30, 0, DateTimeKind.Utc)));
+            Assert.That(events[1].EndDate, Is.EqualTo(new DateTime(2025, 6, 18, 13, 30, 0, DateTimeKind.Utc)));
+            Assert.That(events[1].CreatorId, Is.EqualTo("F0E9D8C7-B6A5-4321-FEDC-BA9876543210".ToLower()));
+            Assert.That(events[1].Description, Is.EqualTo("Catching up with Sarah at the new cafe."));
+            Assert.That(events[1].IsCancelled, Is.True, "Expected the event to be marked as cancelled.");
+
+            Assert.That(events[2].Id, Is.EqualTo("E1000000-0000-0000-0000-000000000006".ToLower()));
+            Assert.That(events[2].Title, Is.EqualTo("Code Review Session"));
+            Assert.That(events[2].StartDate, Is.EqualTo(new DateTime(2025, 6, 19, 10, 0, 0, DateTimeKind.Utc)));
+            Assert.That(events[2].EndDate, Is.EqualTo(new DateTime(2025, 6, 19, 11, 30, 0, DateTimeKind.Utc)));
+            Assert.That(events[2].CreatorId, Is.EqualTo("A1B2C3D4-E5F6-7890-1234-567890ABCDEF".ToLower()));
+            Assert.That(events[2].Description, Is.EqualTo("Reviewing code for the new feature implementation."));
+            Assert.That(events[2].IsCancelled, Is.True, "Expected the event to be marked as cancelled.");
         }
 
         [Test]

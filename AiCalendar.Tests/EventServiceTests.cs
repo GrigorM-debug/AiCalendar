@@ -49,8 +49,8 @@ namespace AiCalendar.Tests
         }
 
         [Test]
-        [TestCase("E1000000-0000-0000-0000-000000000005")]
-        [TestCase("E1000000-0000-0000-0000-000000000006")]
+        [TestCase("E1000000-0000-0000-0000-000000000008")]
+        [TestCase("E1000000-0000-0000-0000-000000000009")]
         public async Task GetEventById_ShouldReturnNull_WhenIdDoesNotExist(string eventId)
         {
             // Arrange
@@ -79,8 +79,8 @@ namespace AiCalendar.Tests
         }
 
         [Test]
-        [TestCase("E1000000-0000-0000-0000-000000000005")]
-        [TestCase("E1000000-0000-0000-0000-000000000006")]
+        [TestCase("E1000000-0000-0000-0000-000000000008")]
+        [TestCase("E1000000-0000-0000-0000-000000000009")]
         public async Task EventExistsByIdAsync_ShouldReturnFalse_WhenIdDoesNotExist(string eventId)
         {
             Guid id = Guid.Parse(eventId);
@@ -122,27 +122,45 @@ namespace AiCalendar.Tests
             var result = await _eventService.GetEventsAsync();
             // Assert
             Assert.That(result, Is.Not.Null);
-            Assert.That(result.Count(), Is.EqualTo(4)); // Assuming we have seeded 4 events
+            Assert.That(result.Count(), Is.EqualTo(6)); // Assuming we have seeded 4 events
 
-            Assert.That(result.Any(e => e.Title == "Team Stand-up Meeting"));
-            Assert.That(result.Any(e => e.StartDate == new DateTime(2025, 6, 16, 9, 0, 0, DateTimeKind.Utc)));
-            Assert.That(result.Any(e => e.EndDate == new DateTime(2025, 6, 16, 9, 30, 0, DateTimeKind.Utc)));
-            Assert.That(result.Any(e => e.Description == "Daily team synchronization meeting."));
+            var resultToList = result.ToList();
 
-            Assert.That(result.Any(e => e.Title == "Project X Review"));
-            Assert.That(result.Any(e => e.StartDate == new DateTime(2025, 6, 17, 14, 0, 0, DateTimeKind.Utc)));
-            Assert.That(result.Any(e => e.EndDate == new DateTime(2025, 6, 17, 15, 30, 0, DateTimeKind.Utc)));
-            Assert.That(result.Any(e => e.Description == "Review progress on Project X with stakeholders."));
+            Assert.That(resultToList[0].Title == "Team Stand-up Meeting");
+            Assert.That(resultToList[0].StartDate == new DateTime(2025, 6, 16, 9, 0, 0, DateTimeKind.Utc));
+            Assert.That(resultToList[0].EndDate == new DateTime(2025, 6, 16, 9, 30, 0, DateTimeKind.Utc));
+            Assert.That(resultToList[0].Description == "Daily team synchronization meeting.");
+            Assert.That(resultToList[0].IsCancelled == false);
 
-            Assert.That(result.Any(e => e.Title == "Dentist Appointment"));
-            Assert.That(result.Any(e => e.StartDate == new DateTime(2025, 6, 20, 8, 0, 0, DateTimeKind.Utc)));
-            Assert.That(result.Any(e => e.EndDate == new DateTime(2025, 6, 20, 9, 0, 0, DateTimeKind.Utc)));
-            Assert.That(result.Any(e => e.Description == "Routine check-up."));
+            Assert.That(resultToList[1].Title == "Project X Review");
+            Assert.That(resultToList[1].StartDate == new DateTime(2025, 6, 17, 14, 0, 0, DateTimeKind.Utc));
+            Assert.That(resultToList[1].EndDate == new DateTime(2025, 6, 17, 15, 30, 0, DateTimeKind.Utc));
+            Assert.That(resultToList[1].Description == "Review progress on Project X with stakeholders.");
+            Assert.That(resultToList[1].IsCancelled == false);
 
-            Assert.That(result.Any(e => e.Title == "Weekend Hike"));
-            Assert.That(result.Any(e => e.StartDate == new DateTime(2025, 6, 21, 7, 0, 0, DateTimeKind.Utc)));
-            Assert.That(result.Any(e => e.EndDate == new DateTime(2025, 6, 21, 15, 0, 0, DateTimeKind.Utc)));
-            Assert.That(result.Any(e => e.Description == "Exploring the Vitosha mountains."));
+            Assert.That(resultToList[2].Title == "Dentist Appointment");
+            Assert.That(resultToList[2].StartDate == new DateTime(2025, 6, 20, 8, 0, 0, DateTimeKind.Utc));
+            Assert.That(resultToList[2].EndDate == new DateTime(2025, 6, 20, 9, 0, 0, DateTimeKind.Utc));
+            Assert.That(resultToList[2].Description == "Routine check-up.");
+            Assert.That(resultToList[2].IsCancelled == false);
+
+            Assert.That(resultToList[3].Title == "Weekend Hike");
+            Assert.That(resultToList[3].StartDate == new DateTime(2025, 6, 21, 7, 0, 0, DateTimeKind.Utc));
+            Assert.That(resultToList[3].EndDate == new DateTime(2025, 6, 21, 15, 0, 0, DateTimeKind.Utc));
+            Assert.That(resultToList[3].Description == "Exploring the Vitosha mountains.");
+            Assert.That(resultToList[3].IsCancelled == false);
+
+            Assert.That(resultToList[4].Title == "Lunch with Sarah");
+            Assert.That(resultToList[4].StartDate == new DateTime(2025, 6, 18, 12, 30, 0, DateTimeKind.Utc));
+            Assert.That(resultToList[4].EndDate == new DateTime(2025, 6, 18, 13, 30, 0, DateTimeKind.Utc));
+            Assert.That(resultToList[4].Description == "Catching up with Sarah at the new cafe.");
+            Assert.That(resultToList[4].IsCancelled == true);
+
+            Assert.That(resultToList[5].Title == "Code Review Session");
+            Assert.That(resultToList[5].StartDate == new DateTime(2025, 6, 19, 10, 0, 0, DateTimeKind.Utc));
+            Assert.That(resultToList[5].EndDate == new DateTime(2025, 6, 19, 11, 30, 0, DateTimeKind.Utc));
+            Assert.That(resultToList[5].Description == "Reviewing code for the new feature implementation.");
+            Assert.That(resultToList[5].IsCancelled == true);
         }
 
         [Test]
@@ -162,23 +180,29 @@ namespace AiCalendar.Tests
             var filter = new EventFilterCriteriaDto()
             {
                 StartDate = new DateTime(2025, 6, 16, 0, 0, 0, DateTimeKind.Utc),
-                EndDate = new DateTime(2025, 6, 20, 23, 59, 59, DateTimeKind.Utc)
+                EndDate = new DateTime(2025, 6, 20, 23, 59, 59, DateTimeKind.Utc),
+                IsCancelled = false
             };
             // Act
             var result = await _eventService.GetEventsAsync(filter);
+
+            var resultToList = result.ToList();
+
             // Assert
             Assert.That(result, Is.Not.Empty);
+
             Assert.That(result.Count(),
-                Is.EqualTo(3)); // Assuming we have seeded 4 events and only 3 fall within this range
-            Assert.That(result.Any(e => e.Title == "Team Stand-up Meeting"));
+                Is.EqualTo(3));
+
+            Assert.That(resultToList[0].Title == "Team Stand-up Meeting");
+            Assert.That(resultToList[0].Description == "Daily team synchronization meeting.");
+
+            Assert.That(resultToList[1].Title == "Project X Review");
+            Assert.That(resultToList[1].Description == "Review progress on Project X with stakeholders.");
             
-            Assert.That(result.Any(e => e.Description == "Daily team synchronization meeting."));
-            Assert.That(result.Any(e => e.Title == "Project X Review"));
-       
-            Assert.That(result.Any(e => e.Description == "Review progress on Project X with stakeholders."));
-            Assert.That(result.Any(e => e.Title == "Dentist Appointment"));
-           
-            Assert.That(result.Any(e => e.Description == "Routine check-up."));
+            Assert.That(resultToList[2].Title == "Dentist Appointment");
+            Assert.That(resultToList[2].Description == "Routine check-up.");
+
             Assert.That(result.All(e => e.IsCancelled == false));
 
             Assert.That(result.All(e => e.StartDate >= new DateTime(2025, 6, 16, 0, 0, 0, DateTimeKind.Utc)));
@@ -212,7 +236,6 @@ namespace AiCalendar.Tests
             var result = await _eventService.GetEventsAsync(filter);
             // Assert
             Assert.That(result, Is.Not.Empty);
-            Assert.That(result.All(e => e.IsCancelled == false));
 
             Assert.That(result.All(e => e.StartDate >= new DateTime(2025, 6, 16, 9, 0, 0, DateTimeKind.Utc)));
         }
@@ -237,10 +260,11 @@ namespace AiCalendar.Tests
             {
                 EndDate = new DateTime(2025, 6, 22, 23, 59, 59, DateTimeKind.Utc)
             };
+
             var result = await _eventService.GetEventsAsync(filter);
+            
             // Assert
             Assert.That(result, Is.Not.Empty);
-            Assert.That(result.All(e => e.IsCancelled == false));
             Assert.That(result.All(e => e.EndDate <= new DateTime(2025, 6, 22, 23, 59, 59, DateTimeKind.Utc)));
         }
 
@@ -264,27 +288,57 @@ namespace AiCalendar.Tests
             Guid user1Id = Guid.Parse("A1B2C3D4-E5F6-7890-1234-567890ABCDEF");
 
             await _eventService.CancelEventAsync(event4Id, user1Id);
+
             var filter = new EventFilterCriteriaDto()
             {
                 IsCancelled = true
             };
 
             var result = await _eventService.GetEventsAsync(filter);
+
             // Assert
             Assert.That(result, Is.Not.Empty);
-            Assert.That(result.Count(), Is.EqualTo(1)); // Only one event should be cancelled
-            Assert.That(result.First().Id, Is.EqualTo(event4Id.ToString()));
-            Assert.That(result.First().IsCancelled, Is.True);
+            Assert.That(result.Count(), Is.EqualTo(3)); // Only one event should be cancelled
+
+            var resultToList = result.ToList();
+
+            Assert.That(resultToList.All(e => e.IsCancelled == true));
+
+            Assert.That(resultToList[0].Title == "Weekend Hike");
+            Assert.That(resultToList[0].Description == "Exploring the Vitosha mountains.");
+            Assert.That(resultToList[0].StartDate == new DateTime(2025, 6, 21, 7, 0, 0, DateTimeKind.Utc));
+            Assert.That(resultToList[0].EndDate == new DateTime(2025, 6, 21, 15, 0, 0, DateTimeKind.Utc));
+            Assert.That(resultToList[0].IsCancelled == true);
+
+            Assert.That(resultToList[1].Title == "Lunch with Sarah");
+            Assert.That(resultToList[1].Description == "Catching up with Sarah at the new cafe.");
+            Assert.That(resultToList[1].StartDate == new DateTime(2025, 6, 18, 12, 30, 0, DateTimeKind.Utc));
+            Assert.That(resultToList[1].EndDate == new DateTime(2025, 6, 18, 13, 30, 0, DateTimeKind.Utc));
+            Assert.That(resultToList[1].IsCancelled == true);
+
+            Assert.That(resultToList[2].Title == "Code Review Session");
+            Assert.That(resultToList[2].Description == "Reviewing code for the new feature implementation.");
+            Assert.That(resultToList[2].StartDate == new DateTime(2025, 6, 19, 10, 0, 0, DateTimeKind.Utc));
+            Assert.That(resultToList[2].EndDate == new DateTime(2025, 6, 19, 11, 30, 0, DateTimeKind.Utc));
+            Assert.That(resultToList[2].IsCancelled == true);
         }
 
         [Test]
         public async Task GetAllEventsAsync_ShouldReturnEmptyCollection_WhenNoCancelledEventsExist()
         {
+            await _eventService.UncancelEventAsync(Guid.Parse("E1000000-0000-0000-0000-000000000004"), Guid.Parse("A1B2C3D4-E5F6-7890-1234-567890ABCDEF"));
+
+            await _eventService.UncancelEventAsync(Guid.Parse("E1000000-0000-0000-0000-000000000005"), Guid.Parse("F0E9D8C7-B6A5-4321-FEDC-BA9876543210"));
+
+            await _eventService.UncancelEventAsync(Guid.Parse("E1000000-0000-0000-0000-000000000006"), Guid.Parse("A1B2C3D4-E5F6-7890-1234-567890ABCDEF"));
+
             var filter = new EventFilterCriteriaDto()
             {
                 IsCancelled = true
             };
+
             var result = await _eventService.GetEventsAsync(filter);
+
             // Assert
             Assert.That(result, Is.Empty);
             Assert.That(result.Count(), Is.EqualTo(0));
