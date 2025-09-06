@@ -202,9 +202,9 @@ else
             await JSRuntime.InvokeVoidAsync("showAlert", "You have to be the event creator to cancelled it", "error");
         }
 
-        if (_event == null || _event.IsCancelled)
+        if (_event == null || _event.IsCancelled == false)
         {
-            await JSRuntime.InvokeVoidAsync("showAlert", "Event is already cancelled", "error");
+            await JSRuntime.InvokeVoidAsync("showAlert", "Event is already uncancelled", "error");
         }
 
         try
