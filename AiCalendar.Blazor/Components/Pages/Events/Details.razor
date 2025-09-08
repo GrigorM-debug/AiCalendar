@@ -41,7 +41,7 @@
             @* Table for event participants *@
             <div class="d-flex justify-content-lg-between">
                 <p class="card-text"> Participants: </p>
-                @if(!_event.IsCancelled)
+                @if(!_event.IsCancelled && _event.CreatorId == UserId)
                 {
                     <button
                         class="btn"
