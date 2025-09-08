@@ -106,6 +106,22 @@ Some MCP operations require proper authentication using JWT tokens for secure ac
 
 ![Github Copilot Chat](![alt text](images/copilot.png))
 
+## Front End
+I created simple front end using .NET Blazor with server side renderring. Please don't blame me if the code or project structure is not
+clean or well written. This was my first time using Blazor. Also a big part of the Blazor app was built for 4-5 days. 
+I have experience with React, but as a .net developer i wanted to try Blazor. I defintnely can say i like it a lot and i think i prefer it 
+over React. Blazor feels more natural to me. Below I will provide pictures of some of the pages. 
+
+### Events Page
+![Events Page](![alt text](images/events.png))
+
+### Event Details Page
+![Event Details Page](![alt text](images/eventdetails.png))
+
+### Select Event Participants Page
+![Select Event Participants Page](![alt text](images/selectparticipants.png))
+
+
 ## Monitoring
 As you know one of the main objectives of .NET Aspire is to provide a centralized view of all running resources. 
 The AICalendar leverages this feature to monitor the health and performance of the application.
