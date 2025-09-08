@@ -47,7 +47,9 @@
                                     {
                                         <div @onclick="@(() => NavigateToDetailsPage(e.Id))"
                                              class="btn @GetEventClass(e) text-white rounded p-1 mb-1">
-                                            <span>@e.StartDate.Hour:@e.StartDate.Minute</span>
+                                            <span>
+                                                @e.StartDate.ToString("HH:mm")
+                                            </span>
                                             <span>@e.Title</span>
                                         </div>
                                     }
